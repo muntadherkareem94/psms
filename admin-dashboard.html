@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to right bottom, #87CEEB, #20B2AA);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .dashboard-container {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px; /* Adjust max-width as needed for dashboard */
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            text-align: center;
+        }
+        .dashboard-button {
+            background: linear-gradient(to right, #87CEEB, #20B2AA);
+            color: white;
+            padding: 1rem 1.5rem; /* Larger padding for buttons */
+            border-radius: 0.75rem; /* More rounded corners */
+            font-weight: 600;
+            font-size: 1.125rem; /* Larger font size */
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s;
+            border: none;
+            display: block; /* Make button full width */
+            width: 100%;
+        }
+        .dashboard-button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px); /* Slight lift effect on hover */
+        }
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .dashboard-container {
+                padding: 1.5rem;
+                gap: 1rem;
+            }
+            .dashboard-container h2 {
+                font-size: 1.75rem;
+            }
+            .dashboard-button {
+                padding: 0.75rem 1rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <h2 class="text-3xl font-bold text-center text-gray-800 mb-4">Admin Dashboard</h2>
+
+        <p class="text-gray-600 mb-6">Welcome, Admin! From here you can manage various aspects of the clinic's data and users.</p>
+
+        <button id="usersDataManagementButton" class="dashboard-button">Users Data Management</button>
+        <!-- Add other admin features here later -->
+        <button id="logoutButton" class="dashboard-button !bg-gray-500 hover:!bg-gray-600">Logout</button>
+    </div>
+
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        // ==================================================================================================
+        // IMPORTANT: If running this HTML file directly from your local file system (e.g., C:/),
+        //            you MUST replace the object below with your actual Firebase project config.
+        //            You can find this in your Firebase console under Project settings -> Your apps.
+        // ==================================================================================================
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDMIZubC87_z2tCnURoqQIJjCWPPdWFdnk",
+            authDomain: "pcms-e1162.firebaseapp.com",
+            projectId: "pcms-e1162",
+            storageBucket: "pcms-e1162.firebasestorage.app",
+            messagingSenderId: "383068543378",
+            appId: "1:383068543378:web:00c7d2bf95f9ded63a494b",
+            measurementId: "G-4C1P3GB6PP"
+        }; 
+        
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
+
+        let app;
+        let db;
+        let auth;
+        let adminUserId = null; // To store the UID of the authenticated admin
+
+        const usersDataManagementButton = document.getElementById('usersDataManagementButton');
+        const logoutButton = document.getElementById('logoutButton');
+
+        /**
+         * Initializes Firebase and sets up authentication listener for the admin.
+         */
+        async function initializeFirebase() {
+            try {
+                if (!app) {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                }
+
+                // Listen for auth state changes to ensure admin remains authenticated
+                onAuthStateChanged(auth, (user) => {
+                    // CHANGED THIS LINE: Now checks for your specific admin email
+                    if (user && user.email === "muntadherkareem@gmail.com") { 
+                        adminUserId = user.uid;
+                        console.log("Admin Dashboard: Admin Firebase Auth Ready. User ID:", adminUserId);
+                    } else {
+                        adminUserId = null;
+                        console.log("Admin Dashboard: No admin user signed in or session expired. Redirecting to login.");
+                        window.location.href = 'index.html'; // Redirect to login if admin is not authenticated
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error initializing Firebase for Admin Dashboard:", error);
+                // Even if Firebase init fails, we still want to redirect to login if no admin session
+                window.location.href = 'index.html'; 
+            }
+        }
+
+        /**
+         * Handles redirection to the Users Data Management page.
+         */
+        function goToUsersDataManagement() {
+            window.location.href = 'users-data-management.html';
+        }
+
+        /**
+         * Handles the logout process for the admin.
+         */
+        async function handleLogout() {
+            try {
+                if (auth && auth.currentUser) {
+                    await signOut(auth);
+                }
+                console.log("Admin logged out.");
+                window.location.href = 'index.html'; // Redirect to login page after logout
+            } catch (error) {
+                console.error("Error during logout:", error);
+                // Optionally show a message to the user if logout fails
+            }
+        }
+
+        // Add event listeners
+        usersDataManagementButton.addEventListener('click', goToUsersDataManagement);
+        logoutButton.addEventListener('click', handleLogout);
+
+        // Initialize Firebase when the window loads
+        window.onload = initializeFirebase;
+    </script>
+</body>
+</html>

@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to right bottom, #87CEEB, #20B2AA);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1200px; /* Wider container for table */
+            margin: 20px auto; /* Center the container with some margin */
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            gap: 1rem;
+        }
+        .header h2 {
+            font-size: 2.25rem; /* text-4xl */
+            font-weight: 700; /* font-bold */
+            color: #1f2937; /* text-gray-800 */
+        }
+        .button {
+            background: linear-gradient(to right, #87CEEB, #20B2AA);
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s;
+            border: none;
+            display: inline-flex; /* Use flex for icon alignment */
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .button.secondary {
+            background: #cbd5e1; /* gray-300 */
+            color: #4b5563; /* gray-700 */
+        }
+        .button.secondary:hover {
+            background: #94a3b8; /* gray-400 */
+        }
+        .button.danger {
+            background: #ef4444; /* red-500 */
+            color: white;
+        }
+        .button.danger:hover {
+            background: #dc2626; /* red-600 */
+        }
+        .table-container {
+            overflow-x: auto; /* Enable horizontal scrolling for table on small screens */
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px; /* Minimum width for the table to prevent squishing */
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0; /* gray-200 */
+        }
+        th {
+            background-color: #f8fafc; /* gray-50 */
+            font-weight: 600;
+            color: #475569; /* slate-600 */
+            text-transform: uppercase;
+            font-size: 0.875rem; /* text-sm */
+        }
+        td {
+            background-color: white;
+        }
+        tr:hover td {
+            background-color: #f1f5f9; /* hover:bg-gray-50 */
+        }
+        .action-buttons button {
+            margin-right: 0.5rem;
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
+        }
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 600px;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+            position: relative; /* For closing button positioning */
+            /* Added for scrollability */
+            max-height: 90vh; /* Limit height to 90% of viewport height */
+            overflow-y: auto; /* Enable vertical scrolling if content overflows */
+        }
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+        .modal-content h3 {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #1f2937;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #4b5563; /* gray-700 */
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db; /* gray-300 */
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: #20B2AA;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .close-modal-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280; /* gray-500 */
+        }
+        .close-modal-button:hover {
+            color: #1f2937; /* gray-800 */
+        }
+
+        /* Message Box */
+        .message-box {
+            display: none;
+            background-color: #f0fdf4; /* Light green */
+            border: 1px solid #a7f3d0; /* Green border */
+            color: #065f46; /* Dark green text */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .message-box.error {
+            background-color: #fef2f2; /* Light red */
+            border-color: #fecaca; /* Red border */
+            color: #991b1b; /* Dark red text */
+        }
+
+        /* Patient Details Modal Specific Styles */
+        .patient-details-content {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 800px; /* Wider for details */
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+            position: relative;
+            /* Added for scrollability */
+            max-height: 90vh; /* Limit height to 90% of viewport height */
+            overflow-y: auto; /* Enable vertical scrolling if content overflows */
+        }
+        .modal-overlay.active .patient-details-content {
+            transform: translateY(0);
+        }
+        .patient-details-content h3 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #1f2937;
+            text-align: center;
+        }
+        .patient-details-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        @media (min-width: 640px) {
+            .patient-details-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .patient-details-grid div {
+            padding: 0.5rem 0;
+        }
+        .patient-details-grid label {
+            font-weight: 600;
+            color: #475569;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+        .patient-details-grid p {
+            color: #333;
+            word-wrap: break-word; /* Ensure long text breaks */
+        }
+        .medical-history-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e2e8f0;
+        }
+        .medical-history-section h4 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #1f2937;
+        }
+        .medical-history-entry {
+            background-color: #f8fafc;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #e2e8f0;
+        }
+        .medical-history-entry strong {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #475569;
+        }
+
+        /* Specialty-specific content area */
+        .specialty-content {
+            border-top: 1px solid #e2e8f0;
+            padding-top: 1.5rem;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2 class="text-4xl font-bold text-gray-800">Doctor Dashboard</h2>
+            <button id="logoutButton" class="button secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h10a1 1 0 001-1V4a1 1 0 00-1-1H3zm2 5a1 1 0 011-1h6a1 1 0 110 2H6a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 110 2H6a1 1 0 01-1-1z" clip-rule="evenodd" />
+                </svg>
+                Logout
+            </button>
+        </div>
+
+        <!-- New line for doctor's name -->
+        <p class="text-lg font-semibold text-gray-700 mb-2" id="doctorGreeting"></p>
+
+        <!-- Main greeting line, adjusted -->
+        <p class="text-gray-600 mb-6" id="dashboardGreeting">Welcome to the <span id="doctorSpeciality" class="font-semibold text-purple-700"></span> Dashboard</p>
+
+        <div class="flex flex-col sm:flex-row gap-4 mb-4">
+            <button id="addNewPatientButton" class="button">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+                Add New Patient
+            </button>
+            <button id="viewAnalyticsButton" class="button secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                </svg>
+                View Data Analytics
+            </button>
+        </div>
+
+        <div id="messageBox" class="message-box"></div>
+
+        <div class="table-container">
+            <table id="patientsTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Date of Birth</th>
+                        <th>Gender</th>
+                        <th>Contact No.</th>
+                        <th>Last Visit</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Patient data will be loaded here by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <div id="specialtyContent" class="specialty-content">
+            <!-- Specialty-specific modules will be loaded here dynamically -->
+            <h3 class="text-xl font-semibold mb-4 text-gray-700">Specialty-Specific Tools & Information</h3>
+            <div id="dynamicSpecialtyModule" class="text-gray-600">
+                <!-- Content will be injected based on doctor's speciality -->
+                <p>Loading specialty content...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Patient Modal -->
+    <div id="patientModalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal-button" id="closePatientModal">&times;</button>
+            <h3 id="patientModalTitle">Add New Patient</h3>
+            <form id="patientForm">
+                <input type="hidden" id="patientId">
+                <div class="form-group">
+                    <label for="patientName">Name</label>
+                    <input type="text" id="patientName" required>
+                </div>
+                <div class="form-group">
+                    <label for="dateOfBirth">Date of Birth</label>
+                    <input type="date" id="dateOfBirth" required>
+                </div>
+                <div class="form-group">
+                    <label for="gender">Gender</label>
+                    <select id="gender" required>
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="contactNumber">Contact Number</label>
+                    <input type="text" id="contactNumber">
+                </div>
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <textarea id="address" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="medicalHistory">Medical History</label>
+                    <textarea id="medicalHistory" rows="4"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="currentMedication">Current Medication</label>
+                    <textarea id="currentMedication" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="allergies">Allergies</label>
+                    <textarea id="allergies" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="lastVisitDate">Last Visit Date</label>
+                    <input type="date" id="lastVisitDate">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" id="cancelPatientModal" class="button secondary">Cancel</button>
+                    <button type="submit" class="button">Save Patient</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Patient Details Modal -->
+    <div id="viewPatientModalOverlay" class="modal-overlay">
+        <div class="patient-details-content">
+            <button class="close-modal-button" id="closeViewPatientModal">&times;</button>
+            <h3 class="text-3xl font-bold mb-4 text-center">Patient Details</h3>
+            <div class="patient-details-grid">
+                <div>
+                    <label>Name:</label>
+                    <p id="detailName"></p>
+                </div>
+                <div>
+                    <label>Date of Birth:</label>
+                    <p id="detailDob"></p>
+                </div>
+                <div>
+                    <label>Gender:</label>
+                    <p id="detailGender"></p>
+                </div>
+                <div>
+                    <label>Contact Number:</label>
+                    <p id="detailContact"></p>
+                </div>
+                <div class="col-span-full">
+                    <label>Address:</label>
+                    <p id="detailAddress"></p>
+                </div>
+            </div>
+            <div class="medical-history-section">
+                <h4>Medical Records</h4>
+                <div>
+                    <label>Medical History:</label>
+                    <p id="detailMedicalHistory"></p>
+                </div>
+                <div>
+                    <label>Current Medication:</label>
+                    <p id="detailCurrentMedication"></p>
+                </div>
+                <div>
+                    <label>Allergies:</label>
+                    <p id="detailAllergies"></p>
+                </div>
+                <div>
+                    <label>Last Visit Date:</label>
+                    <p id="detailLastVisitDate"></p>
+                </div>
+            </div>
+            <div class="modal-buttons justify-center">
+                <button type="button" id="editPatientFromView" class="button">Edit Patient</button>
+                <button type="button" id="closeViewDetailsButton" class="button secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Action Modal (reused from user management) -->
+    <div id="confirmModalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="confirmModalTitle">Confirm Action</h3>
+            <p id="confirmModalMessage" class="text-center mb-6"></p>
+            <div class="modal-buttons justify-center">
+                <button type="button" id="cancelConfirm" class="button secondary">Cancel</button>
+                <button type="button" id="confirmAction" class="button danger">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, setDoc, updateDoc, deleteDoc, onSnapshot, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        // ==================================================================================================
+        // IMPORTANT: If running this HTML file directly from your local file system (e.g., C:/),
+        //            you MUST replace the object below with your actual Firebase project config.
+        //            You can find this in your Firebase console under Project settings -> Your apps.
+        // ==================================================================================================
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDMIZubC87_z2tCnURoqQIJjCWPPdWFdnk",
+            authDomain: "pcms-e1162.firebaseapp.com",
+            projectId: "pcms-e1162",
+            storageBucket: "pcms-e1162.firebasestorage.app",
+            messagingSenderId: "383068543378",
+            appId: "1:383068543378:web:00c7d2bf95f9ded63a494b",
+            measurementId: "G-4C1P3GB6PP"
+        }; 
+        
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app;
+        let db;
+        let auth;
+        let doctorUserId = null; // This will store the UID of the logged-in doctor
+        let doctorSpeciality = null; // Store doctor's speciality
+
+        // DOM Elements
+        const logoutButton = document.getElementById('logoutButton');
+        const addNewPatientButton = document.getElementById('addNewPatientButton');
+        const viewAnalyticsButton = document.getElementById('viewAnalyticsButton'); 
+        const patientsTableBody = document.querySelector('#patientsTable tbody');
+        const messageBox = document.getElementById('messageBox');
+        
+        const doctorGreetingSpan = document.getElementById('doctorGreeting'); // New span for "Dr. Firstname"
+        const dashboardGreetingSpan = document.getElementById('dashboardGreeting'); // Main dashboard greeting
+        const doctorSpecialitySpan = document.getElementById('doctorSpeciality'); 
+        const dynamicSpecialtyModule = document.getElementById('dynamicSpecialtyModule'); 
+
+        // Patient Add/Edit Modal Elements
+        const patientModalOverlay = document.getElementById('patientModalOverlay');
+        const closePatientModalButton = document.getElementById('closePatientModal');
+        const cancelPatientModalButton = document.getElementById('cancelPatientModal'); 
+        const patientForm = document.getElementById('patientForm');
+        const patientModalTitle = document.getElementById('patientModalTitle');
+        const patientIdInput = document.getElementById('patientId');
+        const patientNameInput = document.getElementById('patientName');
+        const dateOfBirthInput = document.getElementById('dateOfBirth');
+        const genderInput = document.getElementById('gender');
+        const contactNumberInput = document.getElementById('contactNumber');
+        const addressInput = document.getElementById('address');
+        const medicalHistoryInput = document.getElementById('medicalHistory');
+        const currentMedicationInput = document.getElementById('currentMedication');
+        const allergiesInput = document.getElementById('allergies');
+        const lastVisitDateInput = document.getElementById('lastVisitDate');
+
+        // View Patient Details Modal Elements
+        const viewPatientModalOverlay = document.getElementById('viewPatientModalOverlay');
+        const closeViewPatientModalButton = document.getElementById('closeViewPatientModal');
+        const closeViewDetailsButton = document.getElementById('closeViewDetailsButton');
+        const editPatientFromViewButton = document.getElementById('editPatientFromView');
+        const detailName = document.getElementById('detailName');
+        const detailDob = document.getElementById('detailDob');
+        const detailGender = document.getElementById('detailGender');
+        const detailContact = document.getElementById('detailContact');
+        const detailAddress = document.getElementById('detailAddress');
+        const detailMedicalHistory = document.getElementById('detailMedicalHistory');
+        const detailCurrentMedication = document.getElementById('detailCurrentMedication');
+        const detailAllergies = document.getElementById('detailAllergies');
+        const detailLastVisitDate = document.getElementById('detailLastVisitDate');
+
+        // Confirm Modal Elements (reused)
+        const confirmModalOverlay = document.getElementById('confirmModalOverlay');
+        const confirmModalTitle = document.getElementById('confirmModalTitle');
+        const confirmModalMessage = document.getElementById('confirmModalMessage');
+        const cancelConfirmButton = document.getElementById('cancelConfirm');
+        const confirmActionButton = document.getElementById('confirmAction');
+
+        let currentActionPatient = null; // Store patient data for confirm dialog actions (delete)
+        let currentViewedPatient = null; // Store patient data when viewing details for edit button
+
+        /**
+         * Displays a message in the message box.
+         * @param {string} message - The message to display.
+         * @param {boolean} isError - True if it's an error message, false otherwise.
+         */
+        function showMessage(message, isError) {
+            messageBox.textContent = message;
+            messageBox.style.display = 'block';
+            if (isError) {
+                messageBox.classList.remove('bg-f0fdf4', 'border-a7f3d0', 'text-065f46');
+                messageBox.classList.add('error');
+            } else {
+                messageBox.classList.remove('error');
+                messageBox.classList.add('bg-f0fdf4', 'border-a7f3d0', 'text-065f46');
+            }
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 5000); // Hide after 5 seconds
+        }
+
+        /**
+         * Shows the patient add/edit modal.
+         * @param {Object|null} patient - Patient data to pre-fill the form, or null for a new patient.
+         */
+        function showPatientModal(patient = null) {
+            patientForm.reset();
+            if (patient) {
+                patientModalTitle.textContent = 'Edit Patient';
+                patientIdInput.value = patient.id;
+                patientNameInput.value = patient.name || '';
+                dateOfBirthInput.value = patient.dateOfBirth || '';
+                genderInput.value = patient.gender || '';
+                contactNumberInput.value = patient.contactNumber || '';
+                addressInput.value = patient.address || '';
+                medicalHistoryInput.value = patient.medicalHistory || '';
+                currentMedicationInput.value = patient.currentMedication || '';
+                allergiesInput.value = patient.allergies || '';
+                lastVisitDateInput.value = patient.lastVisitDate || '';
+            } else {
+                patientModalTitle.textContent = 'Add New Patient';
+                patientIdInput.value = '';
+                // Set default last visit date to today for new patient
+                lastVisitDateInput.value = new Date().toISOString().slice(0, 10);
+            }
+            patientModalOverlay.classList.add('active');
+        }
+
+        /**
+         * Hides the patient add/edit modal.
+         */
+        function hidePatientModal() {
+            patientModalOverlay.classList.remove('active');
+        }
+
+        /**
+         * Shows the view patient details modal.
+         * @param {Object} patient - Patient data to display.
+         */
+        function showViewPatientModal(patient) {
+            currentViewedPatient = patient; // Store for easy access for edit button
+            detailName.textContent = patient.name || 'N/A';
+            detailDob.textContent = patient.dateOfBirth || 'N/A';
+            detailGender.textContent = patient.gender || 'N/A';
+            detailContact.textContent = patient.contactNumber || 'N/A';
+            detailAddress.textContent = patient.address || 'N/A';
+            detailMedicalHistory.textContent = patient.medicalHistory || 'N/A';
+            detailCurrentMedication.textContent = patient.currentMedication || 'N/A';
+            detailAllergies.textContent = patient.allergies || 'N/A';
+            detailLastVisitDate.textContent = patient.lastVisitDate || 'N/A';
+            viewPatientModalOverlay.classList.add('active');
+        }
+
+        /**
+         * Hides the view patient details modal.
+         */
+        function hideViewPatientModal() {
+            viewPatientModalOverlay.classList.remove('active');
+            currentViewedPatient = null;
+        }
+
+        /**
+         * Shows the confirmation modal for delete actions.
+         * @param {string} title - Title for the confirmation modal.
+         * @param {string} message - Message for the confirmation modal.
+         * @param {Object} patient - The patient object associated with the action.
+         * @param {Function} actionCallback - The function to call if confirmed.
+         */
+        function showConfirmModal(title, message, patient, actionCallback) {
+            confirmModalTitle.textContent = title;
+            confirmModalMessage.textContent = message;
+            currentActionPatient = { patient, actionCallback }; // Store patient and callback
+            confirmModalOverlay.classList.add('active');
+        }
+
+        /**
+         * Hides the confirmation modal.
+         */
+        function hideConfirmModal() {
+            confirmModalOverlay.classList.remove('active');
+            currentActionPatient = null;
+        }
+
+        /**
+         * Renders the patients table with the provided data.
+         * @param {Array<Object>} patients - Array of patient objects.
+         */
+        function renderPatientsTable(patients) {
+            patientsTableBody.innerHTML = '';
+            if (patients.length === 0) {
+                patientsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">No patients found. Click "Add New Patient" to get started.</td></tr>';
+                return;
+            }
+            patients.forEach(patient => {
+                const row = patientsTableBody.insertRow();
+                row.innerHTML = `
+                    <td class="whitespace-nowrap">${patient.name || 'N/A'}</td>
+                    <td>${patient.dateOfBirth || 'N/A'}</td>
+                    <td>${patient.gender || 'N/A'}</td>
+                    <td>${patient.contactNumber || 'N/A'}</td>
+                    <td>${patient.lastVisitDate || 'N/A'}</td>
+                    <td class="action-buttons whitespace-nowrap">
+                        <button class="button secondary view-button" data-id="${patient.id}">View</button>
+                        <button class="button secondary edit-button" data-id="${patient.id}">Edit</button>
+                        <button class="button danger delete-button" data-id="${patient.id}">Delete</button>
+                    </td>
+                `;
+            });
+            // Add event listeners for new buttons
+            patientsTableBody.querySelectorAll('.view-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const patientId = event.target.dataset.id;
+                    const patient = patients.find(p => p.id === patientId);
+                    if (patient) showViewPatientModal(patient);
+                });
+            });
+            patientsTableBody.querySelectorAll('.edit-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const patientId = event.target.dataset.id;
+                    const patient = patients.find(p => p.id === patientId);
+                    if (patient) showPatientModal(patient);
+                });
+            });
+            patientsTableBody.querySelectorAll('.delete-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const patientId = event.target.dataset.id;
+                    const patient = patients.find(p => p.id === patientId);
+                    if (patient) {
+                        showConfirmModal(
+                            'Delete Patient',
+                            `Are you sure you want to permanently delete patient ${patient.name}? This action cannot be undone.`,
+                            patient,
+                            deletePatient
+                        );
+                    }
+                });
+            });
+        }
+
+        /**
+         * Fetches patient data from Firestore for the logged-in doctor.
+         */
+        async function fetchPatients() {
+            if (!doctorUserId) {
+                console.warn("Doctor User ID not available, cannot fetch patients.");
+                return;
+            }
+            try {
+                // Listen to real-time updates using onSnapshot
+                const patientsCollectionRef = collection(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`);
+                onSnapshot(patientsCollectionRef, (snapshot) => {
+                    const patients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderPatientsTable(patients);
+                }, (error) => {
+                    console.error("Error fetching patients with onSnapshot:", error);
+                    showMessage("Error loading patients. Please try again.", true);
+                });
+            } catch (error) {
+                console.error("Error setting up onSnapshot for patients:", error);
+                showMessage("Failed to set up real-time patient updates.", true);
+            }
+        }
+
+        /**
+         * Adds a new patient record.
+         * @param {Object} patientData - Data for the new patient.
+         */
+        async function addPatient(patientData) {
+            if (!doctorUserId) {
+                showMessage("Doctor not authenticated. Cannot add patient.", true);
+                return;
+            }
+            try {
+                const patientsCollectionRef = collection(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`);
+                await addDoc(patientsCollectionRef, patientData);
+                showMessage("Patient added successfully!", false);
+                hidePatientModal();
+            } catch (error) {
+                console.error("Error adding patient:", error);
+                showMessage("Failed to add patient. Please try again.", true);
+            }
+        }
+
+        /**
+         * Edits an existing patient record.
+         * @param {string} patientId - The ID of the patient to edit.
+         * @param {Object} updatedData - The updated patient data.
+         */
+        async function editPatient(patientId, updatedData) {
+            if (!doctorUserId) {
+                showMessage("Doctor not authenticated. Cannot edit patient.", true);
+                return;
+            }
+            try {
+                const patientDocRef = doc(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`, patientId);
+                await updateDoc(patientDocRef, updatedData);
+                showMessage("Patient updated successfully!", false);
+                hidePatientModal();
+            } catch (error) {
+                console.error("Error editing patient:", error);
+                showMessage("Failed to edit patient. Please try again.", true);
+            }
+        }
+
+        /**
+         * Deletes a patient record.
+         * @param {Object} patientToDelete - The patient object to delete.
+         */
+        async function deletePatient(patientToDelete) {
+            if (!doctorUserId) {
+                showMessage("Doctor not authenticated. Cannot delete patient.", true);
+                return;
+            }
+            hideConfirmModal(); // Hide confirmation modal immediately
+            try {
+                const patientDocRef = doc(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`, patientToDelete.id);
+                await deleteDoc(patientDocRef);
+                showMessage(`Patient "${patientToDelete.name}" deleted successfully!`, false);
+            } catch (error) {
+                console.error("Error deleting patient:", error);
+                showMessage("Failed to delete patient. Please try again.", true);
+            }
+        }
+
+        /**
+         * Handles the logout process.
+         */
+        async function handleLogout() {
+            try {
+                // Ensure auth object is available and signed in before signing out
+                if (auth && auth.currentUser) {
+                    await signOut(auth);
+                    console.log("Doctor logged out successfully.");
+                    // Immediately redirect after signOut completes
+                    window.location.href = 'index.html'; 
+                } else {
+                    console.warn("No active user to log out or auth object not initialized.");
+                    // Even if no user, still try to redirect to login page
+                    window.location.href = 'index.html'; 
+                }
+            } catch (error) {
+                console.error("Error during logout:", error);
+                showMessage("Failed to log out. Please try again.", true);
+            }
+        }
+
+        /**
+         * Dynamically loads content based on the doctor's speciality.
+         * @param {string} speciality - The doctor's speciality.
+         */
+        function loadSpecialtyContent(speciality) {
+            dynamicSpecialtyModule.innerHTML = ''; // Clear previous content
+
+            let content = '';
+            switch (speciality) {
+                case 'Cardiology':
+                    content = `
+                        <h4 class="text-lg font-bold mb-2 text-gray-800">Cardiology Tools:</h4>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700">
+                            <li><a href="#" class="text-blue-600 hover:underline">ECG Interpretation Guidelines</a></li>
+                            <li><a href="#" class="text-blue-600 hover:underline">Hypertension Management Protocols</a></li>
+                            <li><a href="#" class="text-blue-600 hover:underline">Cardiac Risk Assessment Calculator</a></li>
+                        </ul>
+                        <p class="mt-4">Track vital signs, blood pressure trends, and heart conditions for your patients.</p>
+                    `;
+                    break;
+                case 'Pediatrics':
+                    content = `
+                        <h4 class="text-lg font-bold mb-2 text-gray-800">Pediatrics Resources:</h4>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700">
+                            <li><a href="#" class="text-blue-600 hover:underline">Childhood Vaccination Schedule</a></li>
+                            <li><a href="#" class="text-blue-600 hover:underline">Growth Charts (CDC/WHO)</a></li>
+                            <li><a href="#" class="text-blue-600 hover:underline">Common Pediatric Illnesses Guidelines</a></li>
+                        </ul>
+                        <p class="mt-4">Focus on developmental milestones, immunizations, and child health tracking.</p>
+                    `;
+                    break;
+                case 'Dermatology':
+                    content = `
+                        <h4 class="text-lg font-bold mb-2 text-gray-800">Dermatology Aids:</h4>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700">
+                            <li><a href="#" class="text-blue-600 hover:underline">Skin Condition Image Atlas</a></li>
+                            <li><a href="#" class="text-blue-600 hover:underline">Treatment Protocols for Acne/Eczema</a></li>
+                            <li><a href="#" class="text-blue-600 hover:underline">Mole Mapping & Melanoma Screening</a></li>
+                        </ul>
+                        <p class="mt-4">Manage and document various skin conditions, from common rashes to complex dermatoses.</p>
+                    `;
+                    break;
+                case 'Orthopedics':
+                    content = `
+                        <h4 class="text-lg font-bold mb-2 text-gray-800">Orthopedics Tools:</h4>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700">
+                            <li><a href="#" class="text-blue-600 hover:underline">Fracture Classification Guides</a></li>
+                            <li><a href="#" class="text-blue-600 hover:underline">Rehabilitation Exercise Presets</a></li>
+                            <li><a href="#" class="text-blue-600 hover:underline">Joint Range of Motion Tracker</a></li>
+                        </ul>
+                        <p class="mt-4">Specialized tools for bone and joint health, injuries, and rehabilitation planning.</p>
+                    `;
+                    break;
+                case 'General Surgery':
+                    content = `
+                        <h4 class="text-lg font-bold mb-2 text-gray-800">General Surgery Resources:</h4>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700">
+                            <li><a href="#" class="text-blue-600 hover:underline">Pre-operative Checklists</a></li>
+                            <li><a href="#" class="text-blue-600 hover:underline">Post-operative Care Guidelines</a></li>
+                            <li><a href="#" class="text-blue-600 hover:underline">Wound Care Management Guide</a></li>
+                        </ul>
+                        <p class="mt-4">Access surgical protocols and post-op care instructions.</p>
+                    `;
+                    break;
+                case 'Oncology':
+                    content = `
+                        <h4 class="text-lg font-bold mb-2 text-gray-800">Oncology Tools:</h4>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700">
+                            <li><a href="#" class="text-blue-600 hover:underline">Chemotherapy Regimen Reference</a></li>
+                            <li><a href="#" class="text-blue-600 hover:underline">Tumor Staging Guidelines</a></li>
+                            <li><a href="#" class="text-blue-600 hover:underline">Side Effect Management Protocols</a></li>
+                        </ul>
+                        <p class="mt-4">Manage cancer patient data, treatment plans, and symptom tracking.</p>
+                    `;
+                    break;
+                // Add more cases for other specialities as needed
+                case 'Psychiatry':
+                    content = `
+                        <h4 class="text-lg font-bold mb-2 text-gray-800">Psychiatry Resources:</h4>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700">
+                            <li><a href="#" class="text-blue-600 hover:underline">DSM-5 Diagnostic Criteria</a></li>
+                            <li><a href="#" class="text-blue-600 hover:underline">Psychopharmacology Guidelines</a></li>
+                            <li><a href="#" class="text-blue-600 hover:underline">Therapy Session Notes Templates</a></li>
+                        </ul>
+                        <p class="mt-4">Utilize tools for mental health assessment, diagnosis, and treatment planning.</p>
+                    `;
+                    break;
+                case 'Internal Medicine':
+                    content = `
+                        <h4 class="text-lg font-bold mb-2 text-gray-800">Internal Medicine Resources:</h4>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700">
+                            <li><a href="#" class="text-blue-600 hover:underline">Chronic Disease Management Protocols</a></li>
+                            <li><a href="#" class="text-blue-600 hover:underline">Adult Immunization Schedule</a></li>
+                            <li><a href="#" class="text-blue-600 hover:underline">Preventive Health Guidelines</a></li>
+                        </ul>
+                        <p class="mt-4">Manage complex adult diseases and provide comprehensive care.</p>
+                    `;
+                    break;
+                // Add more cases for other specialities as needed, ensuring each has a paragraph describing its focus.
+                default:
+                    content = `
+                        <h4 class="text-lg font-bold mb-2 text-gray-800">General Practice Resources:</h4>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700">
+                            <li><a href="#" class="text-blue-600 hover:underline">Common Illnesses Quick Reference</a></li>
+                            <li><a href="#" class="text-blue-600 hover:underline">Referral Guidelines</a></li>
+                            <li><a href="#" class="text-blue-600 hover:underline">Preventative Care Checklists</a></li>
+                        </ul>
+                        <p class="mt-4">Welcome to your general dashboard. You can add and manage patient records.</p>
+                    `;
+                    break;
+            }
+            dynamicSpecialtyModule.innerHTML = content;
+        }
+
+
+        /**
+         * Initializes Firebase and sets up authentication listener.
+         */
+        async function initializeFirebase() {
+            try {
+                if (!app) {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                }
+
+                // Sign in with custom token if available, otherwise check auth state
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                }
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        doctorUserId = user.uid;
+                        // Removed displayUserId.textContent = doctorUserId; as per request
+
+                        // Fetch doctor's details (including speciality and deactivated status) from Firestore
+                        const doctorDocRef = doc(db, `artifacts/${appId}/public/data/doctors`, user.uid);
+                        const doctorDocSnap = await getDoc(doctorDocRef);
+
+                        if (doctorDocSnap.exists()) {
+                            const doctorData = doctorDocSnap.data();
+                            if (doctorData.deactivated) {
+                                await signOut(auth); // Sign out deactivated user
+                                showMessage("Your account is deactivated. Please contact support.", true);
+                                setTimeout(() => {
+                                    window.location.href = 'index.html';
+                                }, 3000);
+                                return; // Stop further execution
+                            } else {
+                                // Extract first name
+                                const firstName = doctorData.name ? doctorData.name.split(' ')[0] : 'Doctor';
+                                doctorGreetingSpan.textContent = `Dr. ${firstName}`; // Set the new greeting line
+                                
+                                doctorSpeciality = doctorData.speciality || 'General Practice'; // Default if not set
+                                doctorSpecialitySpan.textContent = doctorSpeciality; // This is for the "Welcome to the [Specialty] Dashboard" line
+                                
+                                fetchPatients(); // Fetch patients once doctor is authenticated and active
+                                loadSpecialtyContent(doctorSpeciality); // Load content based on speciality
+                            }
+                        } else {
+                            // If doctor document doesn't exist at expected path
+                            await signOut(auth);
+                            showMessage("Your doctor account record was not found or is invalid. Please contact support.", true);
+                            setTimeout(() => {
+                                window.location.href = 'index.html';
+                            }, 3000);
+                            return; // Stop further execution
+                        }
+                    } else {
+                        doctorUserId = null;
+                        doctorSpeciality = null;
+                        doctorGreetingSpan.textContent = ''; // Clear greeting
+                        doctorSpecialitySpan.textContent = ''; // Clear speciality in main line
+                        console.log("Doctor Dashboard: User signed out or no user. Redirecting to login.");
+                        window.location.href = 'index.html'; // Redirect to login if not authenticated
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error initializing Firebase for Doctor Dashboard:", error);
+                showMessage("Failed to initialize app. Redirecting to login.", true);
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Event Listeners
+        logoutButton.addEventListener('click', handleLogout);
+        addNewPatientButton.addEventListener('click', () => showPatientModal());
+        viewAnalyticsButton.addEventListener('click', () => { window.location.href = 'data-analytics.html'; }); // Redirect to analytics page
+
+        closePatientModalButton.addEventListener('click', hidePatientModal);
+        cancelPatientModalButton.addEventListener('click', hidePatientModal);
+
+        patientForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const id = patientIdInput.value;
+            const patientData = {
+                name: patientNameInput.value.trim(),
+                dateOfBirth: dateOfBirthInput.value,
+                gender: genderInput.value,
+                contactNumber: contactNumberInput.value.trim(),
+                address: addressInput.value.trim(),
+                medicalHistory: medicalHistoryInput.value.trim(),
+                currentMedication: currentMedicationInput.value.trim(),
+                allergies: allergiesInput.value.trim(),
+                lastVisitDate: lastVisitDateInput.value
+            };
+
+            if (id) {
+                await editPatient(id, patientData);
+            } else {
+                await addPatient(patientData);
+            }
+        });
+
+        closeViewPatientModalButton.addEventListener('click', hideViewPatientModal);
+        closeViewDetailsButton.addEventListener('click', hideViewPatientModal);
+        editPatientFromViewButton.addEventListener('click', () => {
+            if (currentViewedPatient) {
+                hideViewPatientModal(); // Hide view modal first
+                showPatientModal(currentViewedPatient); // Show edit modal with data
+            }
+        });
+
+        confirmActionButton.addEventListener('click', () => {
+            if (currentActionPatient && currentActionPatient.actionCallback) {
+                currentActionPatient.actionCallback(currentActionPatient.patient);
+            }
+        });
+
+        cancelConfirmButton.addEventListener('click', hideConfirmModal);
+
+        // Initialize Firebase when the window loads
+        window.onload = initializeFirebase;
+    </script>
+</body>
+</html>

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Light blue-green gradient background */
+            background: linear-gradient(to right bottom, #87CEEB, #20B2AA);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px; /* Add some padding for smaller screens */
+            box-sizing: border-box; /* Include padding in element's total width and height */
+        }
+        .login-container {
+            background-color: white;
+            padding: 2.5rem; /* Equivalent to p-10 */
+            border-radius: 1.5rem; /* Equivalent to rounded-3xl */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px; /* Max width for the login form */
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem; /* Equivalent to gap-6 */
+        }
+        .input-group {
+            position: relative;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 0.75rem 0.75rem 0.75rem 2.5rem; /* Equivalent to pl-10 */
+            border: 1px solid #e2e8f0; /* Equivalent to border-gray-300 */
+            border-radius: 0.5rem; /* Equivalent to rounded-lg */
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #20B2AA; /* Focus color */
+        }
+        .input-group svg {
+            position: absolute;
+            left: 0.75rem; /* Equivalent to left-3 */
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8; /* Equivalent to text-gray-400 */
+        }
+        .login-button {
+            background: linear-gradient(to right, #87CEEB, #20B2AA);
+            color: white;
+            padding: 0.75rem; /* Equivalent to py-3 */
+            border-radius: 0.5rem; /* Equivalent to rounded-lg */
+            font-weight: 600; /* Equivalent to font-semibold */
+            text-align: center;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            border: none; /* Remove default button border */
+        }
+        .login-button:hover {
+            opacity: 0.9;
+        }
+        .message-box {
+            display: none;
+            background-color: #f0fdf4; /* Light green */
+            border: 1px solid #a7f3d0; /* Green border */
+            color: #065f46; /* Dark green text */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .message-box.error {
+            display: block; /* Always show error messages for visibility */
+            background-color: #fef2f2; /* Light red */
+            border-color: #fecaca; /* Red border */
+            color: #991b1b; /* Dark red text */
+        }
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .login-container {
+                padding: 1.5rem;
+                gap: 1rem;
+            }
+            .login-container h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2 class="text-3xl font-bold text-center text-gray-800">Login</h2>
+
+        <div class="input-group">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+            </svg>
+            <input type="text" id="username" placeholder="Type your username">
+        </div>
+
+        <div class="input-group">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+            </svg>
+            <input type="password" id="password" placeholder="Type your password">
+        </div>
+
+        <a href="#" class="text-sm text-right text-blue-600 hover:underline">Forgot password?</a>
+
+        <button id="loginButton" class="login-button">LOGIN</button>
+
+        <div id="messageBox" class="message-box"></div>
+    </div>
+
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        // ==================================================================================================
+        // IMPORTANT: If running this HTML file directly from your local file system (e.g., C:/),
+        //            you MUST replace the object below with your actual Firebase project config.
+        //            You can find this in your Firebase console under Project settings -> Your apps.
+        // ==================================================================================================
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDMIZubC87_z2tCnURoqQIJjCWPPdWFdnk",
+            authDomain: "pcms-e1162.firebaseapp.com",
+            projectId: "pcms-e1162",
+            storageBucket: "pcms-e1162.firebasestorage.app",
+            messagingSenderId: "383068543378",
+            appId: "1:383068543378:web:00c7d2bf95f9ded63a494b",
+            measurementId: "G-4C1P3GB6PP"
+        }; 
+        
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app;
+        let db;
+        let auth;
+
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginButton = document.getElementById('loginButton');
+        const messageBox = document.getElementById('messageBox');
+
+        // Explicit mapping of roles to Firestore collection names and dashboard filenames
+        const roleMappings = {
+            // Doctors will now be redirected based on their specialty from doctorSpecialityDashboards map
+            'doctor': { collection: 'doctors' }, 
+            'pharmacy': { collection: 'pharmacies', dashboard: 'pharmacy-dashboard.html' },
+            'radiology_clinic': { collection: 'radiology_clinics', dashboard: 'radiology-clinic-dashboard.html' },
+            'lab': { collection: 'labs', dashboard: 'laboratory-dashboard.html' },
+            'nurse_clinic': { collection: 'nurse_clinics', dashboard: 'nurse-clinic-dashboard.html' },
+            'neurophysiology_clinic': { collection: 'neurophysiology_clinics', dashboard: 'neurophysiology-clinic-dashboard.html' },
+            'optometry_clinic': { collection: 'optometry_clinics', dashboard: 'optometry-clinic-dashboard.html' },
+            'ent_nurse_clinic': { collection: 'ent_nurse_clinics', dashboard: 'ent-nurse-clinic-dashboard.html' },
+            'midwife_clinic': { collection: 'midwife_clinics', dashboard: 'midwife-clinic-dashboard.html' },
+            'cast_room_nurse_clinic': { collection: 'cast_room_nurse_clinics', dashboard: 'cast-room-nurse-clinic-dashboard.html' },
+            'echocardiography_clinic': { collection: 'echocardiography_clinics', dashboard: 'echocardiography-clinic-dashboard.html' },
+            'audiometry_clinic': { collection: 'audiometry_clinics', dashboard: 'audiometry-clinic-dashboard.html' },
+            'admin': { collection: null, dashboard: 'admin-dashboard.html' } // Admin handled separately, no public data collection
+        };
+
+        // Mapping for doctor specialities to their specific dashboards
+        const doctorSpecialityDashboards = {
+            'General Practice': 'general-practice-dashboard.html',
+            'Cardiology': 'cardiology-dashboard.html',
+            'Pediatrics': 'pediatrics-dashboard.html',
+            'Dermatology': 'dermatology-dashboard.html',
+            'Orthopedics': 'orthopedics-dashboard.html',
+            'Neurology': 'neurology-dashboard.html',
+            'Oncology': 'oncology-dashboard.html',
+            'Gastroenterology': 'gastroenterology-dashboard.html',
+            'Ophthalmology': 'ophthalmology-dashboard.html',
+            'ENT': 'ent-dashboard.html', 
+            'Gynecology': 'gynecology-dashboard.html',
+            'Urology': 'urology-dashboard.html',
+            'Psychiatry': 'psychiatry-dashboard.html',
+            'General Surgery': 'general-surgery-dashboard.html',
+            'Plastic Surgery': 'plastic-surgery-dashboard.html',
+            'Neurosurgery': 'neurosurgery-dashboard.html',
+            'Thoracic Surgery': 'thoracic-surgery-dashboard.html',
+            'Vascular Surgery': 'vascular-surgery-dashboard.html',
+            'Cardiothoracic Surgery': 'cardiothoracic-surgery-dashboard.html', 
+            'Critical Care': 'critical-care-dashboard.html', 
+            'Emergency Medicine': 'emergency-medicine-dashboard.html', 
+            'Intensive Care Medicine': 'intensive-care-medicine-dashboard.html' 
+        };
+
+        /**
+         * Displays a message in the message box.
+         * @param {string} message - The message to display.
+         * @param {boolean} isError - True if it's an error message, false otherwise.
+         */
+        function showMessage(message, isError) {
+            messageBox.textContent = message;
+            messageBox.style.display = 'block';
+            if (isError) {
+                messageBox.classList.remove('bg-f0fdf4', 'border-a7f3d0', 'text-065f46');
+                messageBox.classList.add('error');
+            } else {
+                messageBox.classList.remove('error');
+                messageBox.classList.add('bg-f0fdf4', 'border-a7f3d0', 'text-065f46');
+            }
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 5000); // Hide after 5 seconds
+        }
+
+        /**
+         * Initializes Firebase and sets up authentication listener.
+         */
+        async function initializeFirebase() {
+            try {
+                if (!app) {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                }
+
+                if (initialAuthToken) {
+                    try {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                        console.log("Signed in with custom token from Canvas.");
+                    } catch (e) {
+                        console.warn("Custom token sign-in failed or expired:", e.message);
+                    }
+                }
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        console.log("onAuthStateChanged: User is authenticated. UID:", user.uid);
+                    } else {
+                        console.log("onAuthStateChanged: No user is authenticated.");
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                showMessage("Failed to initialize app. Please try again later.", true);
+            }
+        }
+
+        /**
+         * Handles the login process and redirects based on user role and doctor speciality.
+         */
+        loginButton.addEventListener('click', async () => {
+            const email = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!email || !password) {
+                showMessage("Please enter both email and password.", true);
+                return;
+            }
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                let redirectToDashboard = null;
+                let userDocFound = false;
+
+                // Admin login check: Based purely on email for the admin.
+                if (email === "muntadherkareem@gmail.com") { 
+                    redirectToDashboard = roleMappings['admin'].dashboard;
+                    userDocFound = true;
+                } else {
+                    // For all other roles, iterate through the explicit role mappings
+                    for (const roleKey in roleMappings) {
+                        if (roleKey === 'admin') continue; // Skip admin here, already handled
+
+                        const mapping = roleMappings[roleKey];
+                        const collectionName = mapping.collection;
+
+                        if (collectionName) {
+                            const userDocRef = doc(db, `artifacts/${appId}/public/data/${collectionName}`, user.uid);
+                            try {
+                                const userDocSnap = await getDoc(userDocRef);
+
+                                if (userDocSnap.exists()) {
+                                    const userData = userDocSnap.data();
+                                    if (userData.deactivated) {
+                                        await signOut(auth);
+                                        showMessage("Your account is deactivated. Please contact support.", true);
+                                        return;
+                                    }
+                                    
+                                    // Check if the role matches the collection's expected role
+                                    if (userData.role === roleKey) { 
+                                        userDocFound = true;
+
+                                        // Special handling for Doctors: Redirect based on speciality
+                                        if (roleKey === 'doctor') {
+                                            if (userData.speciality && doctorSpecialityDashboards[userData.speciality]) {
+                                                redirectToDashboard = doctorSpecialityDashboards[userData.speciality];
+                                            } else {
+                                                // Fallback for doctors without a specific specialty dashboard configured
+                                                // (This case should ideally not happen if all doctors have a specialty)
+                                                console.warn(`Doctor ${user.uid} has specialty '${userData.speciality}' but no specific dashboard mapping. Redirecting to general doctor dashboard.`);
+                                                redirectToDashboard = 'doctor-dashboard.html'; 
+                                            }
+                                        } else {
+                                            // For other roles (pharmacy, clinics, labs), use their default dashboard mapping
+                                            redirectToDashboard = mapping.dashboard;
+                                        }
+                                        break; // Found the user's role and determined redirect path, stop searching
+                                    }
+                                }
+                            } catch (firestoreError) {
+                                console.warn(`Error fetching user from ${collectionName} for role ${roleKey}:`, firestoreError.message);
+                                // Continue to next collection if there's a Firestore error for one collection
+                            }
+                        }
+                    }
+                }
+                
+                // Final redirection logic
+                if (userDocFound && redirectToDashboard) {
+                    showMessage("Login successful!", false);
+                    setTimeout(() => {
+                        window.location.href = redirectToDashboard;
+                    }, 500); 
+                } else {
+                    console.error("Authenticated user but no valid role document found in Firestore or role mismatch. Or no dashboard found.");
+                    await signOut(auth); // Sign out unauthorized or misconfigured user
+                    showMessage("Account not found or unauthorized. Please contact support.", true);
+                }
+
+            } catch (error) {
+                console.error("Login error:", error);
+                let errorMessage = "An unknown error occurred. Please try again.";
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    errorMessage = "Invalid email or password.";
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = "The email address is not valid.";
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorMessage = "Too many login attempts. Please try again later.";
+                }
+                showMessage(errorMessage, true);
+            }
+        });
+
+        // Display any error messages from previous redirects (e.g., from dashboards)
+        window.addEventListener('DOMContentLoaded', () => {
+            const storedMessage = sessionStorage.getItem('loginErrorMessage');
+            if (storedMessage) {
+                showMessage(storedMessage, true);
+                sessionStorage.removeItem('loginErrorMessage');
+            }
+            initializeFirebase(); // Initialize Firebase once DOM is ready
+        });
+    </script>
+</body>
+</html>

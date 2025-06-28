@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Analytics</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to right bottom, #87CEEB, #20B2AA);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1200px; /* Wider container for charts */
+            margin: 20px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .header h2 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .button {
+            background: linear-gradient(to right, #87CEEB, #20B2AA);
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .button.secondary {
+            background: #cbd5e1;
+            color: #4b5563;
+        }
+        .button.secondary:hover {
+            background: #94a3b8;
+        }
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        @media (min-width: 768px) {
+            .chart-grid {
+                grid-template-columns: 1fr 1fr; /* Two columns on medium screens and up */
+            }
+        }
+        .chart-card {
+            background-color: #f8fafc; /* gray-50 */
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center canvas within card */
+        }
+        .chart-card h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        canvas {
+            max-width: 100%; /* Ensure canvas is responsive */
+            height: auto; /* Maintain aspect ratio */
+            background-color: white;
+            border-radius: 0.75rem;
+            padding: 10px; /* Padding inside the canvas for charts */
+        }
+
+        /* Message Box */
+        .message-box {
+            display: none;
+            background-color: #f0fdf4; /* Light green */
+            border: 1px solid #a7f3d0; /* Green border */
+            color: #065f46; /* Dark green text */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .message-box.error {
+            background-color: #fef2f2; /* Light red */
+            border-color: #fecaca; /* Red border */
+            color: #991b1b; /* Dark red text */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Data Analytics</h2>
+            <button id="backToDashboardButton" class="button secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                </svg>
+                Back to Dashboard
+            </button>
+        </div>
+
+        <p class="text-gray-600 mb-6">Here you can view analytical insights from your patient data.</p>
+
+        <div id="messageBox" class="message-box"></div>
+
+        <div class="chart-grid">
+            <div class="chart-card">
+                <h3>Patient Gender Distribution</h3>
+                <canvas id="genderChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Patients by Age Group</h3>
+                <canvas id="ageChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Patient Visits Over Time</h3>
+                <canvas id="visitsChart"></canvas>
+            </div>
+            <!-- Add more chart cards as needed -->
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        // ==================================================================================================
+        // IMPORTANT: If running this HTML file directly from your local file system (e.g., C:/),
+        //            you MUST replace the object below with your actual Firebase project config.
+        //            You can find this in your Firebase console under Project settings -> Your apps.
+        // ==================================================================================================
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDMIZubC87_z2tCnURoqQIJjCWPPdWFdnk",
+            authDomain: "pcms-e1162.firebaseapp.com",
+            projectId: "pcms-e1162",
+            storageBucket: "pcms-e1162.firebasestorage.app",
+            messagingSenderId: "383068543378",
+            appId: "1:383068543378:web:00c7d2bf95f9ded63a494b",
+            measurementId: "G-4C1P3GB6PP"
+        }; 
+        
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app;
+        let db;
+        let auth;
+        let doctorUserId = null;
+
+        // DOM Elements
+        const backToDashboardButton = document.getElementById('backToDashboardButton');
+        const messageBox = document.getElementById('messageBox');
+        const genderChartCanvas = document.getElementById('genderChart');
+        const ageChartCanvas = document.getElementById('ageChart');
+        const visitsChartCanvas = document.getElementById('visitsChart');
+
+        let genderChartInstance = null;
+        let ageChartInstance = null;
+        let visitsChartInstance = null;
+
+        /**
+         * Displays a message in the message box.
+         * @param {string} message - The message to display.
+         * @param {boolean} isError - True if it's an error message, false otherwise.
+         */
+        function showMessage(message, isError) {
+            messageBox.textContent = message;
+            messageBox.style.display = 'block';
+            if (isError) {
+                messageBox.classList.remove('bg-f0fdf4', 'border-a7f3d0', 'text-065f46');
+                messageBox.classList.add('error');
+            } else {
+                messageBox.classList.remove('error');
+                messageBox.classList.add('bg-f0fdf4', 'border-a7f3d0', 'text-065f46');
+            }
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 5000); // Hide after 5 seconds
+        }
+
+        /**
+         * Calculates age from a date of birth string.
+         * @param {string} dobString - Date of birth in 'YYYY-MM-DD' format.
+         * @returns {number|null} The age, or null if dobString is invalid.
+         */
+        function calculateAge(dobString) {
+            if (!dobString) return null;
+            const dob = new Date(dobString);
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const m = today.getMonth() - dob.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+            return age;
+        }
+
+        /**
+         * Group patients by age range.
+         * @param {Array<Object>} patients - Array of patient objects.
+         * @returns {Object} An object with age ranges as keys and counts as values.
+         */
+        function groupPatientsByAge(patients) {
+            const ageGroups = {
+                '0-12': 0, '13-18': 0, '19-35': 0, '36-60': 0, '61+': 0
+            };
+            patients.forEach(patient => {
+                const age = calculateAge(patient.dateOfBirth);
+                if (age !== null) {
+                    if (age >= 0 && age <= 12) ageGroups['0-12']++;
+                    else if (age >= 13 && age <= 18) ageGroups['13-18']++;
+                    else if (age >= 19 && age <= 35) ageGroups['19-35']++;
+                    else if (age >= 36 && age <= 60) ageGroups['36-60']++;
+                    else if (age >= 61) ageGroups['61+']++;
+                }
+            });
+            return ageGroups;
+        }
+
+        /**
+         * Group patient visits by month.
+         * @param {Array<Object>} patients - Array of patient objects.
+         * @returns {Object} An object with month-year strings as keys and visit counts as values.
+         */
+        function groupVisitsByMonth(patients) {
+            const visitCounts = {};
+            patients.forEach(patient => {
+                if (patient.lastVisitDate) {
+                    const visitDate = new Date(patient.lastVisitDate);
+                    // Format as YYYY-MM for consistent grouping (e.g., "2023-01")
+                    const monthYear = `${visitDate.getFullYear()}-${(visitDate.getMonth() + 1).toString().padStart(2, '0')}`;
+                    visitCounts[monthYear] = (visitCounts[monthYear] || 0) + 1;
+                }
+            });
+            // Sort by month-year
+            return Object.keys(visitCounts).sort().reduce((obj, key) => {
+                obj[key] = visitCounts[key];
+                return obj;
+            }, {});
+        }
+
+        /**
+         * Renders the gender distribution chart.
+         * @param {Array<Object>} patients - Array of patient objects.
+         */
+        function renderGenderChart(patients) {
+            if (genderChartInstance) genderChartInstance.destroy(); // Destroy previous instance
+
+            const genderData = { Male: 0, Female: 0, Other: 0 };
+            patients.forEach(patient => {
+                if (patient.gender in genderData) {
+                    genderData[patient.gender]++;
+                } else {
+                    genderData.Other++; // Catch unexpected gender values
+                }
+            });
+
+            const data = {
+                labels: Object.keys(genderData),
+                datasets: [{
+                    data: Object.values(genderData),
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.7)', /* Blue for Male */
+                        'rgba(255, 99, 132, 0.7)', /* Red for Female */
+                        'rgba(255, 206, 86, 0.7)'  /* Yellow for Other */
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(255, 206, 86, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            };
+
+            const config = {
+                type: 'pie',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Patient Gender Distribution'
+                        }
+                    }
+                }
+            };
+            genderChartInstance = new Chart(genderChartCanvas, config);
+        }
+
+        /**
+         * Renders the age distribution chart.
+         * @param {Array<Object>} patients - Array of patient objects.
+         */
+        function renderAgeChart(patients) {
+            if (ageChartInstance) ageChartInstance.destroy(); // Destroy previous instance
+
+            const ageGroups = groupPatientsByAge(patients);
+            const labels = Object.keys(ageGroups);
+            const dataValues = Object.values(ageGroups);
+
+            const data = {
+                labels: labels,
+                datasets: [{
+                    label: 'Number of Patients',
+                    data: dataValues,
+                    backgroundColor: 'rgba(75, 192, 192, 0.7)', /* Green */
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            };
+
+            const config = {
+                type: 'bar',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Patients by Age Group'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Patients'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Age Group'
+                            }
+                        }
+                    }
+                }
+            };
+            ageChartInstance = new Chart(ageChartCanvas, config);
+        }
+
+        /**
+         * Renders the patient visits over time chart.
+         * @param {Array<Object>} patients - Array of patient objects.
+         */
+        function renderVisitsChart(patients) {
+            if (visitsChartInstance) visitsChartInstance.destroy(); // Destroy previous instance
+
+            const visitsData = groupVisitsByMonth(patients);
+            const labels = Object.keys(visitsData);
+            const dataValues = Object.values(visitsData);
+
+            const data = {
+                labels: labels,
+                datasets: [{
+                    label: 'Number of Visits',
+                    data: dataValues,
+                    fill: false,
+                    borderColor: 'rgb(153, 102, 255)', /* Purple */
+                    tension: 0.1
+                }]
+            };
+
+            const config = {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Patient Visits Over Time'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Visits'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Month'
+                            }
+                        }
+                    }
+                }
+            };
+            visitsChartInstance = new Chart(visitsChartCanvas, config);
+        }
+
+        /**
+         * Initializes Firebase and sets up authentication listener.
+         */
+        async function initializeFirebase() {
+            try {
+                if (!app) {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                }
+
+                // If running in Canvas, initialAuthToken will be available. 
+                // If running locally, this will be null, and onAuthStateChanged will handle.
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                }
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        doctorUserId = user.uid;
+                        console.log("Data Analytics: Firebase Auth Ready. Doctor User ID:", doctorUserId);
+
+                        // Verify doctor's active status before fetching data
+                        // CHANGED THIS LINE: Now fetching from the PUBLIC data path for doctors
+                        const doctorDocRef = doc(db, `artifacts/${appId}/public/data/doctors`, user.uid);
+                        const doctorDocSnap = await getDoc(doctorDocRef);
+
+                        if (doctorDocSnap.exists()) {
+                            const doctorData = doctorDocSnap.data();
+                            if (doctorData.deactivated) {
+                                await signOut(auth);
+                                showMessage("Your account is deactivated. Please contact support.", true);
+                                setTimeout(() => {
+                                    window.location.href = 'index.html';
+                                }, 3000);
+                                return;
+                            } else {
+                                // Fetch patient data and render charts
+                                const patientsCollectionRef = collection(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`);
+                                onSnapshot(patientsCollectionRef, (snapshot) => {
+                                    const patients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                                    if (patients.length > 0) {
+                                        renderGenderChart(patients);
+                                        renderAgeChart(patients);
+                                        renderVisitsChart(patients);
+                                    } else {
+                                        showMessage("No patient data available to generate analytics.", false);
+                                        // Clear charts if no data
+                                        if (genderChartInstance) genderChartInstance.destroy();
+                                        if (ageChartInstance) ageChartInstance.destroy();
+                                        if (visitsChartInstance) visitsChartInstance.destroy();
+                                    }
+                                }, (error) => {
+                                    console.error("Error fetching patient data for analytics:", error);
+                                    showMessage("Error loading analytics data. Please try again.", true);
+                                });
+                            }
+                        } else {
+                            await signOut(auth);
+                            showMessage("Your doctor account record was not found. Please contact support.", true);
+                            setTimeout(() => {
+                                window.location.href = 'index.html';
+                            }, 3000);
+                            return;
+                        }
+
+                    } else {
+                        doctorUserId = null;
+                        console.log("Data Analytics: User signed out or no user. Redirecting to login.");
+                        window.location.href = 'index.html';
+                    }
+                });
+            } catch (error) {
+                console.error("Error initializing Firebase for Data Analytics:", error);
+                showMessage("Failed to initialize app. Redirecting to login.", true);
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Event Listeners
+        backToDashboardButton.addEventListener('click', () => {
+            window.location.href = 'doctor-dashboard.html';
+        });
+
+        // Initialize Firebase when the window loads
+        window.onload = initializeFirebase;
+    </script>
+</body>
+</html>

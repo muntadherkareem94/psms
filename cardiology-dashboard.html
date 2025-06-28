@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardiology Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to right bottom, #fde68a, #fcd34d); /* Soft yellow/amber gradient */
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1200px; /* Wider for more content */
+            margin: 20px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .header h2 {
+            font-size: 2.25rem; /* text-4xl */
+            font-weight: 700; /* font-bold */
+            color: #1f2937; /* text-gray-800 */
+        }
+        .button {
+            background: linear-gradient(to right, #fbbf24, #f59e0b); /* Amber gradient */
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .button.secondary {
+            background: #cbd5e1; /* gray-300 */
+            color: #4b5563; /* gray-700 */
+        }
+        .button.secondary:hover {
+            background: #94a3b8; /* gray-400 */
+        }
+        .button.danger {
+            background: linear-gradient(to right, #ef4444, #dc2626); /* Red gradient */
+            color: white;
+        }
+        .button.danger:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* Message Box */
+        .message-box {
+            display: none;
+            background-color: #fffbeb; /* Lighter yellow */
+            border: 1px solid #fcd34d; /* Yellow border */
+            color: #b45309; /* Darker yellow text */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .message-box.error {
+            background-color: #fef2f2; /* Light red */
+            border-color: #fecaca; /* Red border */
+            color: #991b1b; /* Dark red text */
+            margin-top: 1rem;
+            display: block;
+        }
+
+        /* Table styles */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px; /* Ensure table is wide enough */
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+            color: #475569;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+        }
+        td {
+            background-color: white;
+        }
+        tr:hover td {
+            background-color: #f1f5f9;
+        }
+        .action-buttons button {
+            margin-right: 0.5rem;
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 600px; /* Adjusted max-width for modals */
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+            position: relative;
+            max-height: 90vh; /* Allow scrolling if content is long */
+            overflow-y: auto;
+        }
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+        .modal-content h3 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #1f2937;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #4b5563;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: #f59e0b; /* Amber focus */
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .close-modal-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+        }
+        .close-modal-button:hover {
+            color: #1f2937;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2 class="text-4xl font-bold text-gray-800">Cardiology Dashboard</h2>
+            <button id="logoutButton" class="button secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h10a1 1 0 001-1V4a1 1 0 00-1-1H3zm2 5a1 1 0 011-1h6a1 1 0 110 2H6a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 110 2H6a1 1 0 01-1-1z" clip-rule="evenodd" />
+                </svg>
+                Logout
+            </button>
+        </div>
+
+        <p class="text-xl font-semibold text-gray-700 mb-6" id="doctorGreeting">Welcome, Dr. <span id="doctorName" class="font-bold text-amber-700"></span> (<span id="doctorSpeciality">Cardiology</span>)!</p>
+
+        <div id="messageBox" class="message-box"></div>
+
+        <div class="flex flex-wrap gap-4 mb-8">
+            <button id="addPatientButton" class="button">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+                Add New Patient
+            </button>
+            <button id="sendConsultButton" class="button">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                </svg>
+                Send Consult
+            </button>
+            <button id="myConsultsButton" class="button secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M2.929 17.071A10.003 10.003 0 0010 20a9.972 9.972 0 006.126-2.165L19.464 19l-.91-2.61a9.957 9.957 0 002.34-6.39A10.003 10.003 0 0010 0 10.003 10.003 0 000 10c0 2.923 1.155 5.584 2.929 7.071zM10 18a8 8 0 100-16 8 8 0 000 16zM6.707 9.293a1 1 0 00-1.414 1.414L8.586 13H5a1 1 0 100 2h3.586l-2.293 2.293a1 1 0 101.414 1.414L10 14.414l2.293 2.293a1 1 0 101.414-1.414L11.414 13H15a1 1 0 100-2h-3.586l2.293-2.293a1 1 0 00-1.414-1.414L10 10.586l-2.293-2.293a1 1 0 00-1.414 0z" clip-rule="evenodd" />
+                </svg>
+                My Consults
+            </button>
+            <button id="myLinksButton" class="button secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5.656 5.656a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 005.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 010-2.828z" clip-rule="evenodd" />
+                </svg>
+                My Links
+            </button>
+            <button id="viewAnalyticsButton" class="button secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                </svg>
+                View Data Analytics
+            </button>
+        </div>
+        
+        <!-- Patient Records Section -->
+        <div class="main-content mt-8 p-6 bg-gray-50 rounded-lg shadow-inner">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">My Patient Records</h3>
+            <div class="table-container">
+                <table id="patientsTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Date of Birth</th>
+                            <th>Gender</th>
+                            <th>Contact No.</th>
+                            <th>Last Visit</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patientsTableBody">
+                        <!-- Patient data will be loaded here by JavaScript -->
+                        <tr><td colspan="6" class="text-center py-4 text-gray-500">Loading patient records...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="main-content mt-8 p-6 bg-gray-50 rounded-lg shadow-inner">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Cardiac Patient Management</h3>
+            <p class="text-gray-600">This section focuses on managing patients with cardiovascular conditions. You can track vital signs, review ECGs, and manage treatment plans.</p>
+            <!-- Future content like patient lists filtered by cardiac conditions, vital sign charts, ECG uploads/reviews -->
+        </div>
+
+        <div class="main-content mt-8 p-6 bg-gray-50 rounded-lg shadow-inner">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Intervention & Procedures Schedule</h3>
+            <p class="text-gray-600">View and manage schedules for cardiac interventions, surgeries, and follow-up procedures.</p>
+            <!-- Future content like surgical schedules, catheterization lab bookings -->
+        </div>
+    </div>
+
+    <!-- Add/Edit Patient Modal -->
+    <div id="patientModalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal-button" id="closePatientModal">&times;</button>
+            <h3 id="patientModalTitle">Add New Patient</h3>
+            <form id="patientForm">
+                <input type="hidden" id="patientId">
+                <div class="form-group">
+                    <label for="patientName">Patient Name</label>
+                    <input type="text" id="patientName" required>
+                </div>
+                <div class="form-group">
+                    <label for="dateOfBirth">Date of Birth</label>
+                    <input type="date" id="dateOfBirth" required>
+                </div>
+                <div class="form-group">
+                    <label for="gender">Gender</label>
+                    <select id="gender" required>
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="contactNumber">Contact Number</label>
+                    <input type="text" id="contactNumber">
+                </div>
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <textarea id="address" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="lastVisit">Last Visit Date</label>
+                    <input type="date" id="lastVisit">
+                </div>
+                <div class="form-group">
+                    <label for="history">History (Placeholder)</label>
+                    <textarea id="history" rows="3" placeholder="Patient medical history..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="physicalExam">Physical Examination (Placeholder)</label>
+                    <textarea id="physicalExam" rows="3" placeholder="Physical examination findings..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="investigation">Investigation (Placeholder)</label>
+                    <textarea id="investigation" rows="3" placeholder="Lab tests, imaging results..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="treatment">Treatment (Placeholder)</label>
+                    <textarea id="treatment" rows="3" placeholder="Prescriptions, procedures, follow-up plan..."></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" id="cancelPatientModal" class="button secondary">Cancel</button>
+                    <button type="submit" class="button">Save Patient</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Send Consult Modal -->
+    <div id="sendConsultModalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal-button" id="closeSendConsultModal">&times;</button>
+            <h3>Send Consultation</h3>
+            <form id="sendConsultForm">
+                <div class="form-group">
+                    <label for="consultRecipient">Recipient Specialty</label>
+                    <select id="consultRecipient" required>
+                        <option value="">Select Specialty</option>
+                        <option value="General Practice">General Practice</option>
+                        <option value="Pediatrics">Pediatrics</option>
+                        <option value="Dermatology">Dermatology</option>
+                        <option value="Orthopedics">Orthopedics</option>
+                        <option value="Neurology">Neurology</option>
+                        <option value="Oncology">Oncology</option>
+                        <option value="Gastroenterology">Gastroenterology</option>
+                        <option value="Ophthalmology">Ophthalmology</option>
+                        <option value="ENT">ENT</option>
+                        <option value="Gynecology">Gynecology</option>
+                        <option value="Urology">Urology</option>
+                        <option value="Psychiatry">Psychiatry</option>
+                        <option value="General Surgery">General Surgery</option>
+                        <option value="Plastic Surgery">Plastic Surgery</option>
+                        <option value="Neurosurgery">Neurosurgery</option>
+                        <option value="Thoracic Surgery">Thoracic Surgery</option>
+                        <option value="Vascular Surgery">Vascular Surgery</option>
+                        <option value="Cardiothoracic Surgery">Cardiothoracic Surgery</option>
+                        <option value="Critical Care">Critical Care</option>
+                        <option value="Emergency Medicine">Emergency Medicine</option>
+                        <option value="Intensive Care Medicine">Intensive Care Medicine</option>
+                        <!-- Add other relevant specialties as needed -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="consultPatientName">Patient Name for Consult</label>
+                    <input type="text" id="consultPatientName" placeholder="e.g., John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label for="consultSubject">Subject</label>
+                    <input type="text" id="consultSubject" required>
+                </div>
+                <div class="form-group">
+                    <label for="consultMessage">Message</label>
+                    <textarea id="consultMessage" rows="5" placeholder="Reason for consult, relevant findings, specific questions..."></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" id="cancelSendConsultModal" class="button secondary">Cancel</button>
+                    <button type="submit" class="button">Send Consult</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- My Consults Modal -->
+    <div id="myConsultsModalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal-button" id="closeMyConsultsModal">&times;</button>
+            <h3>My Received Consultations</h3>
+            <div id="receivedConsultsList" class="mt-4">
+                <p class="text-gray-600 italic">No received consultations yet.</p>
+                <!-- Received consults will be listed here dynamically -->
+            </div>
+            <div class="modal-buttons">
+                <button type="button" id="closeMyConsultsModalBottom" class="button secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Links Modal -->
+    <div id="myLinksModalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal-button" id="closeMyLinksModal">&times;</button>
+            <h3>My Clinic Links</h3>
+            <div class="mt-4">
+                <p class="text-gray-600 mb-4">Here you can manage links to other departments or clinics for seamless communication.</p>
+                <ul class="list-disc list-inside text-gray-700">
+                    <li><a href="nurse-clinic-dashboard.html" class="text-blue-600 hover:underline">Nurse Clinic Dashboard</a></li>
+                    <li><a href="laboratory-dashboard.html" class="text-blue-600 hover:underline">Laboratory Dashboard</a></li>
+                    <li><a href="radiology-clinic-dashboard.html" class="text-blue-600 hover:underline">Radiology Clinic Dashboard</a></li>
+                    <li><a href="neurophysiology-clinic-dashboard.html" class="text-blue-600 hover:underline">Neurophysiology Clinic Dashboard</a></li>
+                    <li><a href="optometry-clinic-dashboard.html" class="text-blue-600 hover:underline">Optometry Clinic Dashboard</a></li>
+                    <li><a href="ent-nurse-clinic-dashboard.html" class="text-blue-600 hover:underline">ENT Nurse Clinic Dashboard</a></li>
+                    <li><a href="midwife-clinic-dashboard.html" class="text-blue-600 hover:underline">Midwife Clinic Dashboard</a></li>
+                    <li><a href="cast-room-nurse-clinic-dashboard.html" class="text-blue-600 hover:underline">Cast Room Nurse Clinic Dashboard</a></li>
+                    <li><a href="echocardiography-clinic-dashboard.html" class="text-blue-600 hover:underline">Echocardiography Clinic Dashboard</a></li>
+                    <li><a href="audiometry-clinic-dashboard.html" class="text-blue-600 hover:underline">Audiometry Clinic Dashboard</a></li>
+                    <!-- Add more links as needed -->
+                </ul>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" id="closeMyLinksModalBottom" class="button secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal (Re-used from previous doctor-dashboard) -->
+    <div id="confirmModalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="confirmModalTitle">Confirm Action</h3>
+            <p id="confirmModalMessage" class="text-center mb-6"></p>
+            <div class="modal-buttons justify-center">
+                <button type="button" id="cancelConfirm" class="button secondary">Cancel</button>
+                <button type="button" id="confirmAction" class="button danger">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        // ==================================================================================================
+        // IMPORTANT: If running this HTML file directly from your local file system (e.g., C:/),
+        //            you MUST replace the object below with your actual Firebase project config.
+        //            You can find this in your Firebase console under Project settings -> Your apps.
+        // ==================================================================================================
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDMIZubC87_z2tCnURoqQIJjCWPPdWFdnk",
+            authDomain: "pcms-e1162.firebaseapp.com",
+            projectId: "pcms-e1162",
+            storageBucket: "pcms-e1162.firebasestorage.app",
+            messagingSenderId: "383068543378",
+            appId: "1:383068543378:web:00c7d2bf95f9ded63a494b",
+            measurementId: "G-4C1P3GB6PP"
+        }; 
+        
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? initialAuthToken : null;
+
+        let app;
+        let db;
+        let auth;
+        let doctorUserId = null; 
+        let doctorSpeciality = 'Cardiology'; // This dashboard is hardcoded for Cardiology
+
+        // DOM Elements
+        const logoutButton = document.getElementById('logoutButton');
+        const doctorNameSpan = document.getElementById('doctorName');
+        const doctorSpecialitySpan = document.getElementById('doctorSpeciality');
+        const messageBox = document.getElementById('messageBox');
+
+        const addPatientButton = document.getElementById('addPatientButton');
+        const sendConsultButton = document.getElementById('sendConsultButton');
+        const myConsultsButton = document.getElementById('myConsultsButton');
+        const myLinksButton = document.getElementById('myLinksButton');
+        const viewAnalyticsButton = document.getElementById('viewAnalyticsButton');
+        const patientsTableBody = document.getElementById('patientsTableBody');
+
+        // Patient Modal Elements
+        const patientModalOverlay = document.getElementById('patientModalOverlay');
+        const closePatientModalButton = document.getElementById('closePatientModal');
+        const cancelPatientModalButton = document.getElementById('cancelPatientModal');
+        const patientForm = document.getElementById('patientForm');
+        const patientModalTitle = document.getElementById('patientModalTitle');
+        const patientIdInput = document.getElementById('patientId');
+        const patientNameInput = document.getElementById('patientName');
+        const dateOfBirthInput = document.getElementById('dateOfBirth');
+        const genderInput = document.getElementById('gender');
+        const contactNumberInput = document.getElementById('contactNumber');
+        const addressInput = document.getElementById('address');
+        const lastVisitInput = document.getElementById('lastVisit');
+        const historyInput = document.getElementById('history');
+        const physicalExamInput = document.getElementById('physicalExam');
+        const investigationInput = document.getElementById('investigation');
+        const treatmentInput = document.getElementById('treatment');
+
+        // Send Consult Modal Elements
+        const sendConsultModalOverlay = document.getElementById('sendConsultModalOverlay');
+        const closeSendConsultModalButton = document.getElementById('closeSendConsultModal');
+        const cancelSendConsultModalButton = document.getElementById('cancelSendConsultModal');
+        const sendConsultForm = document.getElementById('sendConsultForm');
+        const consultRecipientSelect = document.getElementById('consultRecipient');
+        const consultPatientNameInput = document.getElementById('consultPatientName');
+        const consultSubjectInput = document.getElementById('consultSubject');
+        const consultMessageInput = document.getElementById('consultMessage');
+
+        // My Consults Modal Elements
+        const myConsultsModalOverlay = document.getElementById('myConsultsModalOverlay');
+        const closeMyConsultsModalButton = document.getElementById('closeMyConsultsModal');
+        const closeMyConsultsModalBottomButton = document.getElementById('closeMyConsultsModalBottom');
+        const receivedConsultsListDiv = document.getElementById('receivedConsultsList');
+
+        // My Links Modal Elements
+        const myLinksModalOverlay = document.getElementById('myLinksModalOverlay');
+        const closeMyLinksModalButton = document.getElementById('closeMyLinksModal');
+        const closeMyLinksModalBottomButton = document.getElementById('closeMyLinksModalBottom');
+
+        // Confirm Modal Elements
+        const confirmModalOverlay = document.getElementById('confirmModalOverlay');
+        const confirmModalTitle = document.getElementById('confirmModalTitle');
+        const confirmModalMessage = document.getElementById('confirmModalMessage');
+        const cancelConfirmButton = document.getElementById('cancelConfirm');
+        const confirmActionButton = document.getElementById('confirmAction');
+
+        let currentActionPatient = null; // Store patient data for confirm dialog actions
+
+        // Mapping of doctor specialities to their specific dashboards (for links in "My Links")
+        const doctorSpecialityDashboards = {
+            'General Practice': 'general-practice-dashboard.html',
+            'Cardiology': 'cardiology-dashboard.html', // Current dashboard
+            'Pediatrics': 'pediatrics-dashboard.html',
+            'Dermatology': 'dermatology-dashboard.html',
+            'Orthopedics': 'orthopedics-dashboard.html',
+            'Neurology': 'neurology-dashboard.html',
+            'Oncology': 'oncology-dashboard.html',
+            'Gastroenterology': 'gastroenterology-dashboard.html',
+            'Ophthalmology': 'ophthalmology-dashboard.html',
+            'ENT': 'ent-dashboard.html', 
+            'Gynecology': 'gynecology-dashboard.html',
+            'Urology': 'urology-dashboard.html',
+            'Psychiatry': 'psychiatry-dashboard.html',
+            'General Surgery': 'general-surgery-dashboard.html',
+            'Plastic Surgery': 'plastic-surgery-dashboard.html',
+            'Neurosurgery': 'neurosurgery-dashboard.html',
+            'Thoracic Surgery': 'thoracic-surgery-dashboard.html',
+            'Vascular Surgery': 'vascular-surgery-dashboard.html',
+            'Cardiothoracic Surgery': 'cardiothoracic-surgery-dashboard.html', 
+            'Critical Care': 'critical-care-dashboard.html', 
+            'Emergency Medicine': 'emergency-medicine-dashboard.html', 
+            'Intensive Care Medicine': 'intensive-care-medicine-dashboard.html' 
+        };
+
+        // Mapping of roles to dashboard filenames for "My Links" to clinics/labs
+        const clinicLabDashboards = {
+            'nurse_clinic': 'nurse-clinic-dashboard.html',
+            'laboratory': 'laboratory-dashboard.html',
+            'radiology_clinic': 'radiology-clinic-dashboard.html',
+            'neurophysiology_clinic': 'neurophysiology-clinic-dashboard.html',
+            'optometry_clinic': 'optometry-clinic-dashboard.html',
+            'ent_nurse_clinic': 'ent-nurse-clinic-dashboard.html',
+            'midwife_clinic': 'midwife-clinic-dashboard.html',
+            'cast_room_nurse_clinic': 'cast-room-nurse-clinic-dashboard.html',
+            'echocardiography_clinic': 'echocardiography-clinic-dashboard.html',
+            'audiometry_clinic': 'audiometry-clinic-dashboard.html'
+        };
+
+
+        /**
+         * Displays a message in the message box.
+         * @param {string} message - The message to display.
+         * @param {boolean} isError - True if it's an error message, false otherwise.
+         */
+        function showMessage(message, isError) {
+            messageBox.textContent = message;
+            messageBox.style.display = 'block';
+            if (isError) {
+                messageBox.classList.remove('bg-fffbeb', 'border-fcd34d', 'text-b45309');
+                messageBox.classList.add('error');
+            } else {
+                messageBox.classList.remove('error');
+                messageBox.classList.add('bg-fffbeb', 'border-fcd34d', 'text-b45309');
+            }
+            if (!isError) {
+                setTimeout(() => {
+                    messageBox.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        /**
+         * Handles the logout process.
+         */
+        async function handleLogout() {
+            try {
+                if (auth && auth.currentUser) {
+                    await signOut(auth);
+                    console.log("Doctor logged out successfully.");
+                    window.location.href = 'index.html'; 
+                } else {
+                    console.warn("No active user to log out or auth object not initialized.");
+                    window.location.href = 'index.html'; 
+                }
+            } catch (error) {
+                console.error("Error during logout:", error);
+                showMessage("Failed to log out. Please try again.", true);
+            }
+        }
+
+        /**
+         * Redirects to the login page with an optional error message.
+         * @param {string} message - The message to display.
+         */
+        function redirectToLoginWithError(message) {
+            sessionStorage.setItem('loginErrorMessage', message);
+            window.location.href = 'index.html';
+        }
+
+        /**
+         * Shows a given modal overlay.
+         * @param {HTMLElement} modalOverlayElement - The modal overlay DOM element.
+         */
+        function showModal(modalOverlayElement) {
+            modalOverlayElement.classList.add('active');
+        }
+
+        /**
+         * Hides a given modal overlay.
+         * @param {HTMLElement} modalOverlayElement - The modal overlay DOM element.
+         */
+        function hideModal(modalOverlayElement) {
+            modalOverlayElement.classList.remove('active');
+        }
+
+        /**
+         * Shows the patient add/edit modal.
+         * @param {Object|null} patient - Patient data to pre-fill the form, or null for a new patient.
+         */
+        function showPatientModal(patient = null) {
+            patientForm.reset(); // Reset form first
+            patientIdInput.value = patient ? patient.id : '';
+            patientModalTitle.textContent = patient ? 'Edit Patient' : 'Add New Patient';
+
+            if (patient) {
+                patientNameInput.value = patient.name || '';
+                dateOfBirthInput.value = patient.dateOfBirth || '';
+                genderInput.value = patient.gender || '';
+                contactNumberInput.value = patient.contactNumber || '';
+                addressInput.value = patient.address || '';
+                lastVisitInput.value = patient.lastVisit || '';
+                historyInput.value = patient.history || '';
+                physicalExamInput.value = patient.physicalExam || '';
+                investigationInput.value = patient.investigation || '';
+                treatmentInput.value = patient.treatment || '';
+            }
+            showModal(patientModalOverlay);
+        }
+
+        /**
+         * Shows the confirmation modal for delete actions.
+         * @param {string} title - Title for the confirmation modal.
+         * @param {string} message - Message for the confirmation modal.
+         * @param {Object} patient - The patient object associated with the action.
+         * @param {Function} actionCallback - The function to call if confirmed.
+         */
+        function showConfirmModal(title, message, patient, actionCallback) {
+            confirmModalTitle.textContent = title;
+            confirmModalMessage.textContent = message;
+            currentActionPatient = { patient, actionCallback }; // Store patient and callback
+            showModal(confirmModalOverlay);
+        }
+
+        /**
+         * Renders patients into the table.
+         * @param {Array<Object>} patients - Array of patient objects.
+         */
+        function renderPatients(patients) {
+            patientsTableBody.innerHTML = ''; // Clear existing rows
+            if (patients.length === 0) {
+                patientsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">No patients found. Click "Add New Patient" to get started.</td></tr>';
+                return;
+            }
+            patients.forEach(patient => {
+                const row = patientsTableBody.insertRow();
+                row.innerHTML = `
+                    <td class="whitespace-nowrap">${patient.name}</td>
+                    <td>${patient.dateOfBirth}</td>
+                    <td>${patient.gender}</td>
+                    <td>${patient.contactNumber || 'N/A'}</td>
+                    <td>${patient.lastVisit || 'N/A'}</td>
+                    <td class="action-buttons whitespace-nowrap">
+                        <button class="button secondary edit-button" data-id="${patient.id}">Edit</button>
+                        <button class="button danger delete-button" data-id="${patient.id}">Delete</button>
+                    </td>
+                `;
+            });
+            attachPatientButtonListeners();
+        }
+
+        /**
+         * Attaches event listeners to the action buttons in the patient table.
+         */
+        function attachPatientButtonListeners() {
+            document.querySelectorAll('.edit-button').forEach(button => {
+                button.onclick = async (event) => {
+                    const patientId = event.target.dataset.id;
+                    const patientDocRef = doc(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`, patientId);
+                    try {
+                        const docSnap = await getDoc(patientDocRef);
+                        if (docSnap.exists()) {
+                            showPatientModal({ id: docSnap.id, ...docSnap.data() });
+                        } else {
+                            showMessage("Patient not found.", true);
+                        }
+                    } catch (error) {
+                        console.error("Error fetching patient for edit:", error);
+                        showMessage("Error loading patient data for edit. Check console.", true);
+                    }
+                };
+            });
+            document.querySelectorAll('.delete-button').forEach(button => {
+                button.onclick = async (event) => {
+                    const patientId = event.target.dataset.id;
+                    const patientDocRef = doc(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`, patientId);
+                    try {
+                        const docSnap = await getDoc(patientDocRef);
+                        if (docSnap.exists()) {
+                            const patientData = { id: docSnap.id, ...docSnap.data() };
+                            showConfirmModal(
+                                'Delete Patient',
+                                `Are you sure you want to delete patient ${patientData.name}? This action cannot be undone.`,
+                                patientData,
+                                deletePatient
+                            );
+                        } else {
+                            showMessage("Patient not found for deletion.", true);
+                        }
+                    } catch (error) {
+                        console.error("Error fetching patient for delete confirmation:", error);
+                        showMessage("Error loading patient data for deletion. Check console.", true);
+                    }
+                };
+            });
+        }
+
+        /**
+         * Adds a new patient or updates an existing one.
+         * @param {Event} event - The form submission event.
+         */
+        patientForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const patientId = patientIdInput.value;
+            const patientData = {
+                name: patientNameInput.value.trim(),
+                dateOfBirth: dateOfBirthInput.value,
+                gender: genderInput.value,
+                contactNumber: contactNumberInput.value.trim(),
+                address: addressInput.value.trim(),
+                lastVisit: lastVisitInput.value,
+                history: historyInput.value.trim(),
+                physicalExam: physicalExamInput.value.trim(),
+                investigation: investigationInput.value.trim(),
+                treatment: treatmentInput.value.trim(),
+                specialty: doctorSpeciality // Associate patient with this specialty
+            };
+
+            if (!patientData.name || !patientData.dateOfBirth || !patientData.gender) {
+                showMessage("Patient Name, Date of Birth, and Gender are required.", true);
+                return;
+            }
+
+            try {
+                if (patientId) {
+                    // Update existing patient
+                    const patientDocRef = doc(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`, patientId);
+                    await updateDoc(patientDocRef, patientData);
+                    showMessage("Patient updated successfully!", false);
+                } else {
+                    // Add new patient
+                    const patientsCollectionRef = collection(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`);
+                    await addDoc(patientsCollectionRef, patientData);
+                    showMessage("Patient added successfully!", false);
+                }
+                hideModal(patientModalOverlay);
+            } catch (error) {
+                console.error("Error saving patient:", error);
+                showMessage("Failed to save patient. Please try again.", true);
+            }
+        });
+
+        /**
+         * Deletes a patient.
+         * @param {Object} patientToDelete - The patient object to delete.
+         */
+        async function deletePatient(patientToDelete) {
+            hideModal(confirmModalOverlay);
+            try {
+                const patientDocRef = doc(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`, patientToDelete.id);
+                await deleteDoc(patientDocRef);
+                showMessage(`Patient "${patientToDelete.name}" deleted successfully!`, false);
+            } catch (error) {
+                console.error("Error deleting patient:", error);
+                showMessage("Failed to delete patient. Please try again.", true);
+            }
+        }
+
+        /**
+         * Handles sending a consultation request.
+         */
+        sendConsultForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const recipientSpecialty = consultRecipientSelect.value;
+            const patientName = consultPatientNameInput.value.trim();
+            const subject = consultSubjectInput.value.trim();
+            const message = consultMessageInput.value.trim();
+
+            if (!recipientSpecialty || !patientName || !subject || !message) {
+                showMessage("Please fill all consult fields.", true);
+                return;
+            }
+
+            try {
+                // Find all doctors with the recipient specialty
+                const doctorsCollectionRef = collection(db, `artifacts/${appId}/public/data/doctors`);
+                const q = query(doctorsCollectionRef, where("speciality", "==", recipientSpecialty), where("deactivated", "==", false));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    showMessage(`No active doctors found for ${recipientSpecialty}.`, true);
+                    return;
+                }
+
+                // For simplicity, send consult to the first found active doctor of that specialty
+                // In a real app, you might pick based on availability, load, etc.
+                const recipientDoctor = querySnapshot.docs[0].id; // Get the UID of the recipient doctor
+
+                const consultData = {
+                    fromDoctorId: doctorUserId,
+                    fromDoctorName: doctorNameSpan.textContent, // Use displayed name
+                    fromDoctorSpecialty: doctorSpeciality,
+                    toDoctorId: recipientDoctor, // The UID of the recipient doctor
+                    toSpecialty: recipientSpecialty,
+                    patientName: patientName,
+                    subject: subject,
+                    message: message,
+                    status: 'pending', // e.g., 'pending', 'read', 'responded'
+                    timestamp: serverTimestamp() // Firestore timestamp
+                };
+
+                // Store consult in a subcollection under the recipient doctor's private data
+                const recipientConsultsCollectionRef = collection(db, `artifacts/${appId}/doctors/${recipientDoctor}/received_consults`);
+                await addDoc(recipientConsultsCollectionRef, consultData);
+
+                showMessage("Consultation sent successfully!", false);
+                hideModal(sendConsultModalOverlay);
+                sendConsultForm.reset();
+            } catch (error) {
+                console.error("Error sending consult:", error);
+                showMessage("Failed to send consult. Please try again.", true);
+            }
+        });
+
+        /**
+         * Fetches and displays received consultations.
+         */
+        async function fetchReceivedConsults() {
+            receivedConsultsListDiv.innerHTML = '<p class="text-gray-600 italic">Loading received consultations...</p>';
+            if (!doctorUserId) {
+                receivedConsultsListDiv.innerHTML = '<p class="text-gray-600 italic">Please log in to view consults.</p>';
+                return;
+            }
+
+            try {
+                const consultsCollectionRef = collection(db, `artifacts/${appId}/doctors/${doctorUserId}/received_consults`);
+                // Listen for real-time updates for received consults
+                onSnapshot(consultsCollectionRef, (snapshot) => {
+                    if (snapshot.empty) {
+                        receivedConsultsListDiv.innerHTML = '<p class="text-gray-600 italic">No received consultations yet.</p>';
+                        return;
+                    }
+                    receivedConsultsListDiv.innerHTML = ''; // Clear previous list
+                    snapshot.docs.forEach(docSnap => {
+                        const consult = docSnap.data();
+                        const consultItem = document.createElement('div');
+                        consultItem.className = 'bg-gray-100 p-3 rounded-lg mb-2 shadow-sm';
+                        consultItem.innerHTML = `
+                            <p class="font-semibold">From: Dr. ${consult.fromDoctorName} (${consult.fromDoctorSpecialty})</p>
+                            <p class="font-semibold">Patient: ${consult.patientName}</p>
+                            <p class="font-semibold">Subject: ${consult.subject}</p>
+                            <p class="text-sm text-gray-700">${consult.message}</p>
+                            <p class="text-xs text-gray-500 mt-1">Status: ${consult.status} | Received: ${consult.timestamp ? new Date(consult.timestamp.toDate()).toLocaleString() : 'N/A'}</p>
+                            <!-- Add buttons for 'Mark as Read', 'Reply' etc. here later -->
+                        `;
+                        receivedConsultsListDiv.appendChild(consultItem);
+                    });
+                }, (error) => {
+                    console.error("Error fetching received consults:", error);
+                    receivedConsultsListDiv.innerHTML = '<p class="text-red-600">Error loading consults. Please try again.</p>';
+                });
+
+            } catch (error) {
+                console.error("Error setting up consults listener:", error);
+                showMessage("Failed to load received consults.", true);
+            }
+        }
+
+
+        /**
+         * Initializes Firebase and sets up authentication listener.
+         */
+        async function initializeFirebase() {
+            try {
+                if (!app) {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                }
+
+                if (initialAuthToken) {
+                    try { await signInWithCustomToken(auth, initialAuthToken); } catch (e) { console.warn("Custom token sign-in failed or expired:", e.message); }
+                }
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        doctorUserId = user.uid;
+
+                        // Fetch doctor's details from Firestore
+                        const doctorDocRef = doc(db, `artifacts/${appId}/public/data/doctors`, user.uid);
+                        try {
+                            const doctorDocSnap = await getDoc(doctorDocRef);
+
+                            if (doctorDocSnap.exists()) {
+                                const doctorData = doctorDocSnap.data();
+                                if (doctorData.deactivated) {
+                                    await signOut(auth);
+                                    redirectToLoginWithError("Your account is deactivated. Please contact support.");
+                                    return;
+                                } 
+                                // Ensure the role and speciality match the dashboard
+                                else if (doctorData.role === 'doctor' && doctorData.speciality === doctorSpeciality) { 
+                                    doctorNameSpan.textContent = doctorData.name || 'Doctor';
+                                    console.log(`${doctorSpeciality} Dashboard: User authenticated and data loaded.`);
+                                    messageBox.style.display = 'none'; 
+
+                                    // Set up real-time listener for patients specific to this doctor
+                                    const patientsCollectionRef = collection(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`);
+                                    onSnapshot(patientsCollectionRef, (snapshot) => {
+                                        const patients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                                        renderPatients(patients);
+                                        console.log(`${doctorSpeciality} Dashboard: Patients rendered.`);
+                                    }, (error) => {
+                                        console.error("Error fetching patients:", error);
+                                        showMessage("Error loading patient data. Please try again.", true);
+                                    });
+
+                                } else {
+                                    // User is authenticated but not the expected role/speciality, redirect
+                                    await signOut(auth);
+                                    redirectToLoginWithError(`Access denied. Please log in with a ${doctorSpeciality} Doctor account.`);
+                                    return;
+                                }
+                            } else {
+                                // User document not found in doctors collection, redirect
+                                await signOut(auth);
+                                redirectToLoginWithError("Doctor account record not found. Please contact support.");
+                                return;
+                            }
+                        } catch (firestoreError) {
+                            console.error("Error fetching doctor user document:", firestoreError);
+                            await signOut(auth); // Sign out the user if there's a Firestore error
+                            redirectToLoginWithError("Error loading account data. Please try again or contact support. (Details: " + firestoreError.message + ")");
+                            return;
+                        }
+                    } else {
+                        doctorUserId = null;
+                        console.log(`${doctorSpeciality} Dashboard: User signed out or no user. Redirecting to login.`);
+                        redirectToLoginWithError(`Please log in to access the ${doctorSpeciality} Dashboard.`);
+                        return;
+                    }
+                });
+
+            } catch (error) {
+                console.error(`Error initializing Firebase for ${doctorSpeciality} Dashboard:`, error);
+                redirectToLoginWithError("Failed to initialize app. Please try again. (Details: " + error.message + ")");
+            }
+        }
+
+        // Event Listeners
+        logoutButton.addEventListener('click', handleLogout);
+        addPatientButton.addEventListener('click', () => showPatientModal());
+        viewAnalyticsButton.addEventListener('click', () => {
+            window.location.href = 'data-analytics.html';
+        });
+
+        // Modals Close Buttons
+        closePatientModalButton.addEventListener('click', () => hideModal(patientModalOverlay));
+        cancelPatientModalButton.addEventListener('click', () => hideModal(patientModalOverlay));
+
+        closeSendConsultModalButton.addEventListener('click', () => hideModal(sendConsultModalOverlay));
+        cancelSendConsultModalButton.addEventListener('click', () => hideModal(sendConsultModalOverlay));
+        sendConsultButton.addEventListener('click', () => showModal(sendConsultModalOverlay));
+
+        closeMyConsultsModalButton.addEventListener('click', () => hideModal(myConsultsModalOverlay));
+        closeMyConsultsModalBottomButton.addEventListener('click', () => hideModal(myConsultsModalOverlay));
+        myConsultsButton.addEventListener('click', () => {
+            showModal(myConsultsModalOverlay);
+            fetchReceivedConsults(); // Fetch consults when modal is opened
+        });
+
+        closeMyLinksModalButton.addEventListener('click', () => hideModal(myLinksModalOverlay));
+        closeMyLinksModalBottomButton.addEventListener('click', () => hideModal(myLinksModalOverlay));
+        myLinksButton.addEventListener('click', () => showModal(myLinksModalOverlay));
+
+        confirmActionButton.addEventListener('click', () => {
+            if (currentActionPatient && currentActionPatient.actionCallback) {
+                currentActionPatient.actionCallback(currentActionPatient.patient);
+            }
+        });
+        cancelConfirmButton.addEventListener('click', () => hideModal(confirmModalOverlay));
+
+
+        // Initialize Firebase when the window loads
+        window.onload = initializeFirebase;
+    </script>
+</body>
+</html>

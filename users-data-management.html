@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users Data Management</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to right bottom, #87CEEB, #20B2AA);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1200px; /* Wider container for table */
+            margin: 20px auto; /* Center the container with some margin */
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            gap: 1rem;
+        }
+        .header h2 {
+            font-size: 2.25rem; /* text-4xl */
+            font-weight: 700; /* font-bold */
+            color: #1f2937; /* text-gray-800 */
+        }
+        .button {
+            background: linear-gradient(to right, #87CEEB, #20B2AA);
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s;
+            border: none;
+            display: inline-flex; /* Use flex for icon alignment */
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .button.secondary {
+            background: #cbd5e1; /* gray-300 */
+            color: #4b5563; /* gray-700 */
+        }
+        .button.secondary:hover {
+            background: #94a3b8; /* gray-400 */
+        }
+        .button.danger {
+            background: #ef4444; /* red-500 */
+            color: white;
+        }
+        .button.danger:hover {
+            background: #dc2626; /* red-600 */
+        }
+        .user-type-section {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background-color: #f8fafc; /* light gray background */
+            border-radius: 1rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        .user-type-section h3 {
+            font-size: 1.75rem; /* text-2xl */
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+        .table-container {
+            overflow-x: auto; /* Enable horizontal scrolling for table on small screens */
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem; /* Space between table and message if needed */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px; /* Adjusted min-width for columns */
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0; /* gray-200 */
+        }
+        th {
+            background-color: #f1f5f9; /* gray-100 */
+            font-weight: 600;
+            color: #475569; /* slate-600 */
+            text-transform: uppercase;
+            font-size: 0.875rem; /* text-sm */
+        }
+        td {
+            background-color: white;
+        }
+        tr:hover td {
+            background-color: #f1f5f9; /* hover:bg-gray-50 */
+        }
+        .action-buttons button {
+            margin-right: 0.5rem;
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
+        }
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 600px;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+            position: relative; /* For closing button positioning */
+            max-height: 90vh; /* Limit height to 90% of viewport height */
+            overflow-y: auto; /* Enable vertical scrolling if content overflows */
+        }
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+        .modal-content h3 {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #1f2937;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #4b5563; /* gray-700 */
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db; /* gray-300 */
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: #20B2AA;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .close-modal-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280; /* gray-500 */
+        }
+        .close-modal-button:hover {
+            color: #1f2937; /* gray-800 */
+        }
+
+        /* Message Box */
+        .message-box {
+            display: none;
+            background-color: #f0fdf4; /* Light green */
+            border: 1px solid #a7f3d0; /* Green border */
+            color: #065f46; /* Dark green text */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .message-box.error {
+            background-color: #fef2f2; /* Light red */
+            border-color: #fecaca; /* Red border */
+            color: #991b1b; /* Dark red text */
+        }
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        .status-badge.active {
+            background-color: #d1fae5; /* green-100 */
+            color: #065f46; /* green-900 */
+        }
+        .status-badge.deactivated {
+            background-color: #fee2e2; /* red-100 */
+            color: #991b1b; /* red-900 */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>User Data Management</h2>
+            <button id="backToDashboardButton" class="button secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                </svg>
+                Back to Dashboard
+            </button>
+        </div>
+
+        <button id="addNewUserButton" class="button self-start">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            Add New User
+        </button>
+
+        <div id="messageBox" class="message-box"></div>
+
+        <div id="usersSectionsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <!-- Doctors Section -->
+            <div id="doctorsSection" class="user-type-section">
+                <h3>Doctors</h3>
+                <div class="table-container">
+                    <table id="doctorsTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Username (Email)</th>
+                                <th>Speciality</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Doctor data will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pharmacies Section -->
+            <div id="pharmaciesSection" class="user-type-section">
+                <h3>Pharmacies</h3>
+                <div class="table-container">
+                    <table id="pharmaciesTable">
+                        <thead>
+                            <tr>
+                                <th>Business Name</th>
+                                <th>Username (Email)</th>
+                                <th>Phone Number</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Pharmacy data will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Radiology Clinics Section -->
+            <div id="radiologyClinicsSection" class="user-type-section">
+                <h3>Radiology Clinics</h3>
+                <div class="table-container">
+                    <table id="radiologyClinicsTable">
+                        <thead>
+                            <tr>
+                                <th>Business Name</th>
+                                <th>Username (Email)</th>
+                                <th>Phone Number</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Radiology Clinic data will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Labs Section -->
+            <div id="labsSection" class="user-type-section">
+                <h3>Labs</h3>
+                <div class="table-container">
+                    <table id="labsTable">
+                        <thead>
+                            <tr>
+                                <th>Business Name</th>
+                                <th>Username (Email)</th>
+                                <th>Phone Number</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Lab data will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Nurse Clinics Section -->
+            <div id="nurseClinicsSection" class="user-type-section">
+                <h3>Nurse Clinics</h3>
+                <div class="table-container">
+                    <table id="nurseClinicsTable">
+                        <thead>
+                            <tr>
+                                <th>Business Name</th>
+                                <th>Username (Email)</th>
+                                <th>Phone Number</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Nurse Clinic data will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Neurophysiology Clinics Section -->
+            <div id="neurophysiologyClinicsSection" class="user-type-section">
+                <h3>Neurophysiology Clinics</h3>
+                <div class="table-container">
+                    <table id="neurophysiologyClinicsTable">
+                        <thead>
+                            <tr>
+                                <th>Business Name</th>
+                                <th>Username (Email)</th>
+                                <th>Phone Number</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Neurophysiology Clinic data will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Optometry Clinics Section -->
+            <div id="optometryClinicsSection" class="user-type-section">
+                <h3>Optometry Clinics</h3>
+                <div class="table-container">
+                    <table id="optometryClinicsTable">
+                        <thead>
+                            <tr>
+                                <th>Business Name</th>
+                                <th>Username (Email)</th>
+                                <th>Phone Number</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Optometry Clinic data will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ENT Nurse Clinics Section -->
+            <div id="entNurseClinicsSection" class="user-type-section">
+                <h3>ENT Nurse Clinics</h3>
+                <div class="table-container">
+                    <table id="entNurseClinicsTable">
+                        <thead>
+                            <tr>
+                                <th>Business Name</th>
+                                <th>Username (Email)</th>
+                                <th>Phone Number</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- ENT Nurse Clinic data will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Midwife Clinics Section -->
+            <div id="midwifeClinicsSection" class="user-type-section">
+                <h3>Midwife Clinics</h3>
+                <div class="table-container">
+                    <table id="midwifeClinicsTable">
+                        <thead>
+                            <tr>
+                                <th>Business Name</th>
+                                <th>Username (Email)</th>
+                                <th>Phone Number</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Midwife Clinic data will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Cast Room Nurse Clinics Section -->
+            <div id="castRoomNurseClinicsSection" class="user-type-section">
+                <h3>Cast Room Nurse Clinics</h3>
+                <div class="table-container">
+                    <table id="castRoomNurseClinicsTable">
+                        <thead>
+                            <tr>
+                                <th>Business Name</th>
+                                <th>Username (Email)</th>
+                                <th>Phone Number</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Cast Room Nurse Clinic data will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Echocardiography Clinics Section (NEW) -->
+            <div id="echocardiographyClinicsSection" class="user-type-section">
+                <h3>Echocardiography Clinics</h3>
+                <div class="table-container">
+                    <table id="echocardiographyClinicsTable">
+                        <thead>
+                            <tr>
+                                <th>Business Name</th>
+                                <th>Username (Email)</th>
+                                <th>Phone Number</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Echocardiography Clinic data will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Audiometry Clinics Section (NEW) -->
+            <div id="audiometryClinicsSection" class="user-type-section">
+                <h3>Audiometry Clinics</h3>
+                <div class="table-container">
+                    <table id="audiometryClinicsTable">
+                        <thead>
+                            <tr>
+                                <th>Business Name</th>
+                                <th>Username (Email)</th>
+                                <th>Phone Number</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Audiometry Clinic data will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit User Modal -->
+    <div id="userModalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal-button" id="closeUserModal">&times;</button>
+            <h3 id="modalTitle">Add New User</h3>
+            <form id="userForm">
+                <input type="hidden" id="userId">
+                
+                <div class="form-group">
+                    <label for="role">User Type</label>
+                    <select id="role" required>
+                        <option value="">Select User Type</option>
+                        <option value="doctor">Doctor</option>
+                        <option value="pharmacy">Pharmacy</option>
+                        <option value="radiology_clinic">Radiology Clinic</option>
+                        <option value="lab">Lab</option>
+                        <option value="nurse_clinic">Nurse Clinic</option>
+                        <option value="neurophysiology_clinic">Neurophysiology Clinic</option>
+                        <option value="optometry_clinic">Optometry Clinic</option>
+                        <option value="ent_nurse_clinic">ENT Nurse Clinic</option>
+                        <option value="midwife_clinic">Midwife Clinic</option>
+                        <option value="cast_room_nurse_clinic">Cast Room Nurse Clinic</option>
+                        <option value="echocardiography_clinic">Echocardiography Clinic</option> <!-- NEW -->
+                        <option value="audiometry_clinic">Audiometry Clinic</option> <!-- NEW -->
+                    </select>
+                </div>
+
+                <div class="form-group" id="nameGroup">
+                    <label for="name">Name</label>
+                    <input type="text" id="name">
+                </div>
+                <div class="form-group" id="businessNameGroup" style="display: none;">
+                    <label for="businessName">Business Name</label>
+                    <input type="text" id="businessName">
+                </div>
+
+                <div class="form-group">
+                    <label for="username">Username (Email)</label>
+                    <input type="email" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password (Set/Reset)</label>
+                    <input type="password" id="password" autocomplete="new-password">
+                    <small class="text-gray-500 text-sm">Leave blank to keep current password if editing. Required for new users.</small>
+                </div>
+                <div class="form-group" id="specialityGroup">
+                    <label for="speciality">Speciality</label>
+                    <select id="speciality">
+                        <option value="">Select Speciality</option>
+                        <option value="General Practice">General Practice</option>
+                        <option value="Cardiology">Cardiology</option>
+                        <option value="Pediatrics">Pediatrics</option>
+                        <option value="Dermatology">Dermatology</option>
+                        <option value="Orthopedics">Orthopedics</option>
+                        <option value="Neurology">Neurology</option>
+                        <option value="Oncology">Oncology</option>
+                        <option value="Gastroenterology">Gastroenterology</option>
+                        <option value="Ophthalmology">Ophthalmology</option>
+                        <option value="ENT">ENT (Ear, Nose, Throat)</option>
+                        <option value="Gynecology">Gynecology</option>
+                        <option value="Urology">Urology</option>
+                        <option value="Psychiatry">Psychiatry</option>
+                        <option value="General Surgery">General Surgery</option>
+                        <option value="Plastic Surgery">Plastic Surgery</option>
+                        <option value="Neurosurgery">Neurosurgery</option>
+                        <option value="Thoracic Surgery">Thoracic Surgery</option>
+                        <option value="Vascular Surgery">Vascular Surgery</option>
+                        <option value="Internal Medicine">Internal Medicine</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="phoneNumber">Phone Number</label>
+                    <input type="text" id="phoneNumber">
+                </div>
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <textarea id="address" rows="3"></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" id="cancelUserModal" class="button secondary">Cancel</button>
+                    <button type="submit" class="button">Save User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirm Action Modal -->
+    <div id="confirmModalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="confirmModalTitle">Confirm Action</h3>
+            <p id="confirmModalMessage" class="text-center mb-6"></p>
+            <div class="modal-buttons justify-center">
+                <button type="button" id="cancelConfirm" class="button secondary">Cancel</button>
+                <button type="button" id="confirmAction" class="button danger">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signOut, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, collection, setDoc, updateDoc, deleteDoc, onSnapshot, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        // ==================================================================================================
+        // IMPORTANT: If running this HTML file directly from your local file system (e.g., C:/),
+        //            you MUST replace the object below with your actual Firebase project config.
+        //            You can find this in your Firebase console under Project settings -> Your apps.
+        // ==================================================================================================
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDMIZubC87_z2tCnURoqQIJjCWPPdWFdnk",
+            authDomain: "pcms-e1162.firebaseapp.com",
+            projectId: "pcms-e1162",
+            storageBucket: "pcms-e1162.firebasestorage.app",
+            messagingSenderId: "383068543378",
+            appId: "1:383068543378:web:00c7d2bf95f9ded63a494b",
+            measurementId: "G-4C1P3GB6PP"
+        }; 
+        
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app;
+        let db;
+        let auth;
+        let adminUserId = null; // To store the UID of the authenticated admin
+
+        // DOM Elements
+        const backToDashboardButton = document.getElementById('backToDashboardButton');
+        const addNewUserButton = document.getElementById('addNewUserButton');
+        const messageBox = document.getElementById('messageBox');
+
+        // References to the new user type specific table bodies
+        const doctorsTableBody = document.querySelector('#doctorsTable tbody');
+        const pharmaciesTableBody = document.querySelector('#pharmaciesTable tbody');
+        const radiologyClinicsTableBody = document.querySelector('#radiologyClinicsTable tbody');
+        const labsTableBody = document.querySelector('#labsTable tbody');
+        const nurseClinicsTableBody = document.querySelector('#nurseClinicsTable tbody');
+        const neurophysiologyClinicsTableBody = document.querySelector('#neurophysiologyClinicsTable tbody');
+        const optometryClinicsTableBody = document.querySelector('#optometryClinicsTable tbody');
+        const entNurseClinicsTableBody = document.querySelector('#entNurseClinicsTable tbody');
+        const midwifeClinicsTableBody = document.querySelector('#midwifeClinicsTable tbody');
+        const castRoomNurseClinicsTableBody = document.querySelector('#castRoomNurseClinicsTable tbody');
+        // NEW TABLE BODIES
+        const echocardiographyClinicsTableBody = document.querySelector('#echocardiographyClinicsTable tbody');
+        const audiometryClinicsTableBody = document.querySelector('#audiometryClinicsTable tbody');
+
+
+        // User Modal Elements
+        const userModalOverlay = document.getElementById('userModalOverlay');
+        const closeUserModalButton = document.getElementById('closeUserModal');
+        const cancelUserModalButton = document.getElementById('cancelUserModal');
+        const userForm = document.getElementById('userForm');
+        const modalTitle = document.getElementById('modalTitle');
+        const userIdInput = document.getElementById('userId');
+        
+        const roleInput = document.getElementById('role');
+        const nameGroup = document.getElementById('nameGroup');
+        const nameInput = document.getElementById('name');
+        const businessNameGroup = document.getElementById('businessNameGroup');
+        const businessNameInput = document.getElementById('businessName');
+        
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        
+        const specialityGroup = document.getElementById('specialityGroup');
+        const specialityInput = document.getElementById('speciality');
+
+        const phoneNumberInput = document.getElementById('phoneNumber');
+        const addressInput = document.getElementById('address');
+
+        // Confirm Modal Elements
+        const confirmModalOverlay = document.getElementById('confirmModalOverlay');
+        const confirmModalTitle = document.getElementById('confirmModalTitle');
+        const confirmModalMessage = document.getElementById('confirmModalMessage');
+        const cancelConfirmButton = document.getElementById('cancelConfirm');
+        const confirmActionButton = document.getElementById('confirmAction');
+
+        let currentActionUser = null; // Store user data for confirm dialog actions (delete/deactivate)
+
+        const userTypeCollections = {
+            'doctor': 'doctors',
+            'pharmacy': 'pharmacies',
+            'radiology_clinic': 'radiology_clinics',
+            'lab': 'labs',
+            'nurse_clinic': 'nurse_clinics',
+            'neurophysiology_clinic': 'neurophysiology_clinics',
+            'optometry_clinic': 'optometry_clinics',
+            'ent_nurse_clinic': 'ent_nurse_clinics',
+            'midwife_clinic': 'midwife_clinics',
+            'cast_room_nurse_clinic': 'cast_room_nurse_clinics',
+            'echocardiography_clinic': 'echocardiography_clinics', // NEW
+            'audiometry_clinic': 'audiometry_clinics' // NEW
+        };
+
+        /**
+         * Displays a message in the message box.
+         * @param {string} message - The message to display.
+         * @param {boolean} isError - True if it's an error message, false otherwise.
+         */
+        function showMessage(message, isError) {
+            messageBox.textContent = message;
+            messageBox.style.display = 'block';
+            if (isError) {
+                messageBox.classList.remove('bg-f0fdf4', 'border-a7f3d0', 'text-065f46');
+                messageBox.classList.add('error');
+            } else {
+                messageBox.classList.remove('error');
+                messageBox.classList.add('bg-f0fdf4', 'border-a7f3d0', 'text-065f46');
+            }
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 5000); // Hide after 5 seconds
+        }
+
+        /**
+         * Toggles form fields based on selected user role.
+         */
+        function toggleFormFields() {
+            const selectedRole = roleInput.value;
+
+            // First, hide all specific fields and remove their 'required' attributes
+            nameGroup.style.display = 'none';
+            businessNameGroup.style.display = 'none';
+            specialityGroup.style.display = 'none';
+
+            nameInput.removeAttribute('required');
+            businessNameInput.removeAttribute('required');
+            specialityInput.removeAttribute('required');
+            
+            // Clear values when fields are hidden to prevent submitting stale data
+            nameInput.value = '';
+            businessNameInput.value = '';
+            specialityInput.value = '';
+
+            // Then, show and set 'required' for the relevant fields based on role
+            if (selectedRole === 'doctor') {
+                nameGroup.style.display = 'block';
+                specialityGroup.style.display = 'block';
+                nameInput.setAttribute('required', 'required');
+                specialityInput.setAttribute('required', 'required');
+            } else if (['pharmacy', 'radiology_clinic', 'lab', 'nurse_clinic', 'neurophysiology_clinic', 'optometry_clinic', 'ent_nurse_clinic', 'midwife_clinic', 'cast_room_nurse_clinic', 'echocardiography_clinic', 'audiometry_clinic'].includes(selectedRole)) {
+                businessNameGroup.style.display = 'block';
+                businessNameInput.setAttribute('required', 'required');
+            }
+        }
+
+        /**
+         * Shows the user add/edit modal.
+         * @param {Object|null} user - User data to pre-fill the form, or null for a new user.
+         */
+        function showUserModal(user = null) {
+            userForm.reset(); // Reset form first
+            userIdInput.value = user ? user.id : '';
+            passwordInput.value = ''; 
+            passwordInput.placeholder = user ? 'Leave blank to keep current password' : 'Required for new user';
+            passwordInput.toggleAttribute('required', !user);
+
+            if (user) {
+                modalTitle.textContent = 'Edit User';
+                roleInput.value = user.role || ''; // Set role from existing user
+                roleInput.disabled = true; // Prevent changing role of existing user
+
+                if (user.role === 'doctor') {
+                    nameInput.value = user.name || '';
+                    specialityInput.value = user.speciality || '';
+                } else if (['pharmacy', 'radiology_clinic', 'lab', 'nurse_clinic', 'neurophysiology_clinic', 'optometry_clinic', 'ent_nurse_clinic', 'midwife_clinic', 'cast_room_nurse_clinic', 'echocardiography_clinic', 'audiometry_clinic'].includes(user.role)) {
+                    businessNameInput.value = user.businessName || '';
+                }
+                usernameInput.value = user.username || '';
+                phoneNumberInput.value = user.phoneNumber || '';
+                addressInput.value = user.address || '';
+            } else {
+                modalTitle.textContent = 'Add New User';
+                roleInput.value = ''; // Clear role for new user
+                roleInput.disabled = false; // Enable role selection
+            }
+            toggleFormFields(); // Adjust fields based on initial role selection (or lack thereof for new user)
+            userModalOverlay.classList.add('active');
+        }
+
+        /**
+         * Hides the user add/edit modal.
+         */
+        function hideUserModal() {
+            userModalOverlay.classList.remove('active');
+            roleInput.disabled = false; // Re-enable role selection when modal closes
+        }
+
+        /**
+         * Shows the confirmation modal for delete/deactivate actions.
+         * @param {string} title - Title for the confirmation modal.
+         * @param {string} message - Message for the confirmation modal.
+         * @param {Object} user - The user object associated with the action.
+         * @param {Function} actionCallback - The function to call if confirmed.
+         */
+        function showConfirmModal(title, message, user, actionCallback) {
+            confirmModalTitle.textContent = title;
+            confirmModalMessage.textContent = message;
+            currentActionUser = { user, actionCallback }; // Store user and callback
+            confirmModalOverlay.classList.add('active');
+        }
+
+        /**
+         * Hides the confirmation modal.
+         */
+        function hideConfirmModal() {
+            confirmModalOverlay.classList.remove('active');
+            currentActionUser = null;
+        }
+
+        /**
+         * Renders users into their respective tables.
+         * @param {Array<Object>} users - Array of user objects.
+         */
+        function renderUsersIntoTables(users) {
+            // Clear all tables first
+            doctorsTableBody.innerHTML = '';
+            pharmaciesTableBody.innerHTML = '';
+            radiologyClinicsTableBody.innerHTML = '';
+            labsTableBody.innerHTML = '';
+            nurseClinicsTableBody.innerHTML = '';
+            neurophysiologyClinicsTableBody.innerHTML = '';
+            optometryClinicsTableBody.innerHTML = '';
+            entNurseClinicsTableBody.innerHTML = '';
+            midwifeClinicsTableBody.innerHTML = '';
+            castRoomNurseClinicsTableBody.innerHTML = '';
+            echocardiographyClinicsTableBody.innerHTML = ''; // NEW
+            audiometryClinicsTableBody.innerHTML = ''; // NEW
+
+
+            const doctors = users.filter(user => user.role === 'doctor');
+            const pharmacies = users.filter(user => user.role === 'pharmacy');
+            const radiologyClinics = users.filter(user => user.role === 'radiology_clinic');
+            const labs = users.filter(user => user.role === 'lab');
+            const nurseClinics = users.filter(user => user.role === 'nurse_clinic');
+            const neurophysiologyClinics = users.filter(user => user.role === 'neurophysiology_clinic');
+            const optometryClinics = users.filter(user => user.role === 'optometry_clinic');
+            const entNurseClinics = users.filter(user => user.role === 'ent_nurse_clinic');
+            const midwifeClinics = users.filter(user => user.role === 'midwife_clinic');
+            const castRoomNurseClinics = users.filter(user => user.role === 'cast_room_nurse_clinic');
+            const echocardiographyClinics = users.filter(user => user.role === 'echocardiography_clinic'); // NEW
+            const audiometryClinics = users.filter(user => user.role === 'audiometry_clinic'); // NEW
+
+
+            // Render Doctors
+            if (doctors.length === 0) {
+                doctorsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No doctors found.</td></tr>';
+            } else {
+                doctors.forEach(user => {
+                    const row = doctorsTableBody.insertRow();
+                    row.innerHTML = `
+                        <td class="whitespace-nowrap">${user.name || 'N/A'}</td>
+                        <td>${user.username || 'N/A'}</td>
+                        <td class="whitespace-nowrap">${user.speciality || 'N/A'}</td>
+                        <td><span class="status-badge ${user.deactivated ? 'deactivated' : 'active'}">${user.deactivated ? 'Deactivated' : 'Active'}</span></td>
+                        <td class="action-buttons whitespace-nowrap">
+                            <button class="button secondary edit-button" data-id="${user.id}" data-role="${user.role}">Edit</button>
+                            <button class="button ${user.deactivated ? 'active-button' : 'danger deactivate-button'}" data-id="${user.id}" data-role="${user.role}" data-status="${user.deactivated}">${user.deactivated ? 'Activate' : 'Deactivate'}</button>
+                            <button class="button danger delete-button" data-id="${user.id}" data-role="${user.role}">Delete</button>
+                        </td>
+                    `;
+                });
+            }
+
+            // Render Pharmacies
+            if (pharmacies.length === 0) {
+                pharmaciesTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No pharmacies found.</td></tr>';
+            } else {
+                pharmacies.forEach(user => {
+                    const row = pharmaciesTableBody.insertRow();
+                    row.innerHTML = `
+                        <td class="whitespace-nowrap">${user.businessName || 'N/A'}</td>
+                        <td>${user.username || 'N/A'}</td>
+                        <td>${user.phoneNumber || 'N/A'}</td>
+                        <td><span class="status-badge ${user.deactivated ? 'deactivated' : 'active'}">${user.deactivated ? 'Deactivated' : 'Active'}</span></td>
+                        <td class="action-buttons whitespace-nowrap">
+                            <button class="button secondary edit-button" data-id="${user.id}" data-role="${user.role}">Edit</button>
+                            <button class="button ${user.deactivated ? 'active-button' : 'danger deactivate-button'}" data-id="${user.id}" data-role="${user.role}" data-status="${user.deactivated}">${user.deactivated ? 'Activate' : 'Deactivate'}</button>
+                            <button class="button danger delete-button" data-id="${user.id}" data-role="${user.role}">Delete</button>
+                        </td>
+                    `;
+                });
+            }
+
+            // Render Radiology Clinics
+            if (radiologyClinics.length === 0) {
+                radiologyClinicsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No radiology clinics found.</td></tr>';
+            } else {
+                radiologyClinics.forEach(user => {
+                    const row = radiologyClinicsTableBody.insertRow();
+                    row.innerHTML = `
+                        <td class="whitespace-nowrap">${user.businessName || 'N/A'}</td>
+                        <td>${user.username || 'N/A'}</td>
+                        <td>${user.phoneNumber || 'N/A'}</td>
+                        <td><span class="status-badge ${user.deactivated ? 'deactivated' : 'active'}">${user.deactivated ? 'Deactivated' : 'Active'}</span></td>
+                        <td class="action-buttons whitespace-nowrap">
+                            <button class="button secondary edit-button" data-id="${user.id}" data-role="${user.role}">Edit</button>
+                            <button class="button ${user.deactivated ? 'active-button' : 'danger deactivate-button'}" data-id="${user.id}" data-role="${user.role}" data-status="${user.deactivated}">${user.deactivated ? 'Activate' : 'Deactivate'}</button>
+                            <button class="button danger delete-button" data-id="${user.id}" data-role="${user.role}">Delete</button>
+                        </td>
+                    `;
+                });
+            }
+
+            // Render Labs
+            if (labs.length === 0) {
+                labsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No labs found.</td></tr>';
+            } else {
+                labs.forEach(user => {
+                    const row = labsTableBody.insertRow();
+                    row.innerHTML = `
+                        <td class="whitespace-nowrap">${user.businessName || 'N/A'}</td>
+                        <td>${user.username || 'N/A'}</td>
+                        <td>${user.phoneNumber || 'N/A'}</td>
+                        <td><span class="status-badge ${user.deactivated ? 'deactivated' : 'active'}">${user.deactivated ? 'Deactivated' : 'Active'}</span></td>
+                        <td class="action-buttons whitespace-nowrap">
+                            <button class="button secondary edit-button" data-id="${user.id}" data-role="${user.role}">Edit</button>
+                            <button class="button ${user.deactivated ? 'active-button' : 'danger deactivate-button'}" data-id="${user.id}" data-role="${user.role}" data-status="${user.deactivated}">${user.deactivated ? 'Activate' : 'Deactivate'}</button>
+                            <button class="button danger delete-button" data-id="${user.id}" data-role="${user.role}">Delete</button>
+                        </td>
+                    `;
+                });
+            }
+
+            // Render Nurse Clinics
+            if (nurseClinics.length === 0) {
+                nurseClinicsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No nurse clinics found.</td></tr>';
+            } else {
+                nurseClinics.forEach(user => {
+                    const row = nurseClinicsTableBody.insertRow();
+                    row.innerHTML = `
+                        <td class="whitespace-nowrap">${user.businessName || 'N/A'}</td>
+                        <td>${user.username || 'N/A'}</td>
+                        <td>${user.phoneNumber || 'N/A'}</td>
+                        <td><span class="status-badge ${user.deactivated ? 'deactivated' : 'active'}">${user.deactivated ? 'Deactivated' : 'Active'}</span></td>
+                        <td class="action-buttons whitespace-nowrap">
+                            <button class="button secondary edit-button" data-id="${user.id}" data-role="${user.role}">Edit</button>
+                            <button class="button ${user.deactivated ? 'active-button' : 'danger deactivate-button'}" data-id="${user.id}" data-role="${user.role}" data-status="${user.deactivated}">${user.deactivated ? 'Activate' : 'Deactivate'}</button>
+                            <button class="button danger delete-button" data-id="${user.id}" data-role="${user.role}">Delete</button>
+                        </td>
+                    `;
+                });
+            }
+
+            // Render Neurophysiology Clinics
+            if (neurophysiologyClinics.length === 0) {
+                neurophysiologyClinicsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No neurophysiology clinics found.</td></tr>';
+            } else {
+                neurophysiologyClinics.forEach(user => {
+                    const row = neurophysiologyClinicsTableBody.insertRow();
+                    row.innerHTML = `
+                        <td class="whitespace-nowrap">${user.businessName || 'N/A'}</td>
+                        <td>${user.username || 'N/A'}</td>
+                        <td>${user.phoneNumber || 'N/A'}</td>
+                        <td><span class="status-badge ${user.deactivated ? 'deactivated' : 'active'}">${user.deactivated ? 'Deactivated' : 'Active'}</span></td>
+                        <td class="action-buttons whitespace-nowrap">
+                            <button class="button secondary edit-button" data-id="${user.id}" data-role="${user.role}">Edit</button>
+                            <button class="button ${user.deactivated ? 'active-button' : 'danger deactivate-button'}" data-id="${user.id}" data-role="${user.role}" data-status="${user.deactivated}">${user.deactivated ? 'Activate' : 'Deactivate'}</button>
+                            <button class="button danger delete-button" data-id="${user.id}" data-role="${user.role}">Delete</button>
+                        </td>
+                    `;
+                });
+            }
+
+            // Render Optometry Clinics
+            if (optometryClinics.length === 0) {
+                optometryClinicsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No optometry clinics found.</td></tr>';
+            } else {
+                optometryClinics.forEach(user => {
+                    const row = optometryClinicsTableBody.insertRow();
+                    row.innerHTML = `
+                        <td class="whitespace-nowrap">${user.businessName || 'N/A'}</td>
+                        <td>${user.username || 'N/A'}</td>
+                        <td>${user.phoneNumber || 'N/A'}</td>
+                        <td><span class="status-badge ${user.deactivated ? 'deactivated' : 'active'}">${user.deactivated ? 'Deactivated' : 'Active'}</span></td>
+                        <td class="action-buttons whitespace-nowrap">
+                            <button class="button secondary edit-button" data-id="${user.id}" data-role="${user.role}">Edit</button>
+                            <button class="button ${user.deactivated ? 'active-button' : 'danger deactivate-button'}" data-id="${user.id}" data-role="${user.role}" data-status="${user.deactivated}">${user.deactivated ? 'Activate' : 'Deactivate'}</button>
+                            <button class="button danger delete-button" data-id="${user.id}" data-role="${user.role}">Delete</button>
+                        </td>
+                    `;
+                });
+            }
+
+            // Render ENT Nurse Clinics
+            if (entNurseClinics.length === 0) {
+                entNurseClinicsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No ENT nurse clinics found.</td></tr>';
+            } else {
+                entNurseClinics.forEach(user => {
+                    const row = entNurseClinicsTableBody.insertRow();
+                    row.innerHTML = `
+                        <td class="whitespace-nowrap">${user.businessName || 'N/A'}</td>
+                        <td>${user.username || 'N/A'}</td>
+                        <td>${user.phoneNumber || 'N/A'}</td>
+                        <td><span class="status-badge ${user.deactivated ? 'deactivated' : 'active'}">${user.deactivated ? 'Deactivated' : 'Active'}</span></td>
+                        <td class="action-buttons whitespace-nowrap">
+                            <button class="button secondary edit-button" data-id="${user.id}" data-role="${user.role}">Edit</button>
+                            <button class="button ${user.deactivated ? 'active-button' : 'danger deactivate-button'}" data-id="${user.id}" data-role="${user.role}" data-status="${user.deactivated}">${user.deactivated ? 'Activate' : 'Deactivate'}</button>
+                            <button class="button danger delete-button" data-id="${user.id}" data-role="${user.role}">Delete</button>
+                        </td>
+                    `;
+                });
+            }
+
+            // Render Midwife Clinics
+            if (midwifeClinics.length === 0) {
+                midwifeClinicsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No midwife clinics found.</td></tr>';
+            } else {
+                midwifeClinics.forEach(user => {
+                    const row = midwifeClinicsTableBody.insertRow();
+                    row.innerHTML = `
+                        <td class="whitespace-nowrap">${user.businessName || 'N/A'}</td>
+                        <td>${user.username || 'N/A'}</td>
+                        <td>${user.phoneNumber || 'N/A'}</td>
+                        <td><span class="status-badge ${user.deactivated ? 'deactivated' : 'active'}">${user.deactivated ? 'Deactivated' : 'Active'}</span></td>
+                        <td class="action-buttons whitespace-nowrap">
+                            <button class="button secondary edit-button" data-id="${user.id}" data-role="${user.role}">Edit</button>
+                            <button class="button ${user.deactivated ? 'active-button' : 'danger deactivate-button'}" data-id="${user.id}" data-role="${user.role}" data-status="${user.deactivated}">${user.deactivated ? 'Activate' : 'Deactivate'}</button>
+                            <button class="button danger delete-button" data-id="${user.id}" data-role="${user.role}">Delete</button>
+                        </td>
+                    `;
+                });
+            }
+
+            // Render Cast Room Nurse Clinics
+            if (castRoomNurseClinics.length === 0) {
+                castRoomNurseClinicsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No cast room nurse clinics found.</td></tr>';
+            } else {
+                castRoomNurseClinics.forEach(user => {
+                    const row = castRoomNurseClinicsTableBody.insertRow();
+                    row.innerHTML = `
+                        <td class="whitespace-nowrap">${user.businessName || 'N/A'}</td>
+                        <td>${user.username || 'N/A'}</td>
+                        <td>${user.phoneNumber || 'N/A'}</td>
+                        <td><span class="status-badge ${user.deactivated ? 'deactivated' : 'active'}">${user.deactivated ? 'Deactivated' : 'Active'}</span></td>
+                        <td class="action-buttons whitespace-nowrap">
+                            <button class="button secondary edit-button" data-id="${user.id}" data-role="${user.role}">Edit</button>
+                            <button class="button ${user.deactivated ? 'active-button' : 'danger deactivate-button'}" data-id="${user.id}" data-role="${user.role}" data-status="${user.deactivated}">${user.deactivated ? 'Activate' : 'Deactivate'}</button>
+                            <button class="button danger delete-button" data-id="${user.id}" data-role="${user.role}">Delete</button>
+                        </td>
+                    `;
+                });
+            }
+
+            // Render Echocardiography Clinics (NEW)
+            if (echocardiographyClinics.length === 0) {
+                echocardiographyClinicsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No echocardiography clinics found.</td></tr>';
+            } else {
+                echocardiographyClinics.forEach(user => {
+                    const row = echocardiographyClinicsTableBody.insertRow();
+                    row.innerHTML = `
+                        <td class="whitespace-nowrap">${user.businessName || 'N/A'}</td>
+                        <td>${user.username || 'N/A'}</td>
+                        <td>${user.phoneNumber || 'N/A'}</td>
+                        <td><span class="status-badge ${user.deactivated ? 'deactivated' : 'active'}">${user.deactivated ? 'Deactivated' : 'Active'}</span></td>
+                        <td class="action-buttons whitespace-nowrap">
+                            <button class="button secondary edit-button" data-id="${user.id}" data-role="${user.role}">Edit</button>
+                            <button class="button ${user.deactivated ? 'active-button' : 'danger deactivate-button'}" data-id="${user.id}" data-role="${user.role}" data-status="${user.deactivated}">${user.deactivated ? 'Activate' : 'Deactivate'}</button>
+                            <button class="button danger delete-button" data-id="${user.id}" data-role="${user.role}">Delete</button>
+                        </td>
+                    `;
+                });
+            }
+
+            // Render Audiometry Clinics (NEW)
+            if (audiometryClinics.length === 0) {
+                audiometryClinicsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No audiometry clinics found.</td></tr>';
+            } else {
+                audiometryClinics.forEach(user => {
+                    const row = audiometryClinicsTableBody.insertRow();
+                    row.innerHTML = `
+                        <td class="whitespace-nowrap">${user.businessName || 'N/A'}</td>
+                        <td>${user.username || 'N/A'}</td>
+                        <td>${user.phoneNumber || 'N/A'}</td>
+                        <td><span class="status-badge ${user.deactivated ? 'deactivated' : 'active'}">${user.deactivated ? 'Deactivated' : 'Active'}</span></td>
+                        <td class="action-buttons whitespace-nowrap">
+                            <button class="button secondary edit-button" data-id="${user.id}" data-role="${user.role}">Edit</button>
+                            <button class="button ${user.deactivated ? 'active-button' : 'danger deactivate-button'}" data-id="${user.id}" data-role="${user.role}" data-status="${user.deactivated}">${user.deactivated ? 'Activate' : 'Deactivate'}</button>
+                            <button class="button danger delete-button" data-id="${user.id}" data-role="${user.role}">Delete</button>
+                        </td>
+                    `;
+                });
+            }
+
+
+            // Re-attach event listeners after rendering
+            attachTableButtonListeners();
+        }
+
+        /**
+         * Attaches event listeners to the action buttons in all tables.
+         */
+        function attachTableButtonListeners() {
+            document.querySelectorAll('.edit-button').forEach(button => {
+                button.onclick = (event) => { // Using onclick to easily re-assign
+                    const userId = event.target.dataset.id;
+                    const userRole = event.target.dataset.role;
+                    fetchUserByIdAndRole(userId, userRole).then(user => {
+                        if (user) showUserModal(user);
+                    });
+                };
+            });
+            document.querySelectorAll('.deactivate-button, .active-button').forEach(button => {
+                button.onclick = async (event) => { // Using onclick to easily re-assign
+                    const userId = event.target.dataset.id;
+                    const userRole = event.target.dataset.role;
+                    const currentStatus = event.target.dataset.status === 'true';
+                    fetchUserByIdAndRole(userId, userRole).then(user => {
+                         if (user) {
+                            const actionText = currentStatus ? 'activate' : 'deactivate';
+                            showConfirmModal(
+                                `${currentStatus ? 'Activate' : 'Deactivate'} User`,
+                                `Are you sure you want to ${actionText} ${user.name || user.businessName || user.username}?`,
+                                user,
+                                toggleDeactivateUser
+                            );
+                        }
+                    });
+                };
+            });
+            document.querySelectorAll('.delete-button').forEach(button => {
+                button.onclick = (event) => { // Using onclick to easily re-assign
+                    const userId = event.target.dataset.id;
+                    const userRole = event.target.dataset.role;
+                    fetchUserByIdAndRole(userId, userRole).then(user => {
+                        if (user) {
+                            showConfirmModal(
+                                'Delete User',
+                                `Are you sure you want to permanently delete ${user.name || user.businessName || user.username}? This action cannot be undone. This will only delete the Firestore record, the Firebase Authentication user needs to be deleted manually.`,
+                                user,
+                                deleteUser
+                            );
+                        }
+                    });
+                };
+            });
+        }
+
+
+        /**
+         * Fetches a single user by ID and Role from their specific collection.
+         * @param {string} userId - The UID of the user.
+         * @param {string} role - The role of the user (e.g., 'doctor', 'pharmacy').
+         * @returns {Promise<Object|null>} The user object or null if not found.
+         */
+        async function fetchUserByIdAndRole(userId, role) {
+            if (!userTypeCollections[role]) {
+                console.error("Invalid user role provided:", role);
+                return null;
+            }
+            const collectionName = userTypeCollections[role];
+            const userDocRef = doc(db, `artifacts/${appId}/public/data/${collectionName}`, userId);
+            try {
+                const docSnap = await getDoc(userDocRef);
+                if (docSnap.exists()) {
+                    return { id: docSnap.id, role: role, ...docSnap.data() };
+                }
+                return null;
+            } catch (error) {
+                console.error(`Error fetching user ${userId} from ${collectionName}:`, error);
+                showMessage(`Error fetching user details for ${userId} from ${role}. Check console.`, true); // Changed message
+                return null;
+            }
+        }
+
+
+        /**
+         * Sets up real-time listeners for all user type collections.
+         */
+        async function setupRealtimeUserListeners() {
+            if (!adminUserId) {
+                console.warn("Admin not authenticated, cannot set up real-time listeners.");
+                return;
+            }
+        
+            Object.keys(userTypeCollections).forEach((role) => {
+                const collectionName = userTypeCollections[role];
+                const usersCollectionRef = collection(db, `artifacts/${appId}/public/data/${collectionName}`);
+                
+                onSnapshot(usersCollectionRef, (snapshot) => {
+                    const currentRoleUsers = snapshot.docs.map(doc => ({ id: doc.id, role: role, ...doc.data() }));
+                    cachedUsersByRole[role] = currentRoleUsers;
+                    // Render all users whenever any collection updates
+                    renderUsersIntoTables(Object.values(cachedUsersByRole).flat()); 
+                }, (error) => {
+                    console.error(`Error setting up onSnapshot for ${role} users:`, error);
+                    console.warn(`Could not load ${role} users due to permissions or other error. Please check Firestore Security Rules.`, error);
+                });
+            });
+        }
+        
+        let cachedUsersByRole = {
+            'doctor': [],
+            'pharmacy': [],
+            'radiology_clinic': [],
+            'lab': [],
+            'nurse_clinic': [],
+            'neurophysiology_clinic': [],
+            'optometry_clinic': [],
+            'ent_nurse_clinic': [],
+            'midwife_clinic': [],
+            'cast_room_nurse_clinic': [],
+            'echocardiography_clinic': [], // NEW
+            'audiometry_clinic': [] // NEW
+        };
+
+
+        /**
+         * Adds a new user of any type.
+         * @param {Object} userData - Data for the new user.
+         */
+        async function addUser(userData) {
+            let secondaryApp;
+            try {
+                // Validate required fields before proceeding
+                if (!userData.role) {
+                    throw new Error("User Type is required.");
+                }
+                if (!userData.username || !userData.password) {
+                    throw new Error("Username (Email) and Password are required.");
+                }
+                if (userData.role === 'doctor' && (!userData.name || !userData.speciality)) {
+                    throw new Error("For doctors, Name and Speciality are required.");
+                }
+                if (['pharmacy', 'radiology_clinic', 'lab', 'nurse_clinic', 'neurophysiology_clinic', 'optometry_clinic', 'ent_nurse_clinic', 'midwife_clinic', 'cast_room_nurse_clinic', 'echocardiography_clinic', 'audiometry_clinic'].includes(userData.role) && !userData.businessName) {
+                    throw new Error("For clinics/pharmacies/labs, Business Name is required.");
+                }
+
+                secondaryApp = initializeApp(firebaseConfig, "SecondaryAuthApp" + Date.now()); // Unique name
+                const secondaryAuth = getAuth(secondaryApp);
+
+                const userCredential = await createUserWithEmailAndPassword(secondaryAuth, userData.username, userData.password);
+                const newUser = userCredential.user;
+
+                const collectionName = userTypeCollections[userData.role];
+                if (!collectionName) {
+                    throw new Error("Invalid user role specified.");
+                }
+
+                const userDocRef = doc(db, `artifacts/${appId}/public/data/${collectionName}`, newUser.uid);
+                
+                const dataToSave = {
+                    username: userData.username,
+                    phoneNumber: userData.phoneNumber,
+                    address: userData.address,
+                    deactivated: false,
+                    role: userData.role // Ensure role is saved
+                };
+
+                if (userData.role === 'doctor') {
+                    dataToSave.name = userData.name;
+                    dataToSave.speciality = userData.speciality;
+                    delete dataToSave.businessName; // Clean up unwanted fields
+                } else {
+                    dataToSave.businessName = userData.businessName;
+                    delete dataToSave.name; // Clean up unwanted fields
+                    delete dataToSave.speciality;
+                }
+
+                await setDoc(userDocRef, dataToSave);
+                showMessage("User added successfully!", false);
+                hideUserModal();
+            } catch (error) {
+                console.error("Error adding user:", error);
+                let errorMessage = "Failed to add user.";
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = "The email address is already in use by another account.";
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = "The email address is not valid.";
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = "The password is too weak. Please choose a stronger password.";
+                } else if (error.message.includes("required")) { // Catch our custom validation errors
+                    errorMessage = error.message;
+                } else if (error.code === 'permission-denied' || error.code === 'FirebaseError') { // Catch Firestore permission errors
+                     errorMessage = `Permission Denied: Failed to save user. Check Firestore Security Rules for '${userData.role}' collection.`;
+                }
+                showMessage(errorMessage, true);
+            } finally {
+                if (secondaryApp) {
+                    await secondaryApp.delete();
+                    console.log("Secondary Firebase app instance deleted.");
+                }
+            }
+        }
+
+        /**
+         * Edits an existing user.
+         * @param {string} userId - The UID of the user to edit.
+         * @param {string} role - The role of the user.
+         * @param {Object} updatedData - The updated user data.
+         */
+        async function editUser(userId, role, updatedData) {
+            try {
+                // Validate required fields before proceeding for editing as well
+                if (!updatedData.username) {
+                    throw new Error("Username (Email) is required.");
+                }
+                if (role === 'doctor' && (!updatedData.name || !updatedData.speciality)) {
+                    throw new Error("For doctors, Name and Speciality are required.");
+                }
+                if (['pharmacy', 'radiology_clinic', 'lab', 'nurse_clinic', 'neurophysiology_clinic', 'optometry_clinic', 'ent_nurse_clinic', 'midwife_clinic', 'cast_room_nurse_clinic', 'echocardiography_clinic', 'audiometry_clinic'].includes(role) && !updatedData.businessName) {
+                    throw new Error("For clinics/pharmacies/labs, Business Name is required.");
+                }
+
+                const collectionName = userTypeCollections[role];
+                if (!collectionName) {
+                    throw new Error("Invalid user role specified for edit.");
+                }
+                const userDocRef = doc(db, `artifacts/${appId}/public/data/${collectionName}`, userId);
+                
+                const dataToUpdate = {
+                    username: updatedData.username,
+                    phoneNumber: updatedData.phoneNumber,
+                    address: updatedData.address,
+                    // role is not updated
+                };
+
+                if (role === 'doctor') {
+                    dataToUpdate.name = updatedData.name;
+                    dataToUpdate.speciality = updatedData.speciality;
+                } else {
+                    dataToUpdate.businessName = updatedData.businessName;
+                }
+
+                await updateDoc(userDocRef, dataToUpdate);
+
+                if (updatedData.password) {
+                    await sendPasswordResetEmail(auth, updatedData.username); // Uses primary auth for sending reset email
+                    showMessage("User details updated and password reset email sent to the user.", false);
+                } else {
+                    showMessage("User details updated successfully!", false);
+                }
+                hideUserModal();
+            } catch (error) {
+                console.error("Error editing user:", error);
+                let errorMessage = "Failed to edit user.";
+                if (error.code === 'auth/invalid-email') {
+                    errorMessage = "The email address is not valid.";
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = "The new password is too weak. Please choose a stronger password.";
+                } else if (error.code === 'auth/requires-recent-login') {
+                     errorMessage = "Please log in again to update this password.";
+                } else if (error.message.includes("required")) { // Catch our custom validation errors
+                    errorMessage = error.message;
+                } else if (error.code === 'permission-denied' || error.code === 'FirebaseError') { // Catch Firestore permission errors
+                     errorMessage = `Permission Denied: Failed to edit user. Check Firestore Security Rules for '${role}' collection.`;
+                }
+                showMessage(errorMessage, true);
+            }
+        }
+
+        /**
+         * Deletes a user from Firestore and notes Firebase Auth limitation.
+         * @param {Object} userToDelete - The user object to delete.
+         */
+        async function deleteUser(userToDelete) {
+            hideConfirmModal(); // Hide confirmation modal immediately
+
+            try {
+                const collectionName = userTypeCollections[userToDelete.role];
+                if (!collectionName) {
+                    throw new Error("Invalid user role specified for delete.");
+                }
+                const userDocRef = doc(db, `artifacts/${appId}/public/data/${collectionName}`, userToDelete.id);
+                await deleteDoc(userDocRef);
+
+                showMessage(`User "${userToDelete.name || userToDelete.businessName || userToDelete.username}" (${userToDelete.role}) has been removed from the list. Note: Their Firebase Authentication record needs to be deleted manually from the Firebase Console or via server-side automation.`, false);
+            } catch (error) {
+                console.error("Error deleting user:", error);
+                let errorMessage = "Failed to delete user record from Firestore.";
+                if (error.code === 'permission-denied' || error.code === 'FirebaseError') { // Catch Firestore permission errors
+                     errorMessage = `Permission Denied: Failed to delete user. Check Firestore Security Rules for '${userToDelete.role}' collection.`;
+                }
+                showMessage(errorMessage, true);
+            }
+        }
+
+        /**
+         * Toggles the deactivated status of a user.
+         * @param {Object} userToToggle - The user object to deactivate/activate.
+         */
+        async function toggleDeactivateUser(userToToggle) {
+            hideConfirmModal(); // Hide confirmation modal immediately
+
+            try {
+                const newStatus = !userToToggle.deactivated;
+                const collectionName = userTypeCollections[userToToggle.role];
+                if (!collectionName) {
+                    throw new Error("Invalid user role specified for deactivate/activate.");
+                }
+                const userDocRef = doc(db, `artifacts/${appId}/public/data/${collectionName}`, userToToggle.id);
+                await updateDoc(userDocRef, { deactivated: newStatus });
+
+                showMessage(`User "${userToToggle.name || userToToggle.businessName || userToToggle.username}" (${userToToggle.role}) has been ${newStatus ? 'deactivated' : 'activated'}!`, false);
+            } catch (error) {
+                console.error("Error toggling user status:", error);
+                let errorMessage = "Failed to change user status. Please try again.";
+                if (error.code === 'permission-denied' || error.code === 'FirebaseError') { // Catch Firestore permission errors
+                     errorMessage = `Permission Denied: Failed to change status. Check Firestore Security Rules for '${userToToggle.role}' collection.`;
+                }
+                showMessage(errorMessage, true);
+            }
+        }
+
+        /**
+         * Initializes Firebase and sets up authentication listener.
+         * This page now requires an authenticated admin session.
+         */
+        async function initializeFirebase() {
+            try {
+                if (!app) {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app); 
+                }
+
+                if (initialAuthToken) {
+                    // Attempt to sign in with custom token. If this fails or token is old, onAuthStateChanged will handle.
+                    try { await auth.signInWithCustomToken(initialAuthToken); } catch (e) { console.warn("Custom token sign-in failed or expired:", e.message); }
+                }
+
+                onAuthStateChanged(auth, async (user) => {
+                    // Check if the user is still signed in and is the admin
+                    if (user && user.email === "muntadherkareem@gmail.com") { // Check for admin email
+                        adminUserId = user.uid;
+                        console.log("Users Data Management: Admin Firebase Auth Ready. User ID:", adminUserId);
+                        setupRealtimeUserListeners(); // Setup listeners and initial render
+                    } else {
+                        adminUserId = null;
+                        console.log("Users Data Management: No admin user signed in or session expired. Redirecting to login.");
+                        showMessage("Access denied. Please log in as admin.", true);
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 3000);
+                    }
+                });
+            } catch (error) {
+                console.error("Error initializing Firebase for Users Data Management:", error);
+                showMessage("Failed to initialize app. Redirecting to login.", true);
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 3000);
+            }
+        }
+
+        // Event Listeners
+        backToDashboardButton.addEventListener('click', () => {
+            window.location.href = 'admin-dashboard.html';
+        });
+
+        addNewUserButton.addEventListener('click', () => showUserModal());
+
+        closeUserModalButton.addEventListener('click', hideUserModal);
+        cancelUserModalButton.addEventListener('click', hideUserModal);
+
+        roleInput.addEventListener('change', toggleFormFields); // Listen for role change to adjust fields
+
+        userForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const id = userIdInput.value;
+            const role = roleInput.value;
+            const userData = {
+                role: role,
+                username: usernameInput.value.trim(),
+                password: passwordInput.value,
+                phoneNumber: phoneNumberInput.value.trim(),
+                address: addressInput.value.trim()
+            };
+
+            if (role === 'doctor') {
+                userData.name = nameInput.value.trim();
+                userData.speciality = specialityInput.value;
+            } else { // For pharmacy, radiology_clinic, lab, and new clinics
+                userData.businessName = businessNameInput.value.trim();
+            }
+
+            if (id) {
+                await editUser(id, role, userData);
+            } else {
+                await addUser(userData);
+            }
+        });
+
+        confirmActionButton.addEventListener('click', () => {
+            if (currentActionUser && currentActionUser.actionCallback) {
+                currentActionUser.actionCallback(currentActionUser.user);
+            }
+        });
+
+        cancelConfirmButton.addEventListener('click', hideConfirmModal);
+
+        // Initialize Firebase when the window loads
+        window.onload = initializeFirebase;
+    </script>
+</body>
+</html>
