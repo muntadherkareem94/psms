@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardiology Physical Examination</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to right bottom, #fde68a, #fcd34d); /* Soft yellow/amber gradient */
+            min-height: 100vh;
+            color: #333;
+        }
+        .section-card {
+            background-color: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            margin-bottom: 1.5rem;
+        }
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #b45309; /* Darker amber for titles */
+            border-bottom: 2px solid #fcd34d;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #f59e0b; /* Amber focus color */
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-primary {
+            background-color: #f59e0b; /* Amber */
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #d97706; /* Darker amber */
+        }
+        .btn-secondary {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+        .btn-secondary:hover {
+            background-color: #d1d5db;
+        }
+        /* Custom styles for multi-select dropdown */
+        .multi-select-dropdown {
+            position: relative;
+        }
+        .multi-select-dropdown-options {
+            display: none;
+            position: absolute;
+            background-color: white;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            z-index: 10;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .multi-select-dropdown-options.active {
+            display: block;
+        }
+        .multi-select-dropdown-option {
+            padding: 0.75rem;
+            cursor: pointer;
+        }
+        .multi-select-dropdown-option:hover {
+            background-color: #f3f4f6;
+        }
+        .multi-select-dropdown-option input[type="checkbox"] {
+            margin-right: 0.5rem;
+        }
+        .multi-select-display {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            background-color: white;
+            cursor: pointer;
+            min-height: 42px; /* Ensure consistent height */
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+        .selected-tag {
+            background-color: #fef3c7; /* Light amber from body gradient */
+            color: #b45309;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Cardiology Physical Examination</h1>
+
+        <div class="section-card">
+            <h2 class="section-title">General Survey</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                    <label for="appearance" class="form-label">Appearance</label>
+                    <select id="appearance" class="form-select">
+                        <option value="">Select</option>
+                        <option>Well</option>
+                        <option>Unwell</option>
+                        <option>Toxic</option>
+                        <option>In distress</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2 lg:col-span-1">
+                    <label class="form-label">Glasgow Coma Scale (GCS)</label>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label for="gcsEyes" class="text-sm">Eyes (E)</label>
+                            <select id="gcsEyes" class="form-select text-sm">
+                                <option value="0">Select</option>
+                                <option value="4">4 - Spontaneous</option>
+                                <option value="3">3 - To speech</option>
+                                <option value="2">2 - To pain</option>
+                                <option value="1">1 - None</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="gcsVerbal" class="text-sm">Verbal (V)</label>
+                            <select id="gcsVerbal" class="form-select text-sm">
+                                <option value="0">Select</option>
+                                <option value="5">5 - Orientated</option>
+                                <option value="4">4 - Confused</option>
+                                <option value="3">3 - Inappropriate words</option>
+                                <option value="2">2 - Incomprehensible</option>
+                                <option value="1">1 - None</option>
+                                <option value="T">T - Intubated</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="gcsMotor" class="text-sm">Motor (M)</label>
+                            <select id="gcsMotor" class="form-select text-sm">
+                                <option value="0">Select</option>
+                                <option value="6">6 - Obeys commands</option>
+                                <option value="5">5 - Localises to pain</option>
+                                <option value="4">4 - Withdraws to pain</option>
+                                <option value="3">3 - Flexion to pain</option>
+                                <option value="2">2 - Extension to pain</option>
+                                <option value="1">1 - None</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="pt-2 text-lg font-semibold text-gray-700">GCS Total: <span id="gcsTotal">0</span></p>
+                </div>
+                
+                <div>
+                    <label for="bodyHabitus" class="form-label">Body Habitus</label>
+                    <select id="bodyHabitus" class="form-select">
+                        <option value="">Select</option>
+                        <option>Normal</option>
+                        <option>Cachectic</option>
+                        <option>Obese</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="handshakeEnquiry" class="form-label">Handshake Enquiry</label>
+                    <select id="handshakeEnquiry" class="form-select">
+                        <option value="">Select</option>
+                        <option>Normal</option>
+                        <option>Cold sweaty hands (Anxiety)</option>
+                        <option>Cold dry hands (Raynaud's Phenomenon)</option>
+                        <option>Hot, Sweaty hands (hyperthyroidism)</option>
+                        <option>Large, Fleshy, Sweaty hands (Acromegaly)</option>
+                        <option>Dry Coarse skin (hypothyroidism, Regular water exposure, manual work)</option>
+                        <option>Delayed relaxation grip (Myotonic Dystrophy)</option>
+                        <option>Deformed hands/Fingers (RA, Dupuytren's Contracture, Trauma)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="bedsideEquipments" class="form-label">Bedside Equipments</label>
+                    <select id="bedsideEquipments" class="form-select">
+                        <option value="">Select</option>
+                        <option>None</option>
+                        <option>Inhaler</option>
+                        <option>Peak flow meter</option>
+                        <option>Oxygen cylinder</option>
+                        <option>Walking aid</option>
+                        <option>Hearing aid</option>
+                        <option>Wheelchair</option>
+                        <option>Insulin Pump</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="facialExpression" class="form-label">Facial Expression</label>
+                    <select id="facialExpression" class="form-select">
+                        <option value="">Select</option>
+                        <option>Normal</option>
+                        <option>Poor expression (Parkinson disease)</option>
+                        <option>Startled expression (hyperthyroidism)</option>
+                        <option>Apathy with poor expression and poor eye contact (depression)</option>
+                        <option>Apathy with pale and puffy skin (Hypothyrodism)</option>
+                        <option>Agitated expression (Anxiety, hyperthyroidism, hypomania)</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2 lg:col-span-3">
+                    <label for="generalObservations" class="form-label">General Observations</label>
+                    <textarea id="generalObservations" class="form-textarea" rows="2" placeholder="e.g., Patient is well-groomed, cooperative, and appears stated age..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Vital Signs</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                <div><label for="bloodPressure" class="form-label">Blood Pressure</label><input type="text" id="bloodPressure" class="form-input" placeholder="e.g., 120/80"></div>
+                <div><label for="heartRate" class="form-label">Heart Rate (bpm)</label><input type="number" id="heartRate" class="form-input" placeholder="e.g., 72"></div>
+                <div><label for="respiratoryRate" class="form-label">Respiratory Rate</label><input type="number" id="respiratoryRate" class="form-input" placeholder="e.g., 16"></div>
+                <div><label for="temperature" class="form-label">Temperature (°C)</label><input type="text" id="temperature" class="form-input" placeholder="e.g., 37.0"></div>
+                <div><label for="spo2" class="form-label">SpO2 (%)</label><input type="number" id="spo2" class="form-input" placeholder="e.g., 98"></div>
+                <div><label for="pain" class="form-label">Pain (0-10)</label><input type="number" id="pain" class="form-input" placeholder="e.g., 0"></div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Anthropometric Measurements</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div><label class="form-label">Height (cm)</label><input type="number" id="height" class="form-input" placeholder="e.g., 175"></div>
+                <div><label class="form-label">Weight (kg)</label><input type="number" id="weight" class="form-input" placeholder="e.g., 70"></div>
+                <div><label class="form-label">BMI (kg/m²)</label><p id="bmiResult" class="pt-2 text-lg font-semibold text-gray-700">--</p></div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Hand Examination</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="multi-select-dropdown">
+                    <label class="form-label">Color</label>
+                    <div class="multi-select-display" id="handColorDisplay">Select options</div>
+                    <div class="multi-select-dropdown-options" id="handColorOptions">
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Normal"> Normal</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Peripheral Cyanosis"> Peripheral Cyanosis</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Tobacco Stain"> Tobacco Stain</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Pale Palmar Creases"> Pale Palmar Creases</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Palmar Erythema"> Palmar Erythema</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Pigmented Palmar Creases"> Pigmented Palmar Creases</label></div>
+                    </div>
+                </div>
+                <div>
+                    <label for="handTemperature" class="form-label">Temperature</label>
+                    <select id="handTemperature" class="form-select">
+                        <option value="">Select</option>
+                        <option>Normal</option>
+                        <option>Warm (sepsis, hyperthyroidism, Co2 retention?)</option>
+                        <option>Cold (Heart failure?, Peripheral vascular disease?)</option>
+                    </select>
+                </div>
+                <div class="multi-select-dropdown">
+                    <label class="form-label">Nail Changes</label>
+                    <div class="multi-select-display" id="nailChangesDisplay">Select options</div>
+                    <div class="multi-select-dropdown-options" id="nailChangesOptions">
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Normal"> Normal</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Beau's lines"> Beau's lines</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Clubbing"> Clubbing</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Leukonychia"> Leukonychia</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Lindsay's nails"> Lindsay's nails</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Koilonychia"> Koilonychia</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Muehrcke's lines"> Muehrcke's lines</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Nail-fold telangiectasia"> Nail-fold telangiectasia</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Onycholysis"> Onycholysis</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Onychomycosis"> Onychomycosis</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Pitting"> Pitting</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Splinter haemorrhages"> Splinter haemorrhages</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Yellow nails"> Yellow nails</label></div>
+                    </div>
+                </div>
+                 <div class="multi-select-dropdown">
+                    <label class="form-label">Asterixis and Fine Tremor</label>
+                    <div class="multi-select-display" id="handTremorDisplay">Select options</div>
+                    <div class="multi-select-dropdown-options" id="handTremorOptions">
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="None"> None</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Asterixis"> Asterixis</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Fine Tremor"> Fine Tremor</label></div>
+                    </div>
+                </div>
+                <div class="multi-select-dropdown">
+                    <label class="form-label">Hands Signs (CV Related)</label>
+                    <div class="multi-select-display" id="handCVSignsDisplay">Select options</div>
+                    <div class="multi-select-dropdown-options" id="handCVSignsOptions">
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="None"> None</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Janeway Lesions"> Janeway Lesions</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Osler's Nodes"> Osler's Nodes</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Xanthoma (tendon)"> Xanthoma (tendon)</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Palmar Xanthoma"> Palmar Xanthoma</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Spider Naevi"> Spider Naevi (on palm)</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Dupuytren's Contracture"> Dupuytren's Contracture</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Tar Staining"> Tar Staining</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Arterial Bruits (Hand/Wrist)"> Arterial Bruits (Hand/Wrist)</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Capillary Pulsation"> Capillary Pulsation (Quincke's sign)</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Warm, Sweaty Palms (Hyperthyroidism)"> Warm, Sweaty Palms (Hyperthyroidism)</label></div>
+                    </div>
+                </div>
+                <div class="md:col-span-2 lg:col-span-1">
+                    <label class="form-label">Pulse</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="pulseRate" class="text-sm">Rate (bpm)</label>
+                            <input type="number" id="pulseRate" class="form-input text-sm" placeholder="e.g., 72">
+                        </div>
+                        <div>
+                            <label for="pulseRhythm" class="text-sm">Rhythm</label>
+                            <select id="pulseRhythm" class="form-select text-sm">
+                                <option value="">Select</option>
+                                <option>Regular</option>
+                                <option>Irregular</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2">
+                            <label for="pulseVolume" class="text-sm">Volume</label>
+                            <select id="pulseVolume" class="form-select text-sm">
+                                <option value="">Select</option>
+                                <option>Large volume</option>
+                                <option>Normal volume</option>
+                                <option>Small volume</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Eyes Examination</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="multi-select-dropdown">
+                    <label class="form-label">General Findings</label>
+                    <div class="multi-select-display" id="eyeFindingsDisplay">Select options</div>
+                    <div class="multi-select-dropdown-options" id="eyeFindingsOptions">
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Normal"> Normal</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Jaundice of sclera"> Jaundice of sclera</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Pallor"> Pallor</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Subconjunctival Hemorrhage"> Subconjunctival Hemorrhage</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Corneal Arcus"> Corneal Arcus</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Xanthelasma"> Xanthelasma</label></div>
+                    </div>
+                </div>
+                <div>
+                    <label for="fundoscopy" class="form-label">Fundoscopy</label>
+                    <select id="fundoscopy" class="form-select">
+                        <option value="">Select Findings</option>
+                        <option>Normal</option>
+                        <option>Roth Spots</option>
+                        <option>Arteriovenous Nicking</option>
+                        <option>Copper/Silver Wiring</option>
+                        <option>Papilledema</option>
+                        <option>Cotton Wool Spots</option>
+                        <option>Hard Exudates</option>
+                        <option>Hemorrhages</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Mouth Examination</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="multi-select-dropdown">
+                    <label class="form-label">General Findings</label>
+                    <div class="multi-select-display" id="mouthGeneralDisplay">Select options</div>
+                    <div class="multi-select-dropdown-options" id="mouthGeneralOptions">
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Normal"> Normal</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Central Cyanosis"> Central Cyanosis</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Macroglossia"> Macroglossia</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Poor Dental Hygiene"> Poor Dental Hygiene</label></div>
+                    </div>
+                </div>
+                <div class="multi-select-dropdown">
+                    <label class="form-label">Tongue Findings</label>
+                    <div class="multi-select-display" id="tongueFindingsDisplay">Select options</div>
+                    <div class="multi-select-dropdown-options" id="tongueFindingsOptions">
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Normal Tongue"> Normal Tongue</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Smooth Tongue"> Smooth Tongue</label></div>
+                        <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Fasciculation"> Fasciculation</label></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Leg Edema</h2>
+            <div>
+                <label for="legEdema" class="form-label">Edema Type</label>
+                <select id="legEdema" class="form-select">
+                    <option value="">Select</option>
+                    <option>None</option>
+                    <option>Unilateral pitting</option>
+                    <option>Bilateral pitting</option>
+                    <option>Unilateral non-pitting</option>
+                    <option>Bilateral non-pitting</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Lymph Nodes</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="lymphNodesPalpable" class="form-label">Palpable Lymph Nodes</label>
+                    <select id="lymphNodesPalpable" class="form-select">
+                        <option value="">Select</option>
+                        <option>No palpable lymph node</option>
+                        <option>Diffuse LAP</option>
+                        <option>Local LAP</option>
+                    </select>
+                </div>
+                <div id="localLapGroupContainer" style="display: none;">
+                    <label for="localLapGroup" class="form-label">Local LAP Group (if applicable)</label>
+                    <select id="localLapGroup" class="form-select">
+                        <option value="">Select Group</option>
+                        <option>Cervical</option>
+                        <option>Supraclavicular</option>
+                        <option>Axillary</option>
+                        <option>Epitrochlear</option>
+                        <option>Inguinal</option>
+                        <option>Popliteal</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="lymphNodeConsistency" class="form-label">Consistency (if palpable)</label>
+                    <select id="lymphNodeConsistency" class="form-select">
+                        <option value="">Select Consistency</option>
+                        <option>Soft (Normal)</option>
+                        <option>Rubbery (Lymphoma)</option>
+                        <option>Matted (TB)</option>
+                        <option>Hard (Cancer)</option>
+                        <option>Tender (Infectious LAP)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Jugular Venous Pressure (JVP)</h2>
+            <div class="multi-select-dropdown">
+                <label class="form-label">JVP Findings</label>
+                <div class="multi-select-display" id="jvpFindingsDisplay">Select options</div>
+                <div class="multi-select-dropdown-options" id="jvpFindingsOptions">
+                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Normal"> Normal</label></div>
+                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Distended"> Distended</label></div>
+                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Giant V waves"> Giant V waves</label></div>
+                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Canon A waves"> Canon A waves</label></div>
+                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Kussmaul's Sign"> Kussmaul's Sign</label></div>
+                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Absent A wave"> Absent A wave</label></div>
+                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Prominent A wave"> Prominent A wave</label></div>
+                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Prominent C-V wave"> Prominent C-V wave</label></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Cardiovascular System Examination</h2>
+            <div class="space-y-6">
+                <div>
+                    <h3 class="font-semibold text-lg mb-2">Inspection</h3>
+                    <div class="multi-select-dropdown">
+                        <label class="form-label">Chest & Precordial Findings</label>
+                        <div class="multi-select-display" id="cvInspectionDisplay">Select options</div>
+                        <div class="multi-select-dropdown-options" id="cvInspectionOptions">
+                            <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Normal Chest Contour"> Normal Chest Contour</label></div>
+                            <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Precordial Bulge"> Precordial Bulge</label></div>
+                            <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Visible Apex Beat"> Visible Apex Beat</label></div>
+                            <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Scars (e.g., Sternotomy, Pacemaker)"> Scars (e.g., Sternotomy, Pacemaker)</label></div>
+                            <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Dilated Veins"> Dilated Veins</label></div>
+                            <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Pulsations (other than apex)"> Pulsations (other than apex)</label></div>
+                        </div>
+                    </div>
+                    <label for="cvInspectionNotes" class="form-label mt-4">Additional Inspection Notes</label>
+                    <textarea id="cvInspectionNotes" class="form-textarea" rows="2" placeholder="Describe any other visual findings..."></textarea>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-lg mb-2">Palpation</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="form-label">Apex Beat</label>
+                            <select id="apexBeatLocation" class="form-select">
+                                <option value="">Location</option>
+                                <option>5th ICS MCL</option>
+                                <option>Displaced (specify)</option>
+                                <option>Not palpable</option>
+                            </select>
+                            <select id="apexBeatCharacter" class="form-select mt-2">
+                                <option value="">Character</option>
+                                <option>Normal</option>
+                                <option>Heaving</option>
+                                <option>Thrusting</option>
+                                <option>Tapping</option>
+                            </select>
+                        </div>
+                        <div class="multi-select-dropdown">
+                            <label class="form-label">Thrills/Heaves</label>
+                            <div class="multi-select-display" id="cvPalpationThrillsDisplay">Select options</div>
+                            <div class="multi-select-dropdown-options" id="cvPalpationThrillsOptions">
+                                <div class="multi-select-dropdown-option"><label><input type="checkbox" value="No thrills/heaves"> No thrills/heaves</label></div>
+                                <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Parasternal Heave"> Parasternal Heave</label></div>
+                                <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Thrill (Aortic area)"> Thrill (Aortic area)</label></div>
+                                <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Thrill (Pulmonary area)"> Thrill (Pulmonary area)</label></div>
+                                <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Thrill (Tricuspid area)"> Thrill (Tricuspid area)</label></div>
+                                <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Thrill (Mitral area)"> Thrill (Mitral area)</label></div>
+                                <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Palpable P2"> Palpable P2</label></div>
+                            </div>
+                        </div>
+                    </div>
+                    <label for="cvPalpationNotes" class="form-label mt-4">Additional Palpation Notes</label>
+                    <textarea id="cvPalpationNotes" class="form-textarea" rows="2" placeholder="Describe any other palpation findings..."></textarea>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-lg mb-2">Auscultation</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="form-label">Heart Sounds (S1, S2)</label>
+                            <div class="multi-select-dropdown">
+                                <div class="multi-select-display" id="heartSoundsDisplay">Select options</div>
+                                <div class="multi-select-dropdown-options" id="heartSoundsOptions">
+                                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Normal S1/S2"> Normal S1/S2</label></div>
+                                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Loud S1"> Loud S1</label></div>
+                                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Soft S1"> Soft S1</label></div>
+                                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Loud S2"> Loud S2</label></div>
+                                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Soft S2"> Soft S2</label></div>
+                                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Physiological S2 Split"> Physiological S2 Split</label></div>
+                                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Fixed S2 Split"> Fixed S2 Split</label></div>
+                                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Paradoxical S2 Split"> Paradoxical S2 Split</label></div>
+                                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Single S2"> Single S2</label></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label">Extra Heart Sounds</label>
+                            <div class="multi-select-dropdown">
+                                <div class="multi-select-display" id="extraHeartSoundsDisplay">Select options</div>
+                                <div class="multi-select-dropdown-options" id="extraHeartSoundsOptions">
+                                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="None"> None</label></div>
+                                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="S3 Gallop"> S3 Gallop</label></div>
+                                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="S4 Gallop"> S4 Gallop</label></div>
+                                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Opening Snap"> Opening Snap</label></div>
+                                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Ejection Click"> Ejection Click</label></div>
+                                    <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Pericardial Friction Rub"> Pericardial Friction Rub</label></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 class="font-medium text-md mt-4 mb-2">Murmurs</h4>
+                    <div>
+                        <label for="murmurPresent" class="form-label text-sm">Murmur Present?</label>
+                        <select id="murmurPresent" class="form-select">
+                            <option value="">Select</option>
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                        </select>
+                    </div>
+
+                    <div id="murmurDetails" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4" style="display: none;">
+                        <div>
+                            <label for="murmurTiming" class="form-label text-sm">Timing</label>
+                            <select id="murmurTiming" class="form-select">
+                                <option value="">Select Timing</option>
+                                <option>Systolic</option>
+                                <option>Diastolic</option>
+                                <option>Continuous</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="murmurShape" class="form-label text-sm">Shape</label>
+                            <select id="murmurShape" class="form-select">
+                                <option value="">Select Shape</option>
+                                <option>Crescendo</option>
+                                <option>Decrescendo</option>
+                                <option>Crescendo-Decrescendo (Diamond)</option>
+                                <option>Plateau</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="murmurLoudness" class="form-label text-sm">Loudness (Levine Scale)</label>
+                            <select id="murmurLoudness" class="form-select">
+                                <option value="">Select Loudness</option>
+                                <option>I/VI (Faint, heard only in ideal conditions)</option>
+                                <option>II/VI (Soft, but easily heard)</option>
+                                <option>III/VI (Moderately loud, no thrill)</option>
+                                <option>IV/VI (Loud, with palpable thrill)</option>
+                                <option>V/VI (Very loud, heard with stethoscope partly off chest)</option>
+                                <option>VI/VI (Heard with stethoscope entirely off chest)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="murmurLocation" class="form-label text-sm">Location of Max Intensity</label>
+                            <select id="murmurLocation" class="form-select">
+                                <option value="">Select Location</option>
+                                <option>Aortic area (2nd RICS)</option>
+                                <option>Pulmonary area (2nd LICS)</option>
+                                <option>Tricuspid area (4th LICS sternal border)</option>
+                                <option>Mitral area (Apex)</option>
+                                <option>Erb's point (3rd LICS)</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="murmurRadiation" class="form-label text-sm">Radiation</label>
+                            <select id="murmurRadiation" class="form-select">
+                                <option value="">Select Radiation</option>
+                                <option>No Radiation</option>
+                                <option>Axilla</option>
+                                <option>Carotids</option>
+                                <option>Back</option>
+                                <option>Epigastric</option>
+                                <option>Neck</option>
+                                <option>Left Sternal Border</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="murmurPitchQuality" class="form-label text-sm">Pitch & Quality</label>
+                            <select id="murmurPitchQuality" class="form-select">
+                                <option value="">Select Pitch & Quality</option>
+                                <option>High-pitched blowing</option>
+                                <option>Low-pitched rumbling</option>
+                                <option>Medium-pitched harsh</option>
+                                <option>Musical</option>
+                                <option>Gurgling</option>
+                            </select>
+                        </div>
+                    </div>
+                    <label for="cvAuscultationNotes" class="form-label mt-4">Additional Auscultation Notes</label>
+                    <textarea id="cvAuscultationNotes" class="form-textarea" rows="2" placeholder="Describe any other auscultation findings..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Peripheral Vascular Examination</h2>
+            <div class="space-y-6">
+                <div>
+                    <h3 class="font-semibold text-lg mb-2">Peripheral Pulses</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div>
+                            <label for="pulseRadialR" class="form-label text-sm">Radial (R)</label>
+                            <select id="pulseRadialR" class="form-select">
+                                <option value="">Select</option>
+                                <option>Intact (2+)</option>
+                                <option>Diminished (1+)</option>
+                                <option>Absent (0)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="pulseRadialL" class="form-label text-sm">Radial (L)</label>
+                            <select id="pulseRadialL" class="form-select">
+                                <option value="">Select</option>
+                                <option>Intact (2+)</option>
+                                <option>Diminished (1+)</option>
+                                <option>Absent (0)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="pulseBrachialR" class="form-label text-sm">Brachial (R)</label>
+                            <select id="pulseBrachialR" class="form-select">
+                                <option value="">Select</option>
+                                <option>Intact (2+)</option>
+                                <option>Diminished (1+)</option>
+                                <option>Absent (0)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="pulseBrachialL" class="form-label text-sm">Brachial (L)</label>
+                            <select id="pulseBrachialL" class="form-select">
+                                <option value="">Select</option>
+                                <option>Intact (2+)</option>
+                                <option>Diminished (1+)</option>
+                                <option>Absent (0)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="pulseFemoralR" class="form-label text-sm">Femoral (R)</label>
+                            <select id="pulseFemoralR" class="form-select">
+                                <option value="">Select</option>
+                                <option>Intact (2+)</option>
+                                <option>Diminished (1+)</option>
+                                <option>Absent (0)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="pulseFemoralL" class="form-label text-sm">Femoral (L)</label>
+                            <select id="pulseFemoralL" class="form-select">
+                                <option value="">Select</option>
+                                <option>Intact (2+)</option>
+                                <option>Diminished (1+)</option>
+                                <option>Absent (0)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="pulsePoplitealR" class="form-label text-sm">Popliteal (R)</label>
+                            <select id="pulsePoplitealR" class="form-select">
+                                <option value="">Select</option>
+                                <option>Intact (2+)</option>
+                                <option>Diminished (1+)</option>
+                                <option>Absent (0)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="pulsePoplitealL" class="form-label text-sm">Popliteal (L)</label>
+                            <select id="pulsePoplitealL" class="form-select">
+                                <option value="">Select</option>
+                                <option>Intact (2+)</option>
+                                <option>Diminished (1+)</option>
+                                <option>Absent (0)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="pulseDorsalisPedisR" class="form-label text-sm">Dorsalis Pedis (R)</label>
+                            <select id="pulseDorsalisPedisR" class="form-select">
+                                <option value="">Select</option>
+                                <option>Intact (2+)</option>
+                                <option>Diminished (1+)</option>
+                                <option>Absent (0)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="pulseDorsalisPedisL" class="form-label text-sm">Dorsalis Pedis (L)</label>
+                            <select id="pulseDorsalisPedisL" class="form-select">
+                                <option value="">Select</option>
+                                <option>Intact (2+)</option>
+                                <option>Diminished (1+)</option>
+                                <option>Absent (0)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="pulsePosteriorTibialR" class="form-label text-sm">Posterior Tibial (R)</label>
+                            <select id="pulsePosteriorTibialR" class="form-select">
+                                <option value="">Select</option>
+                                <option>Intact (2+)</option>
+                                <option>Diminished (1+)</option>
+                                <option>Absent (0)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="pulsePosteriorTibialL" class="form-label text-sm">Posterior Tibial (L)</label>
+                            <select id="pulsePosteriorTibialL" class="form-select">
+                                <option value="">Select</option>
+                                <option>Intact (2+)</option>
+                                <option>Diminished (1+)</option>
+                                <option>Absent (0)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <label for="peripheralPulsesNotes" class="form-label mt-4">Additional Peripheral Pulses Notes</label>
+                    <textarea id="peripheralPulsesNotes" class="form-textarea" rows="2" placeholder="Describe any asymmetry, character changes (e.g., bounding, thready), or other findings."></textarea>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-lg mb-2">Ankle-Brachial Index (ABI)</h3>
+                    <label for="abiResult" class="form-label">ABI Result</label>
+                    <select id="abiResult" class="form-select">
+                        <option value="">Select Category</option>
+                        <option>Normal (0.91-1.30)</option>
+                        <option>Borderline (0.90)</option>
+                        <option>Abnormal (&le;0.89)</option>
+                        <option>Severe PAD (&le;0.40)</option>
+                        <option>Non-compressible Arteries (>1.30)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold text-lg mb-2">Auscultation for Bruits</h3>
+                    <div class="multi-select-dropdown">
+                        <label class="form-label">Bruits Detected</label>
+                        <div class="multi-select-display" id="bruitsAuscultationDisplay">Select options</div>
+                        <div class="multi-select-dropdown-options" id="bruitsAuscultationOptions">
+                            <div class="multi-select-dropdown-option"><label><input type="checkbox" value="None"> None</label></div>
+                            <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Carotid Bruit (R)"> Carotid Bruit (R)</label></div>
+                            <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Carotid Bruit (L)"> Carotid Bruit (L)</label></div>
+                            <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Abdominal Aortic Bruit"> Abdominal Aortic Bruit</label></div>
+                            <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Renal Artery Bruit (R)"> Renal Artery Bruit (R)</label></div>
+                            <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Renal Artery Bruit (L)"> Renal Artery Bruit (L)</label></div>
+                            <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Femoral Artery Bruit (R)"> Femoral Artery Bruit (R)</label></div>
+                            <div class="multi-select-dropdown-option"><label><input type="checkbox" value="Femoral Artery Bruit (L)"> Femoral Artery Bruit (L)</label></div>
+                        </div>
+                    </div>
+                    <label for="bruitsNotes" class="form-label mt-4">Additional Bruits Notes</label>
+                    <textarea id="bruitsNotes" class="form-textarea" rows="2" placeholder="Describe character and timing of any bruits."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Respiratory System (Brief)</h2>
+            <div class="space-y-6">
+                <div>
+                    <label for="tracheaPosition" class="form-label">Trachea Position</label>
+                    <select id="tracheaPosition" class="form-select">
+                        <option value="">Select Position</option>
+                        <option>Central</option>
+                        <option>Deviated to Right</option>
+                        <option>Deviated to Left</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="chestExpansion" class="form-label">Chest Expansion</label>
+                    <select id="chestExpansion" class="form-select">
+                        <option value="">Select Expansion</option>
+                        <option>Normal</option>
+                        <option>Reduced Unilaterally</option>
+                        <option>Reduced Bilaterally</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="respiratoryAuscultationNotes" class="form-label">Auscultation Findings</label>
+                    <textarea id="respiratoryAuscultationNotes" class="form-textarea" rows="3" placeholder="Describe breath sounds, adventitious sounds (e.g., crackles, wheezes, rub)."></textarea>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="mt-8 flex flex-col sm:flex-row justify-between gap-4">
+            <button id="backToHistoryButton" class="btn btn-secondary">Back to Patient History</button>
+            <button id="nextButton" class="btn btn-primary">Next: Investigation</button>
+        </div>
+         <div class="mt-4 flex justify-center">
+             <button id="backToDashboardButton" class="btn btn-secondary">Back to Dashboard</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromDashboard = urlParams.get('from');
+            const patientId = urlParams.get('patientId');
+            const patientDataSessionKey = 'currentPatientRecord';
+            const multiSelectUpdaters = {};
+
+            function setupMultiSelect(displayId, optionsId) {
+                const display = document.getElementById(displayId);
+                const optionsContainer = document.getElementById(optionsId);
+                const checkboxes = optionsContainer.querySelectorAll('input[type="checkbox"]');
+
+                const updateDisplay = () => {
+                    const selectedValues = Array.from(checkboxes)
+                        .filter(cb => cb.checked)
+                        .map(cb => cb.value);
+
+                    if (selectedValues.length === 0) {
+                        display.innerHTML = '<span class="text-gray-400">Select options</span>';
+                    } else {
+                        display.innerHTML = selectedValues.map(val => `<span class="selected-tag">${val}</span>`).join('');
+                    }
+                };
+                
+                multiSelectUpdaters[displayId] = updateDisplay;
+
+                display.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    optionsContainer.classList.toggle('active');
+                });
+
+                checkboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', updateDisplay);
+                });
+
+                document.addEventListener('click', (event) => {
+                    if (!display.contains(event.target) && !optionsContainer.contains(event.target)) {
+                        optionsContainer.classList.remove('active');
+                    }
+                });
+
+                updateDisplay();
+                return checkboxes;
+            }
+
+            const handColorCheckboxes = setupMultiSelect('handColorDisplay', 'handColorOptions');
+            const nailChangesCheckboxes = setupMultiSelect('nailChangesDisplay', 'nailChangesOptions');
+            const handTremorCheckboxes = setupMultiSelect('handTremorDisplay', 'handTremorOptions');
+            const handCVSignsCheckboxes = setupMultiSelect('handCVSignsDisplay', 'handCVSignsOptions'); 
+            const eyeFindingsCheckboxes = setupMultiSelect('eyeFindingsDisplay', 'eyeFindingsOptions');
+            const mouthGeneralCheckboxes = setupMultiSelect('mouthGeneralDisplay', 'mouthGeneralOptions');
+            const tongueFindingsCheckboxes = setupMultiSelect('tongueFindingsDisplay', 'tongueFindingsOptions');
+            const jvpFindingsCheckboxes = setupMultiSelect('jvpFindingsDisplay', 'jvpFindingsOptions');
+            const cvInspectionCheckboxes = setupMultiSelect('cvInspectionDisplay', 'cvInspectionOptions'); 
+            const cvPalpationThrillsCheckboxes = setupMultiSelect('cvPalpationThrillsDisplay', 'cvPalpationThrillsOptions'); 
+            const heartSoundsCheckboxes = setupMultiSelect('heartSoundsDisplay', 'heartSoundsOptions'); 
+            const extraHeartSoundsCheckboxes = setupMultiSelect('extraHeartSoundsDisplay', 'extraHeartSoundsOptions'); 
+            const bruitsAuscultationCheckboxes = setupMultiSelect('bruitsAuscultationDisplay', 'bruitsAuscultationOptions'); 
+
+            const heightInput = document.getElementById('height');
+            const weightInput = document.getElementById('weight');
+            const bmiResultEl = document.getElementById('bmiResult');
+            function calculateBmi() {
+                const height = parseFloat(heightInput.value);
+                const weight = parseFloat(weightInput.value);
+                if (height > 0 && weight > 0) {
+                    const heightInMeters = height / 100;
+                    const bmi = weight / (heightInMeters * heightInMeters);
+                    bmiResultEl.textContent = bmi.toFixed(1);
+                } else {
+                    bmiResultEl.textContent = '--';
+                }
+            }
+            heightInput.addEventListener('input', calculateBmi);
+            weightInput.addEventListener('input', calculateBmi);
+
+            const gcsEyes = document.getElementById('gcsEyes');
+            const gcsVerbal = document.getElementById('gcsVerbal');
+            const gcsMotor = document.getElementById('gcsMotor');
+            const gcsTotalEl = document.getElementById('gcsTotal');
+            function calculateGcs() {
+                const eyes = parseInt(gcsEyes.value) || 0;
+                const motor = parseInt(gcsMotor.value) || 0;
+                const verbalValue = gcsVerbal.value;
+                if (verbalValue === 'T') {
+                    const subTotal = eyes + motor;
+                    gcsTotalEl.textContent = `${subTotal}T`;
+                } else {
+                    const verbal = parseInt(verbalValue) || 0;
+                    gcsTotalEl.textContent = eyes + verbal + motor;
+                }
+            }
+            gcsEyes.addEventListener('change', calculateGcs);
+            gcsVerbal.addEventListener('change', calculateGcs);
+            gcsMotor.addEventListener('change', calculateGcs);
+
+            const lymphNodesPalpable = document.getElementById('lymphNodesPalpable');
+            const localLapGroupContainer = document.getElementById('localLapGroupContainer');
+            function toggleLocalLapGroup() {
+                if (lymphNodesPalpable.value === 'Local LAP') {
+                    localLapGroupContainer.style.display = 'block';
+                } else {
+                    localLapGroupContainer.style.display = 'none';
+                    document.getElementById('localLapGroup').value = '';
+                }
+            }
+            lymphNodesPalpable.addEventListener('change', toggleLocalLapGroup);
+
+            const murmurPresentSelect = document.getElementById('murmurPresent');
+            const murmurDetailsDiv = document.getElementById('murmurDetails');
+            function toggleMurmurDetails() {
+                if (murmurPresentSelect.value === 'Yes') {
+                    murmurDetailsDiv.style.display = 'grid';
+                } else {
+                    murmurDetailsDiv.style.display = 'none';
+                    document.getElementById('murmurTiming').value = '';
+                    document.getElementById('murmurShape').value = '';
+                    document.getElementById('murmurLoudness').value = '';
+                    document.getElementById('murmurLocation').value = '';
+                    document.getElementById('murmurRadiation').value = '';
+                    document.getElementById('murmurPitchQuality').value = '';
+                }
+            }
+            murmurPresentSelect.addEventListener('change', toggleMurmurDetails);
+
+            function getSelectedCheckboxes(checkboxes) {
+                return Array.from(checkboxes)
+                    .filter(cb => cb.checked)
+                    .map(cb => cb.value);
+            }
+
+            function setSelectedCheckboxes(checkboxes, displayId, values) {
+                if (!values) return;
+                checkboxes.forEach(cb => {
+                    cb.checked = values.includes(cb.value);
+                });
+                if (multiSelectUpdaters[displayId]) {
+                    multiSelectUpdaters[displayId]();
+                }
+            }
+
+            function getExamDataFromForm() {
+                return {
+                    generalSurvey: {
+                        appearance: document.getElementById('appearance').value,
+                        gcs: {
+                            eyes: gcsEyes.value,
+                            verbal: gcsVerbal.value,
+                            motor: gcsMotor.value,
+                            total: gcsTotalEl.textContent
+                        },
+                        bodyHabitus: document.getElementById('bodyHabitus').value,
+                        handshakeEnquiry: document.getElementById('handshakeEnquiry').value,
+                        bedsideEquipments: document.getElementById('bedsideEquipments').value,
+                        facialExpression: document.getElementById('facialExpression').value,
+                        observations: document.getElementById('generalObservations').value,
+                    },
+                    vitals: { bp: document.getElementById('bloodPressure').value, hr: document.getElementById('heartRate').value, rr: document.getElementById('respiratoryRate').value, temp: document.getElementById('temperature').value, spo2: document.getElementById('spo2').value, pain: document.getElementById('pain').value, },
+                    anthropometrics: { height: document.getElementById('height').value, weight: document.getElementById('weight').value, bmi: bmiResultEl.textContent, },
+                    hand: { color: getSelectedCheckboxes(handColorCheckboxes), temperature: document.getElementById('handTemperature').value, nailChanges: getSelectedCheckboxes(nailChangesCheckboxes), tremor: getSelectedCheckboxes(handTremorCheckboxes), cvSigns: getSelectedCheckboxes(handCVSignsCheckboxes), pulse: { rate: document.getElementById('pulseRate').value, rhythm: document.getElementById('pulseRhythm').value, volume: document.getElementById('pulseVolume').value } },
+                    eyes: { generalFindings: getSelectedCheckboxes(eyeFindingsCheckboxes), fundoscopy: document.getElementById('fundoscopy').value },
+                    mouth: { generalFindings: getSelectedCheckboxes(mouthGeneralCheckboxes), tongueFindings: getSelectedCheckboxes(tongueFindingsCheckboxes) },
+                    legEdema: document.getElementById('legEdema').value,
+                    lymphNodes: { palpable: document.getElementById('lymphNodesPalpable').value, group: document.getElementById('localLapGroup').value, consistency: document.getElementById('lymphNodeConsistency').value },
+                    jvp: getSelectedCheckboxes(jvpFindingsCheckboxes),
+                    cardiovascularExam: { inspection: { findings: getSelectedCheckboxes(cvInspectionCheckboxes), notes: document.getElementById('cvInspectionNotes').value }, palpation: { apexBeatLocation: document.getElementById('apexBeatLocation').value, apexBeatCharacter: document.getElementById('apexBeatCharacter').value, thrillsHeaves: getSelectedCheckboxes(cvPalpationThrillsCheckboxes), notes: document.getElementById('cvPalpationNotes').value }, auscultation: { heartSounds: getSelectedCheckboxes(heartSoundsCheckboxes), extraHeartSounds: getSelectedCheckboxes(extraHeartSoundsCheckboxes), murmurPresent: document.getElementById('murmurPresent').value, murmur: { timing: document.getElementById('murmurTiming').value, shape: document.getElementById('murmurShape').value, loudness: document.getElementById('murmurLoudness').value, location: document.getElementById('murmurLocation').value, radiation: document.getElementById('murmurRadiation').value, pitchQuality: document.getElementById('murmurPitchQuality').value }, notes: document.getElementById('cvAuscultationNotes').value } },
+                    peripheralVascularExam: { pulses: { radialR: document.getElementById('pulseRadialR').value, radialL: document.getElementById('pulseRadialL').value, brachialR: document.getElementById('pulseBrachialR').value, brachialL: document.getElementById('pulseBrachialL').value, femoralR: document.getElementById('pulseFemoralR').value, femoralL: document.getElementById('pulseFemoralL').value, poplitealR: document.getElementById('pulsePoplitealR').value, poplitealL: document.getElementById('pulsePoplitealL').value, dorsalisPedisR: document.getElementById('pulseDorsalisPedisR').value, dorsalisPedisL: document.getElementById('pulseDorsalisPedisL').value, posteriorTibialR: document.getElementById('pulsePosteriorTibialR').value, posteriorTibialL: document.getElementById('pulsePosteriorTibialL').value, notes: document.getElementById('peripheralPulsesNotes').value }, abiResult: document.getElementById('abiResult').value, bruits: { detected: getSelectedCheckboxes(bruitsAuscultationCheckboxes), notes: document.getElementById('bruitsNotes').value } },
+                    respiratoryBrief: { tracheaPosition: document.getElementById('tracheaPosition').value, chestExpansion: document.getElementById('chestExpansion').value, auscultationNotes: document.getElementById('respiratoryAuscultationNotes').value }
+                };
+            }
+
+            function setExamDataToForm(examData) {
+                if (!examData) return;
+                const setVal = (id, value) => { const el = document.getElementById(id); if (el && value !== undefined) el.value = value; };
+                
+                const gs = examData.generalSurvey || {};
+                setVal('appearance', gs.appearance);
+                if (gs.gcs) {
+                    setVal('gcsEyes', gs.gcs.eyes);
+                    setVal('gcsVerbal', gs.gcs.verbal);
+                    setVal('gcsMotor', gs.gcs.motor);
+                    calculateGcs();
+                }
+                setVal('bodyHabitus', gs.bodyHabitus);
+                setVal('handshakeEnquiry', gs.handshakeEnquiry);
+                setVal('bedsideEquipments', gs.bedsideEquipments);
+                setVal('facialExpression', gs.facialExpression);
+                setVal('generalObservations', gs.observations);
+
+                const vitals = examData.vitals || {};
+                setVal('bloodPressure', vitals.bp); setVal('heartRate', vitals.hr); setVal('respiratoryRate', vitals.rr); setVal('temperature', vitals.temp); setVal('spo2', vitals.spo2); setVal('pain', vitals.pain);
+
+                const anthro = examData.anthropometrics || {};
+                setVal('height', anthro.height); setVal('weight', anthro.weight);
+                if (anthro.height && anthro.weight) calculateBmi();
+
+                const hand = examData.hand || {};
+                setSelectedCheckboxes(handColorCheckboxes, 'handColorDisplay', hand.color);
+                setVal('handTemperature', hand.temperature);
+                setSelectedCheckboxes(nailChangesCheckboxes, 'nailChangesDisplay', hand.nailChanges);
+                setSelectedCheckboxes(handTremorCheckboxes, 'handTremorDisplay', hand.tremor);
+                setSelectedCheckboxes(handCVSignsCheckboxes, 'handCVSignsDisplay', hand.cvSigns); 
+                if (hand.pulse) { setVal('pulseRate', hand.pulse.rate); setVal('pulseRhythm', hand.pulse.rhythm); setVal('pulseVolume', hand.pulse.volume); }
+
+                const eyes = examData.eyes || {};
+                setSelectedCheckboxes(eyeFindingsCheckboxes, 'eyeFindingsDisplay', eyes.generalFindings);
+                setVal('fundoscopy', eyes.fundoscopy);
+
+                const mouth = examData.mouth || {};
+                setSelectedCheckboxes(mouthGeneralCheckboxes, 'mouthGeneralDisplay', mouth.generalFindings);
+                setSelectedCheckboxes(tongueFindingsCheckboxes, 'tongueFindingsDisplay', mouth.tongueFindings);
+
+                setVal('legEdema', examData.legEdema); 
+                
+                const lymphNodes = examData.lymphNodes || {};
+                setVal('lymphNodesPalpable', lymphNodes.palpable);
+                toggleLocalLapGroup();
+                setVal('localLapGroup', lymphNodes.group);
+                setVal('lymphNodeConsistency', lymphNodes.consistency);
+
+                setSelectedCheckboxes(jvpFindingsCheckboxes, 'jvpFindingsDisplay', examData.jvp);
+
+                const cvExam = examData.cardiovascularExam || {};
+                if (cvExam.inspection) { setSelectedCheckboxes(cvInspectionCheckboxes, 'cvInspectionDisplay', cvExam.inspection.findings); setVal('cvInspectionNotes', cvExam.inspection.notes); }
+                if (cvExam.palpation) { setVal('apexBeatLocation', cvExam.palpation.apexBeatLocation); setVal('apexBeatCharacter', cvExam.palpation.apexBeatCharacter); setSelectedCheckboxes(cvPalpationThrillsCheckboxes, 'cvPalpationThrillsDisplay', cvExam.palpation.thrillsHeaves); setVal('cvPalpationNotes', cvExam.palpation.notes); }
+                if (cvExam.auscultation) { setSelectedCheckboxes(heartSoundsCheckboxes, 'heartSoundsDisplay', cvExam.auscultation.heartSounds); setSelectedCheckboxes(extraHeartSoundsCheckboxes, 'extraHeartSoundsDisplay', cvExam.auscultation.extraHeartSounds); setVal('murmurPresent', cvExam.auscultation.murmurPresent); toggleMurmurDetails(); if (cvExam.auscultation.murmur) { setVal('murmurTiming', cvExam.auscultation.murmur.timing); setVal('murmurShape', cvExam.auscultation.murmur.shape); setVal('murmurLoudness', cvExam.auscultation.murmur.loudness); setVal('murmurLocation', cvExam.auscultation.murmur.location); setVal('murmurRadiation', cvExam.auscultation.murmur.radiation); setVal('murmurPitchQuality', cvExam.auscultation.murmur.pitchQuality); } setVal('cvAuscultationNotes', cvExam.auscultation.notes); }
+
+                const pvExam = examData.peripheralVascularExam || {};
+                if (pvExam.pulses) { setVal('pulseRadialR', pvExam.pulses.radialR); setVal('pulseRadialL', pvExam.pulses.radialL); setVal('pulseBrachialR', pvExam.pulses.brachialR); setVal('pulseBrachialL', pvExam.pulses.brachialL); setVal('pulseFemoralR', pvExam.pulses.femoralR); setVal('pulseFemoralL', pvExam.pulses.femoralL); setVal('pulsePoplitealR', pvExam.pulses.poplitealR); setVal('pulsePoplitealL', pvExam.pulses.poplitealL); setVal('pulseDorsalisPedisR', pvExam.pulses.dorsalisPedisR); setVal('pulseDorsalisPedisL', pvExam.pulses.dorsalisPedisL); setVal('pulsePosteriorTibialR', pvExam.pulses.posteriorTibialR); setVal('pulsePosteriorTibialL', pvExam.pulses.posteriorTibialL); setVal('peripheralPulsesNotes', pvExam.pulses.notes); }
+                setVal('abiResult', pvExam.abiResult);
+                if (pvExam.bruits) { setSelectedCheckboxes(bruitsAuscultationCheckboxes, 'bruitsAuscultationDisplay', pvExam.bruits.detected); setVal('bruitsNotes', pvExam.bruits.notes); }
+
+                const respBrief = examData.respiratoryBrief || {};
+                setVal('tracheaPosition', respBrief.tracheaPosition); setVal('chestExpansion', respBrief.chestExpansion); setVal('respiratoryAuscultationNotes', respBrief.auscultationNotes);
+            }
+
+            function saveAndProceed(destination) {
+                const examData = getExamDataFromForm();
+                let fullPatientRecord = JSON.parse(sessionStorage.getItem(patientDataSessionKey)) || {};
+                if (fullPatientRecord.patientId !== patientId || !sessionStorage.getItem('currentPatientRecordOwner')) { alert('Patient context changed. Return to the dashboard.'); return; }
+                fullPatientRecord.examination = examData;
+                sessionStorage.setItem(patientDataSessionKey, JSON.stringify(fullPatientRecord));
+                window.location.href = destination;
+            }
+
+            if (!patientId || fromDashboard !== 'cardiology-dashboard.html' || !sessionStorage.getItem('currentPatientRecordOwner')) {
+                document.querySelector('.max-w-7xl').innerHTML = `<div class="section-card text-center"><h2 class="text-2xl font-bold text-red-600">Error: Missing Information</h2><p class="mt-4 text-gray-700">Patient ID or return dashboard not specified. Please go back to the dashboard and select a patient.</p></div>`;
+                return;
+            }
+
+            const sessionData = sessionStorage.getItem(patientDataSessionKey);
+            if (sessionData) {
+                const fullRecord = JSON.parse(sessionData);
+                if (fullRecord.patientId !== patientId) { alert('Patient context changed. Return to the dashboard.'); window.location.replace('cardiology-dashboard.html'); return; }
+                if (fullRecord.examination) {
+                    setExamDataToForm(fullRecord.examination);
+                }
+            }
+
+            document.getElementById('backToHistoryButton').addEventListener('click', () => {
+                saveAndProceed(`history-page.html?from=${fromDashboard}&patientId=${patientId}`);
+            });
+            document.getElementById('nextButton').addEventListener('click', () => {
+                saveAndProceed(`investigation.html?from=${fromDashboard}&patientId=${patientId}`);
+            });
+            document.getElementById('backToDashboardButton').addEventListener('click', () => {
+                const confirmExit = confirm("Are you sure you want to exit? All unsaved progress for this patient will be lost.");
+                if (confirmExit) {
+                    sessionStorage.removeItem(patientDataSessionKey);
+                    sessionStorage.removeItem('currentPatientRecordOwner');
+                    window.location.href = fromDashboard;
+                }
+            });
+
+            calculateGcs();
+            toggleLocalLapGroup();
+            toggleMurmurDetails();
+        });
+    </script>
+</body>
+</html>

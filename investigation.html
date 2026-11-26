@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Investigation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(to right bottom, #dcfce7, #d1fae5); }
+        .section-card { background-color: white; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); margin-bottom: 1.5rem; }
+        .section-title { font-size: 1.25rem; font-weight: 700; color: #166534; border-bottom: 2px solid #bbf7d0; padding-bottom: 0.75rem; margin-bottom: 1.5rem; }
+        .subsection-title { font-size: 1.125rem; font-weight: 600; color: #15803d; margin-top: 1.5rem; margin-bottom: 1rem; }
+        .form-label { display: block; font-weight: 600; color: #374151; margin-bottom: 0.5rem; }
+        .form-textarea, .form-select, .form-input { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
+        .form-textarea:focus, .form-select:focus, .form-input:focus { outline: none; border-color: #22c55e; box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25); }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background-color: #22c55e; color: white; }
+        .btn-primary:hover { background-color: #16a34a; }
+        .btn-primary:disabled { background-color: #86efac; cursor: not-allowed; }
+        .btn-secondary { background-color: #e5e7eb; color: #374151; }
+        .btn-secondary:hover { background-color: #d1d5db; }
+        .ts-control { border-radius: 0.5rem !important; border: 1px solid #d1d5db !important; padding: 0.75rem !important; }
+        .ts-control.focus { border-color: #22c55e !important; box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25) !important; }
+        .ts-dropdown { background-color: white !important; z-index: 1050 !important; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content { background-color: white; padding: 2.5rem; border-radius: 1rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); width: 90%; max-width: 600px; transform: translateY(-20px); transition: transform 0.3s ease; position: relative; max-height: 90vh; overflow-y: auto; }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        .close-modal-button { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280; }
+        .file-list { margin-top: 1rem; text-align: left; }
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background-color: #f3f4f6; border-radius: 0.375rem; margin-bottom: 0.5rem; }
+        .file-action-btn { background: none; border: none; cursor: pointer; padding: 0.25rem; }
+        .view-file-btn { color: #3b82f6; }
+        .view-file-btn:hover { color: #1d4ed8; }
+        .delete-file-btn { color: #ef4444; }
+        .delete-file-btn:hover { color: #b91c1c; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Patient Investigation Orders & Results</h1>
+        <div id="messageBox" style="display: none;" class="p-4 mb-4 rounded-md text-center"></div>
+
+        <div class="section-card">
+            <h2 class="section-title">General Investigation Search</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="generalSearchSelect" class="form-label">Search all investigations</label>
+                    <select id="generalSearchSelect" multiple placeholder="Search for any lab, imaging, or specialty test..."></select>
+                </div>
+                <div class="clinical-notes-container general-hematology-notes mt-2" style="display: none;"><label class="form-label text-sm">Brief Clinical Notes for Hematopathologist:</label><textarea class="form-textarea text-sm" rows="2"></textarea></div>
+                <div class="clinical-notes-container general-histopathology-notes mt-2" style="display: none;"><label class="form-label text-sm">Brief Clinical Notes for Pathologist:</label><textarea class="form-textarea text-sm" rows="2"></textarea></div>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <button id="generalOrderLinkedBtn" class="btn btn-secondary btn-sm">Order from Linked Facility</button>
+                    <button id="generalOrderUnlinkedBtn" class="btn btn-secondary btn-sm">Order from Non-Linked Facility</button>
+                    <button id="generalAttachBtn" class="btn btn-secondary btn-sm">Attach Investigation</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">I. Laboratory Investigations</h2>
+            <div class="space-y-8">
+                
+                <div data-lab-section="hematology">
+                    <h3 class="subsection-title">Hematology</h3>
+                    <select class="lab-test-select" multiple placeholder="Search for hematology tests..."></select>
+                    <div class="clinical-notes-container hematology-notes mt-2" style="display: none;"><label class="form-label text-sm">Brief Clinical Notes for Hematopathologist:</label><textarea class="form-textarea text-sm" rows="2"></textarea></div>
+                    <div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-secondary btn-sm order-linked-btn" data-type="labs">Order from Linked Lab</button><button class="btn btn-secondary btn-sm order-unlinked-btn" data-type="labs">Order from Non-Linked Lab</button><button class="btn btn-secondary btn-sm attach-btn">Attach Investigation</button></div><div class="file-upload-area mt-2" style="display: none;"><div class="file-list"></div></div>
+                </div>
+
+                <div data-lab-section="biochemistry">
+                    <h3 class="subsection-title">Biochemistry</h3>
+                    <select class="lab-test-select" multiple placeholder="Search for biochemistry tests..."></select>
+                    <div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-secondary btn-sm order-linked-btn" data-type="labs">Order from Linked Lab</button><button class="btn btn-secondary btn-sm order-unlinked-btn" data-type="labs">Order from Non-Linked Lab</button><button class="btn btn-secondary btn-sm attach-btn">Attach Investigation</button></div><div class="file-upload-area mt-2" style="display: none;"><div class="file-list"></div></div>
+                </div>
+                
+                <div data-lab-section="hormonal">
+                    <h3 class="subsection-title">Hormonal Assays</h3>
+                    <select class="lab-test-select" multiple placeholder="Search for hormonal tests..."></select>
+                    <div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-secondary btn-sm order-linked-btn" data-type="labs">Order from Linked Lab</button><button class="btn btn-secondary btn-sm order-unlinked-btn" data-type="labs">Order from Non-Linked Lab</button><button class="btn btn-secondary btn-sm attach-btn">Attach Investigation</button></div><div class="file-upload-area mt-2" style="display: none;"><div class="file-list"></div></div>
+                </div>
+
+                <div data-lab-section="immunology">
+                    <h3 class="subsection-title">Immunology & Serology</h3>
+                    <select class="lab-test-select" multiple placeholder="Search for immunology tests..."></select>
+                    <div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-secondary btn-sm order-linked-btn" data-type="labs">Order from Linked Lab</button><button class="btn btn-secondary btn-sm order-unlinked-btn" data-type="labs">Order from Non-Linked Lab</button><button class="btn btn-secondary btn-sm attach-btn">Attach Investigation</button></div><div class="file-upload-area mt-2" style="display: none;"><div class="file-list"></div></div>
+                </div>
+
+                <div data-lab-section="microbiology">
+                    <h3 class="subsection-title">Microbiology</h3>
+                    <select class="lab-test-select" multiple placeholder="Search for microbiology tests..."></select>
+                    <div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-secondary btn-sm order-linked-btn" data-type="labs">Order from Linked Lab</button><button class="btn btn-secondary btn-sm order-unlinked-btn" data-type="labs">Order from Non-Linked Lab</button><button class="btn btn-secondary btn-sm attach-btn">Attach Investigation</button></div><div class="file-upload-area mt-2" style="display: none;"><div class="file-list"></div></div>
+                </div>
+
+                 <div data-lab-section="tumor_markers">
+                    <h3 class="subsection-title">Tumor Markers</h3>
+                    <select class="lab-test-select" multiple placeholder="Search for tumor markers..."></select>
+                    <div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-secondary btn-sm order-linked-btn" data-type="labs">Order from Linked Lab</button><button class="btn btn-secondary btn-sm order-unlinked-btn" data-type="labs">Order from Non-Linked Lab</button><button class="btn btn-secondary btn-sm attach-btn">Attach Investigation</button></div><div class="file-upload-area mt-2" style="display: none;"><div class="file-list"></div></div>
+                </div>
+
+                <div data-lab-section="toxicology">
+                    <h3 class="subsection-title">Toxicology Screen</h3>
+                    <select class="lab-test-select" multiple placeholder="Search for toxicology tests..."></select>
+                    <div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-secondary btn-sm order-linked-btn" data-type="labs">Order from Linked Lab</button><button class="btn btn-secondary btn-sm order-unlinked-btn" data-type="labs">Order from Non-Linked Lab</button><button class="btn btn-secondary btn-sm attach-btn">Attach Investigation</button></div><div class="file-upload-area mt-2" style="display: none;"><div class="file-list"></div></div>
+                </div>
+
+                <div data-lab-section="molecular">
+                    <h3 class="subsection-title">Molecular & Genetic Tests</h3>
+                    <select class="lab-test-select" multiple placeholder="Search for molecular/genetic tests..."></select>
+                    <div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-secondary btn-sm order-linked-btn" data-type="labs">Order from Linked Lab</button><button class="btn btn-secondary btn-sm order-unlinked-btn" data-type="labs">Order from Non-Linked Lab</button><button class="btn btn-secondary btn-sm attach-btn">Attach Investigation</button></div><div class="file-upload-area mt-2" style="display: none;"><div class="file-list"></div></div>
+                </div>
+
+                <div data-lab-section="histopathology">
+                    <h3 class="subsection-title">Histopathology/Cytology</h3>
+                    <select class="lab-test-select" multiple placeholder="Search for pathology tests..."></select>
+                    <div class="clinical-notes-container histopathology-notes mt-2" style="display: none;"><label class="form-label text-sm">Brief Clinical Notes for Pathologist:</label><textarea class="form-textarea text-sm" rows="2"></textarea></div>
+                    <div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-secondary btn-sm order-linked-btn" data-type="labs">Order from Linked Lab</button><button class="btn btn-secondary btn-sm order-unlinked-btn" data-type="labs">Order from Non-Linked Lab</button><button class="btn btn-secondary btn-sm attach-btn">Attach Investigation</button></div><div class="file-upload-area mt-2" style="display: none;"><div class="file-list"></div></div>
+                </div>
+                
+                <div data-lab-section="flow_cytometry">
+                    <h3 class="subsection-title">Flow Cytometry and Cell Markers</h3>
+                    <select class="lab-test-select" multiple placeholder="Search for flow cytometry tests..."></select>
+                    <div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-secondary btn-sm order-linked-btn" data-type="labs">Order from Linked Lab</button><button class="btn btn-secondary btn-sm order-unlinked-btn" data-type="labs">Order from Non-Linked Lab</button><button class="btn btn-secondary btn-sm attach-btn">Attach Investigation</button></div><div class="file-upload-area mt-2" style="display: none;"><div class="file-list"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card" data-section-id="imaging">
+            <h2 class="section-title">II. Imaging Studies</h2>
+            <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="imagingModality" class="form-label">Modality</label>
+                        <select id="imagingModality" class="form-select"><option value="">Select Modality</option><option value="xray">X-Ray</option><option value="ultrasound">Ultrasound</option><option value="ct">CT Scan</option><option value="mri">MRI</option><option value="pet">PET Scan</option></select>
+                    </div>
+                    <div id="imagingRegionContainer" style="display:none;">
+                        <label for="imagingRegion" class="form-label">Region</label>
+                        <select id="imagingRegion" class="form-select" multiple></select>
+                    </div>
+                    <div id="imagingViewContainer" style="display:none;">
+                        <label for="imagingView" class="form-label">View</label>
+                        <select id="imagingView" class="form-select" multiple></select>
+                    </div>
+                </div>
+                 <div class="mt-4 flex flex-wrap gap-2">
+                    <button class="btn btn-secondary btn-sm order-linked-btn" data-type="radiology_clinics">Order from Linked Radiology Clinic</button>
+                    <button class="btn btn-secondary btn-sm order-unlinked-btn" data-type="radiology_clinics">Order from Non-Linked Clinic</button>
+                    <button class="btn btn-secondary btn-sm attach-btn">Attach Investigation</button>
+                </div>
+                <div class="file-upload-area mt-2" style="display: none;"><div class="file-list"></div></div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">III. Other Specialized Investigations</h2>
+            <div class="space-y-8">
+                <div data-specialty-section="echocardiography">
+                    <h3 class="subsection-title">Echocardiography</h3>
+                    <select class="specialty-test-select" multiple placeholder="Select Echo study..."></select>
+                    <div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-secondary btn-sm order-linked-btn" data-type="echocardiography_clinics">Order from Linked Echo Clinic</button><button class="btn btn-secondary btn-sm order-unlinked-btn" data-type="echocardiography_clinics">Order from Non-Linked Clinic</button><button class="btn btn-secondary btn-sm attach-btn">Attach Investigation</button></div><div class="file-upload-area mt-2" style="display: none;"><div class="file-list"></div></div>
+                </div>
+                <div data-specialty-section="neurophysiology">
+                    <h3 class="subsection-title">Neurophysiology</h3>
+                    <select class="specialty-test-select" multiple placeholder="Select Neurophysiology study..."></select>
+                    <div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-secondary btn-sm order-linked-btn" data-type="neurophysiology_clinics">Order from Linked Clinic</button><button class="btn btn-secondary btn-sm order-unlinked-btn" data-type="neurophysiology_clinics">Order from Non-Linked Clinic</button><button class="btn btn-secondary btn-sm attach-btn">Attach Investigation</button></div><div class="file-upload-area mt-2" style="display: none;"><div class="file-list"></div></div>
+                </div>
+                
+                <div data-specialty-section="audiometry" style="display: none;">
+                    <h3 class="subsection-title">Audiometry</h3>
+                    <select class="specialty-test-select" multiple placeholder="Select Audiometry study..."></select>
+                    <div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-secondary btn-sm order-linked-btn" data-type="audiometry_clinics">Order from Linked Clinic</button><button class="btn btn-secondary btn-sm order-unlinked-btn" data-type="audiometry_clinics">Order from Non-Linked Clinic</button><button class="btn btn-secondary btn-sm attach-btn">Attach Investigation</button></div><div class="file-upload-area mt-2" style="display: none;"><div class="file-list"></div></div>
+                </div>
+
+                <div data-specialty-section="optometry" style="display: none;">
+                    <h3 class="subsection-title">Optometry</h3>
+                    <select class="specialty-test-select" multiple placeholder="Select Optometry study..."></select>
+                    <div class="mt-4 flex flex-wrap gap-2"><button class="btn btn-secondary btn-sm order-linked-btn" data-type="optometry_clinics">Order from Linked Clinic</button><button class="btn btn-secondary btn-sm order-unlinked-btn" data-type="optometry_clinics">Order from Non-Linked Clinic</button><button class="btn btn-secondary btn-sm attach-btn">Attach Investigation</button></div><div class="file-upload-area mt-2" style="display: none;"><div class="file-list"></div></div>
+                </div>
+
+                <div data-specialty-section="ecg">
+                    <h3 class="subsection-title">ECG Request</h3>
+                    <p class="text-sm text-gray-600 mb-2">Send a request for an ECG to be performed or attach a result.</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button class="btn btn-secondary btn-sm order-linked-btn" data-type="nurse_clinics">Send Request to Linked Nurse</button>
+                        <button class="btn btn-secondary btn-sm order-unlinked-btn" data-type="nurse_clinics">Send Request to Non-linked Nurse</button>
+                        <button class="btn btn-secondary btn-sm attach-btn">Attach ECG Result</button>
+                    </div>
+                    <div class="file-upload-area mt-2" style="display: none;"><div class="file-list"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">General Investigation Notes</h2>
+            <div>
+                <label for="generalInvestigationNotes" class="form-label">Additional Notes on Investigations</label>
+                <textarea id="generalInvestigationNotes" class="form-textarea" rows="4" placeholder="Enter any other relevant investigation findings or comments..."></textarea>
+            </div>
+        </div>
+
+        <div class="mt-8 flex flex-col sm:flex-row justify-between gap-4">
+            <button id="backButton" class="btn btn-secondary">Back to Physical Examination</button>
+            <button id="nextButton" class="btn btn-primary">Next: Treatment</button>
+        </div>
+         <div class="mt-4 flex justify-center">
+             <button id="backToDashboardButton" class="btn btn-secondary">Back to Dashboard</button>
+        </div>
+    </div>
+
+    <div id="orderModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal-button">&times;</button>
+            <h3 id="modalTitle" class="text-2xl font-bold text-gray-800 mb-4 text-center">Order Investigation</h3>
+            <div class="form-group">
+                <label for="facilitySearch" class="form-label">Select a Facility</label>
+                <select id="facilitySearch" placeholder="Select a facility..."></select>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="btn btn-secondary close-modal-button">Cancel</button>
+                <button id="sendOrderBtn" type="button" class="btn btn-primary">Send Order</button>
+            </div>
+        </div>
+    </div>
+
+   <div id="attachFileModal" class="modal-overlay">
+    <div class="modal-content">
+        <button class="close-modal-button">&times;</button>
+        <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center">Attach Investigation File</h3>
+
+        <div id="attachSectionGroup" class="form-group">
+            <label for="attachFileSectionSelect" class="form-label">1. Investigation Section</label>
+            <select id="attachFileSectionSelect" placeholder="Select a section..."></select>
+        </div>
+
+        <div id="attachTestGroup" class="form-group" style="display: none;">
+            <label for="attachFileTestSelect" class="form-label">2. Specific Investigation</label>
+            <select id="attachFileTestSelect" placeholder="Select the specific test..."></select>
+        </div>
+
+        <div id="attachDateGroup" class="form-group" style="display: none;">
+            <label for="attachFileDateInput" class="form-label">3. Date of Investigation</label>
+            <input type="date" id="attachFileDateInput" class="form-input">
+        </div>
+
+        <div class="modal-buttons">
+            <button type="button" class="btn btn-secondary close-modal-button">Cancel</button>
+            <button id="finalAttachBtn" type="button" class="btn btn-primary">Choose File & Attach</button>
+        </div>
+    </div>
+</div>
+
+    <script type="module">
+        // Firebase imports for communication with the backend
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, query, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- Global Configuration & Variables ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDMIZubC87_z2tCnURoqQIJjCWPPdWFdnk",
+            authDomain: "pcms-e1162.firebaseapp.com",
+            projectId: "pcms-e1162",
+            storageBucket: "pcms-e1162.firebasestorage.app",
+            messagingSenderId: "383068543378",
+            appId: "1:383068543378:web:00c7d2bf95f9ded63a494b",
+            measurementId: "G-4C1P3GB6PP"
+        };
+        
+        let app, db, auth;
+        let doctorUserId = null, doctorName = null, fromDashboard = null, patientId = null;
+        let linkedInstitutions = [];
+        const patientDataSessionKey = 'currentPatientRecord';
+        let clinicalRecordReady = false;
+        let tempAttachedFiles = {}; 
+        let currentAttachContext = null; // Stores info about which attach button was clicked
+
+/**
+ * Formats a date string (like '2025-07-16') into 'DD-Mon-YYYY' format (e.g., '16-Jul-2025').
+ * @param {string} dateString - The date string from the date input.
+ * @returns {string} The formatted date.
+ */
+function formatDateForFilename(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = date.toLocaleString('default', { month: 'short' });
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+}
+
+/**
+ * Populates the specific investigation dropdown based on the selected section.
+ * @param {string} sectionId - The ID of the section (e.g., 'hematology').
+ */
+function populateSpecificTestSelect(sectionId) {
+    const testSelect = document.getElementById('attachFileTestSelect').tomselect;
+    testSelect.clear();
+    testSelect.clearOptions();
+
+    let options = [];
+    if (labTests[sectionId]) {
+        options = labTests[sectionId].map(test => ({ value: test, text: test }));
+    } else if (specialtyTests[sectionId]) {
+        options = specialtyTests[sectionId].map(test => ({ value: test, text: test }));
+    } else if (sectionId === 'imaging') {
+        // For imaging, we can list the modalities as the "test"
+        options = Object.keys(imagingData).map(modality => ({ value: modality.toUpperCase(), text: modality.toUpperCase() }));
+    }
+
+    testSelect.addOptions(options);
+    document.getElementById('attachTestGroup').style.display = options.length > 0 ? 'block' : 'none';
+}
+
+/**
+ * Configures and shows the attachment modal based on context.
+ * @param {string|null} sectionId - The section ID if a specific button was clicked, otherwise null.
+ */
+function configureAttachModal(sectionId = null) {
+    const modal = document.getElementById('attachFileModal');
+    const sectionGroup = document.getElementById('attachSectionGroup');
+    const testGroup = document.getElementById('attachTestGroup');
+    const dateGroup = document.getElementById('attachDateGroup');
+    
+    // Reset modal state
+    document.getElementById('attachFileTestSelect').tomselect.clear();
+    document.getElementById('attachFileDateInput').value = new Date().toISOString().split('T')[0]; // Default to today
+    
+    currentAttachContext = { sectionId: sectionId };
+
+    if (sectionId) {
+        // A specific section's "Attach" button was clicked
+        sectionGroup.style.display = 'none'; // Hide section selector
+        document.getElementById('attachFileSectionSelect').tomselect.clear();
+        populateSpecificTestSelect(sectionId);
+        testGroup.style.display = 'block';
+        dateGroup.style.display = 'block';
+    } else {
+        // The general "Attach" button was clicked
+        sectionGroup.style.display = 'block';
+        testGroup.style.display = 'none';
+        dateGroup.style.display = 'none';
+        document.getElementById('attachFileSectionSelect').tomselect.clear();
+    }
+    modal.classList.add('active');
+}
+
+        // --- Data Definitions ---
+        const labTests = {
+            hematology: ['CBC', 'ESR', 'CRP', 'Blood Film', 'Reticulocyte Count', 'PT', 'aPTT', 'INR', 'D-dimer', 'Mixing study', 'Hb electrophoresis', 'Bone Marrow Aspirate', 'Bone Marrow Biopsy', 'Factor II assay', 'Factor III assay', 'Factor V assay', 'Factor VII assay', 'Factor VIII assay', 'Factor IX assay', 'Factor X assay', 'Factor XI assay', 'Factor XII assay', 'Factor XIII assay', 'Iron studies (Iron, TIBC, Ferritin, Transferrin saturation)', 'Vitamin B12 level', 'Folate level', 'Methylmalonic acid', 'Homocysteine', 'Lactate dehydrogenase (LDH)', 'Haptoglobin', 'Indirect bilirubin', 'Direct Coombs test (Direct antiglobulin)', 'Indirect Coombs test', 'G6PD assay', 'Pyruvate kinase assay', 'Platelet aggregation test', 'PFA-100 (Platelet function analyzer)', 'Serum protein electrophoresis (SPEP)', 'Immunofixation electrophoresis (IFE)', 'Serum free light chains (kappa/lambda)', 'Beta-2 microglobulin', 'Cold agglutinin test', 'Cryoglobulins'],
+            biochemistry: ['Fasting blood glucose', 'Random blood glucose', 'Postprandial blood glucose (2-hour)', 'Oral glucose tolerance test (OGTT)', 'HbA1c (Glycated hemoglobin)', 'Serum insulin', 'C-peptide', 'Fructosamine', 'Lipid profile (complete)', 'Total cholesterol', 'HDL cholesterol', 'LDL cholesterol', 'Triglycerides', 'VLDL cholesterol', 'Non-HDL cholesterol', 'Apolipoprotein A1', 'Apolipoprotein B', 'Lipoprotein (a)', 'Liver function tests (LFTs)', 'Serum total bilirubin', 'Direct bilirubin', 'Indirect bilirubin', 'Alanine aminotransferase (ALT)', 'Aspartate aminotransferase (AST)', 'Alkaline phosphatase (ALP)', 'Gamma-glutamyl transferase (GGT)', 'Serum albumin', 'Serum total protein', 'Albumin:Globulin ratio', 'Prothrombin time (as liver synthetic function)', 'Ammonia', 'Kidney function tests (KFTs)', 'Blood urea', 'Serum creatinine', 'Urea:Creatinine ratio', 'Estimated GFR (eGFR)', 'Uric acid', 'Electrolytes panel', 'Sodium', 'Potassium', 'Chloride', 'Calcium (total)', 'Ionized calcium', 'Phosphorus (inorganic)', 'Magnesium', 'Bicarbonate (HCO3)', 'Serum osmolality', 'Anion gap', 'Arterial blood gases (ABG)', 'Venous blood gases (VBG)', 'Lactate', 'CK (creatine kinase) total', 'CK-MB', 'Troponin I', 'Troponin T', 'Myoglobin', 'BNP (B-type natriuretic peptide)', 'NT-proBNP', 'Amylase', 'Lipase', 'Pancreatic elastase', 'Serum cholinesterase', 'Angiotensin-converting enzyme (ACE)', 'Zinc', 'Copper', 'Ceruloplasmin'],
+            hormonal: ['Prolactin', 'Growth hormone (GH)', 'Insulin-like growth factor 1 (IGF-1)', 'Adrenocorticotropic hormone (ACTH)', 'Thyroid-stimulating hormone (TSH)', 'Luteinizing hormone (LH)', 'Follicle-stimulating hormone (FSH)', 'Melanocyte-stimulating hormone (MSH)', 'Free T3 (FT3)', 'Free T4 (FT4)', 'Total T3', 'Total T4', 'Reverse T3', 'Thyroglobulin', 'Thyroglobulin antibody', 'Thyroid peroxidase antibody (anti-TPO)', 'Thyroid-stimulating immunoglobulin (TSI)', 'Cortisol (AM)', 'Cortisol (PM)', '24-hour urinary cortisol', 'ACTH stimulation test (Synacthen test)', 'Dexamethasone suppression test', 'Aldosterone', 'Plasma renin activity', 'Aldosterone:Renin ratio', 'Dehydroepiandrosterone sulfate (DHEAS)', '17-hydroxyprogesterone', 'Metanephrines (plasma)', 'Normetanephrines (plasma)', '24-hour urinary metanephrines', '24-hour urinary catecholamines', 'Metyrapone stimulation test', 'CRH stimulation test', 'Estradiol (E2)', 'Progesterone', 'Anti-Müllerian hormone (AMH)', 'Beta-hCG (quantitative)', 'Total testosterone', 'Free testosterone', 'Sex hormone–binding globulin (SHBG)', 'Inhibin B', 'Parathyroid hormone (PTH)', 'Vitamin D (25-hydroxy)', 'Vitamin D (1,25-dihydroxy)', 'Calcitonin', 'Fibroblast growth factor 23 (FGF23)', 'Serum insulin', 'C-peptide', 'Proinsulin', 'Glucagon', 'Growth hormone stimulation test', 'Growth hormone suppression test', 'GnRH stimulation test', 'TRH stimulation test', 'Clomiphene challenge test', 'hCG stimulation test', 'Glucose-stimulated insulin release test', 'Fasting insulin to glucose ratio'],
+            immunology: ['Antinuclear antibody (ANA)', 'Anti-double stranded DNA (anti-dsDNA)', 'Anti-histone antibody', 'Anti-Smith antibody (anti-Sm)', 'Anti-RNP antibody', 'Anti-Ro (SSA) antibody', 'Anti-La (SSB) antibody', 'Anti-centromere antibody', 'Anti-Scl-70 antibody (anti-topoisomerase I)', 'Anti-Jo-1 antibody', 'Anti-Mi-2 antibody', 'Anti-MDA5 antibody', 'Anti-TIF1-γ antibody', 'Anti-SRP antibody', 'Anti-PL-7 antibody', 'Anti-PL-12 antibody', 'Anti-PM/Scl antibody', 'Anti-neutrophil cytoplasmic antibodies (ANCA)', 'c-ANCA (anti-PR3)', 'p-ANCA (anti-MPO)', 'Anti-glomerular basement membrane (anti-GBM) antibody', 'Anti-phospholipid antibodies', 'Lupus anticoagulant', 'Anticardiolipin antibody (IgG, IgM)', 'Beta-2 glycoprotein 1 antibody (IgG, IgM)', 'Rheumatoid factor (RF)', 'Anti-cyclic citrullinated peptide (anti-CCP) antibody', 'Cryoglobulins', 'Complement C3', 'Complement C4', 'CH50 (total complement activity)', 'C1q immune complex', 'C1 esterase inhibitor level', 'C1 esterase inhibitor function', 'Serum immunoglobulin A (IgA)', 'Serum immunoglobulin G (IgG)', 'Serum immunoglobulin M (IgM)', 'Serum immunoglobulin E (IgE)', 'Serum immunoglobulin D (IgD)', 'Quantitative immunoglobulin panel (IgG, IgA, IgM)', 'Serum free light chains (kappa/lambda)', 'Immunofixation electrophoresis (IFE)', 'Serum protein electrophoresis (SPEP)', 'Total IgE level', 'Allergen-specific IgE testing (RAST / ImmunoCAP)', 'Tryptase level', 'Histamine level', 'Anti-insulin antibody', 'Islet cell antibody (ICA)', 'Anti-GAD antibody', 'Anti-IA-2 antibody', 'HLA-B27 typing', 'HLA-DR typing', 'HLA-DQ typing', 'Lymphocyte subset panel (CD3, CD4, CD8, CD19, NK cells)', 'Flow cytometry for immunodeficiency', 'Delayed-type hypersensitivity (DTH) skin testing', 'Tuberculin skin test (TST)', 'Interferon-gamma release assay (IGRA)'],
+            microbiology: ['Blood culture (aerobic and anaerobic)', 'Urine culture and sensitivity', 'Stool culture', 'Sputum culture and Gram stain', 'CSF culture', 'Wound/pus culture', 'Throat swab culture', 'High vaginal swab (HVS) culture', 'Endocervical swab culture', 'Seminal fluid culture', 'Mycobacterial culture (TB culture)', 'Fungal culture', 'Anaerobic culture', 'AFB smear (acid-fast bacilli)', 'Ziehl-Neelsen stain (AFB stain)', 'GeneXpert MTB/RIF (TB PCR)', 'TB PCR (other than GeneXpert)', 'TB IGRA (Interferon Gamma Release Assay)', 'Tuberculin skin test (TST)', 'Malaria thick and thin blood film', 'Malaria antigen test', 'Dengue NS1 antigen', 'Dengue IgM', 'Dengue IgG', 'Hepatitis B surface antigen (HBsAg)', 'Hepatitis B surface antibody (anti-HBs)', 'Hepatitis B core antibody total (anti-HBc total)', 'Hepatitis B core IgM (anti-HBc IgM)', 'Hepatitis B e antigen (HBeAg)', 'Hepatitis B e antibody (anti-HBe)', 'Hepatitis B DNA PCR (viral load)', 'Hepatitis C antibody (anti-HCV)', 'Hepatitis C RNA PCR (viral load)', 'Hepatitis A IgM', 'Hepatitis A total antibody (IgM + IgG)', 'Hepatitis E IgM', 'Hepatitis E total antibody (IgM + IgG)', 'HIV 1 & 2 antibody and p24 antigen (4th generation)', 'HIV 1/2 antibody rapid test', 'HIV RNA PCR (viral load)', 'HTLV-1/2 antibody', 'Syphilis VDRL', 'Syphilis RPR', 'Treponema pallidum particle agglutination (TPPA)', 'Treponema pallidum antibody (TPAb)', 'Chlamydia trachomatis PCR', 'Neisseria gonorrhoeae PCR', 'Chlamydia/GC dual NAAT (PCR)', 'HSV 1/2 IgM', 'HSV 1/2 IgG', 'HSV PCR', 'CMV IgM', 'CMV IgG', 'CMV DNA PCR', 'EBV IgM (VCA)', 'EBV IgG (VCA)', 'EBV nuclear antibody (EBNA)', 'EBV PCR', 'Rubella IgM', 'Rubella IgG', 'Measles IgM', 'Measles IgG', 'Toxoplasma IgM', 'Toxoplasma IgG', 'Varicella-zoster IgM', 'Varicella-zoster IgG', 'Mumps IgM', 'Mumps IgG', 'Brucella IgM', 'Brucella IgG', 'Brucella agglutination test (SAT)', 'Leptospira IgM', 'Leptospira PCR', 'Salmonella typhi IgM', 'Salmonella typhi IgG', 'Widal test', 'COVID-19 PCR (SARS-CoV-2)', 'COVID-19 antigen test', 'COVID-19 IgM', 'COVID-19 IgG', 'Influenza A/B PCR', 'Influenza antigen test', 'RSV antigen test', 'RSV PCR', 'H. pylori stool antigen', 'H. pylori IgG', 'H. pylori urea breath test', 'Clostridium difficile toxin A/B', 'Clostridium difficile PCR', 'Cryptosporidium antigen', 'Giardia antigen', 'Entamoeba histolytica antigen', 'Candida antigen', 'Aspergillus galactomannan', 'Histoplasma antigen', 'Blood parasite smear (other than malaria)', 'Toxocara IgG', 'Echinococcus IgG', 'Schistosoma antibody', 'Strongyloides antibody', 'Trichinella antibody'],
+            toxicology: ['Blood lead level', 'Blood mercury level', 'Blood arsenic level', 'Blood cadmium level', 'Blood aluminum level', 'Blood thallium level', 'Blood barium level', 'Blood selenium level', 'Urinary lead level (24-hour)', 'Urinary mercury level (24-hour)', 'Urinary arsenic level (24-hour)', 'Urinary cadmium level (24-hour)', 'Urinary thallium level', 'Urinary barium level', 'Urinary selenium level', 'Urinary chromium level', 'Urinary nickel level', 'Urinary fluoride level', 'Carbon monoxide (Carboxyhemoglobin %)', 'Cyanide level (blood)', 'Ethanol level (blood)', 'Methanol level (blood)', 'Isopropanol level (blood)', 'Ethylene glycol level (blood)', 'Acetaminophen (paracetamol) level', 'Salicylate (aspirin) level', 'Toxic alcohol screen (combined: methanol, isopropanol, ethylene glycol)', 'Urine drug screen (immunoassay)', 'Urine cocaine metabolite (benzoylecgonine)', 'Urine cannabis (THC)', 'Urine opioids (morphine, codeine, heroin)', 'Urine amphetamines', 'Urine barbiturates', 'Urine benzodiazepines', 'Urine methadone', 'Urine PCP (phencyclidine)', 'Urine tricyclic antidepressants', 'Urine synthetic cannabinoids (K2, Spice)', 'Hair toxicology panel', 'Nail toxicology panel', 'Heavy metals panel (blood)', 'Heavy metals panel (urine)', 'Comprehensive drug of abuse panel (blood or urine)'],
+            molecular: ['Karyotyping (conventional cytogenetics)', 'FISH (fluorescence in situ hybridization)', 'Chromosomal microarray (CMA)', 'Whole exome sequencing (WES)', 'Whole genome sequencing (WGS)', 'Targeted gene panel sequencing', 'Next-generation sequencing (NGS) panel', 'Mitochondrial DNA analysis', 'Y-chromosome microdeletion analysis', 'SNP microarray', 'Comparative genomic hybridization (CGH)', 'Trisomy 21 (Down syndrome) analysis', 'Trisomy 18 (Edwards syndrome) analysis', 'Trisomy 13 (Patau syndrome) analysis', 'Fragile X testing (FMR1 CGG repeat analysis)', 'Spinal muscular atrophy (SMA) SMN1 deletion analysis)', 'Cystic fibrosis (CFTR mutation panel)', 'Thalassemia mutation analysis (alpha/beta)', 'Sickle cell mutation (HbS gene test)', 'Factor V Leiden mutation', 'Prothrombin gene mutation (F2 G20210A)', 'MTHFR mutation (C677T, A1298C)', 'BRCA1 gene mutation', 'BRCA2 gene mutation', 'Lynch syndrome panel (MLH1, MSH2, MSH6, PMS2, EPCAM)', 'TP53 mutation analysis', 'BCR-ABL1 fusion (Philadelphia chromosome)', 'JAK2 V617F mutation', 'CALR mutation', 'MPL mutation', 'FLT3 mutation (ITD/TKD)', 'NPM1 mutation', 'CEBPA mutation', 'IDH1 mutation', 'IDH2 mutation', 'DNMT3A mutation', 'SF3B1 mutation', 'KIT mutation', 'NRAS/KRAS mutation panel', 'EGFR mutation (lung cancer)', 'ALK rearrangement (FISH or PCR)', 'ROS1 rearrangement', 'RET fusion', 'BRAF V600E mutation', 'HER2 (ERBB2) gene amplification', 'PD-L1 expression (IHC or PCR)', 'Microsatellite instability (MSI)', 'Mismatch repair (MMR) gene testing', 'NTRK fusion testing', 'T-cell receptor (TCR) gene rearrangement', 'Immunoglobulin heavy chain (IGH) rearrangement', 'HLA typing (HLA-A, B, C, DR, DQ)', 'HLA-B27 typing', 'HLA-B57:01 typing (for abacavir hypersensitivity)', 'NAT2 genotype (isoniazid metabolism)', 'UGT1A1 genotyping (irinotecan metabolism)', 'CYP2C19 genotyping (clopidogrel metabolism)', 'CYP2D6 genotyping', 'TPMT genotyping (thiopurine metabolism)', 'DPYD genotyping (fluoropyrimidine metabolism)', 'APOE genotyping (Alzheimer’s risk)', 'CCR5 delta32 mutation (HIV resistance)', 'Tay-Sachs disease gene analysis', 'Gaucher disease gene analysis', 'Phenylketonuria (PKU) gene test', 'Duchenne muscular dystrophy (DMD gene testing)', 'Neurofibromatosis type 1 (NF1 gene testing)', 'Neurofibromatosis type 2 (NF2 gene testing)', 'Tuberous sclerosis (TSC1, TSC2 gene testing)', 'RET proto-oncogene testing (MEN 2)', 'Multiple endocrine neoplasia type 1 (MEN1 gene testing)', 'Prader-Willi / Angelman syndrome (methylation analysis)', 'Chromosome Y microdeletion (AZFa, AZFb, AZFc)', 'Non-invasive prenatal testing (NIPT)', 'Prenatal aneuploidy screening (by cell-free fetal DNA)'],
+            histopathology: ['Tissue biopsy (formalin-fixed, paraffin-embedded)', 'Excisional biopsy', 'Incisional biopsy', 'Endoscopic biopsy', 'Needle core biopsy (e.g., liver, prostate, kidney)', 'Punch biopsy (skin)', 'Bone marrow biopsy (for histology)', 'Frozen section biopsy', 'Cervical punch biopsy', 'Endometrial biopsy', 'Lymph node biopsy', 'Papanicolaou (Pap) smear', 'Conventional Pap smear', 'Liquid-based cytology (ThinPrep, SurePath)', 'Endocervical brush cytology', 'Endometrial brushing cytology', 'Urine cytology', 'Sputum cytology', 'Pleural fluid cytology', 'Peritoneal fluid cytology', 'CSF cytology', 'Bronchial brushing cytology', 'Fine-needle aspiration cytology (FNAC)', 'Breast FNAC', 'Thyroid FNAC', 'Lymph node FNAC', 'Salivary gland FNAC', 'Liver FNAC', 'Histological examination with H&E stain', 'Special stains (e.g., PAS, Ziehl-Neelsen, GMS, Masson trichrome)', 'Congo red stain (for amyloid)', 'Oil Red O stain (for fat)', 'Reticulin stain (for fibrosis)', 'Iron stain (Prussian blue)', 'Silver stain', 'Immunohistochemistry (IHC panel)', 'ER/PR receptor staining', 'HER2/neu IHC', 'Ki-67 proliferation index', 'p53 IHC', 'ALK IHC', 'CD markers panel (e.g., CD3, CD20, CD117)', 'Synaptophysin IHC', 'Chromogranin IHC', 'Cytokeratin (AE1/AE3) IHC', 'Vimentin IHC', 'Desmin IHC', 'P63/P40 IHC', 'In-situ hybridization (ISH)', 'Fluorescence in situ hybridization (FISH) – tissue sections', 'Molecular pathology report (from FFPE tissue)', 'Histological tumor grading (e.g., Gleason score, Nottingham grade)', 'Pathological tumor staging (pTNM classification)', 'Margin status assessment', 'Lymphovascular invasion assessment', 'Perineural invasion assessment', 'Mitotic count', 'Tumor necrosis evaluation'],
+            flow_cytometry: ["CD markers panel", "T-cell receptor (TCR) gene rearrangement", "Immunoglobulin heavy chain (IGH) rearrangement", "Lymphocyte subset panel (CD3, CD4, CD8, CD19, NK cells)", "Flow cytometry for immunodeficiency"],
+            tumor_markers: ['PSA (Prostate-Specific Antigen)', 'CEA (Carcinoembryonic Antigen)', 'AFP (Alpha-Fetoprotein)', 'CA 19-9', 'CA-125', 'CA 15-3', 'hCG'],
+        };
+        const imagingData = {
+            xray: { regions: ['Chest', 'Abdomen', 'Spine', 'Skull', 'Pelvis', 'Extremities'], views: ['AP', 'PA', 'Lateral', 'Oblique'] },
+            ultrasound: { regions: ['Abdomen', 'Pelvis', 'Renal', 'Thyroid', 'Breast', 'Scrotal', 'Doppler (Vascular)', 'Echocardiography (TTE/TEE)'], views: ['Standard Views'] },
+            ct: { regions: ['Head', 'Neck', 'Chest', 'Abdomen/Pelvis', 'Spine', 'Extremities', 'CT Angiography (CTA)'], views: ['Axial', 'Coronal', 'Sagittal', 'With Contrast', 'Without Contrast'] },
+            mri: { regions: ['Brain', 'Spine', 'Joints (Knee, Shoulder, etc.)', 'Abdomen', 'Pelvis', 'MR Angiography (MRA)'], views: ['T1', 'T2', 'FLAIR', 'DWI', 'With Gadolinium'] },
+            pet: { regions: ['Whole Body', 'Brain'], views: ['FDG-PET'] }
+        };
+        const specialtyTests = {
+            echocardiography: ['Transthoracic Echocardiogram (TTE)', 'Transesophageal Echocardiogram (TEE)', 'Stress Echocardiogram'],
+            neurophysiology: ['EEG (Electroencephalogram)', 'EMG (Electromyography)', 'NCS (Nerve Conduction Studies)', 'Evoked Potentials (VEP, BAER, SSEP)'],
+            audiometry: ['Pure Tone Audiometry', 'Tympanometry', 'Speech Audiometry'],
+            optometry: ['Visual Acuity Test', 'Tonometry (IOP Measurement)', 'Fundus Photography', 'Optical Coherence Tomography (OCT)'],
+            ecg: ['Standard 12-lead ECG']
+        };
+        let allTestsForGeneralSearch = [];
+
+        // --- Initialization & Event Listeners ---
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeFirebase();
+            populateAllTests();
+            initializeAllTomSelects();
+            setupEventListeners();
+        });
+        
+        async function initializeFirebase() {
+            try {
+                app = initializeApp(firebaseConfig); 
+                db = getFirestore(app); 
+                auth = getAuth(app);
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) { 
+                        doctorUserId = user.uid; 
+                        try {
+                            await loadDoctorData();
+                            await loadInitialDataFromSession();
+                            clinicalRecordReady = true;
+                        } catch (error) {
+                            alert('The patient session could not be verified. Return to the dashboard.');
+                            clinicalRecordReady = false;
+                        }
+                    } else { 
+                        window.location.href = 'index.html'; 
+                    }
+                });
+            } catch(e) { console.error("Firebase Init Error", e); }
+        }
+        
+        function populateAllTests() {
+            allTestsForGeneralSearch = [];
+            for (const category in labTests) {
+                labTests[category].forEach(test => allTestsForGeneralSearch.push({ value: `${category}#${test}`, text: test, group: category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), type: 'labs', section: category }));
+            }
+            for (const modality in imagingData) {
+                imagingData[modality].regions.forEach(region => allTestsForGeneralSearch.push({ value: `imaging#${modality}#${region}`, text: `${modality.toUpperCase()} - ${region}`, group: 'Imaging', type: 'radiology_clinics', section: 'imaging', modality: modality, region: region }));
+            }
+            for (const specialty in specialtyTests) {
+                 specialtyTests[specialty].forEach(test => allTestsForGeneralSearch.push({ value: `${specialty}#${test}`, text: test, group: specialty.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()), type: `${specialty}_clinics`, section: specialty }));
+            }
+            allTestsForGeneralSearch.push({ value: 'ecg#ECG Request', text: 'ECG Request', group: 'ECG', type: 'nurse_clinics', section: 'ecg' });
+        }
+
+        function initializeAllTomSelects() {
+            for (const section in labTests) {
+                const select = document.querySelector(`[data-lab-section="${section}"] .lab-test-select`);
+                if (select) createTomSelect(select, { options: labTests[section].map(t => ({value: t, text: t})) });
+            }
+            for (const section in specialtyTests) {
+                if (section === 'ecg') continue;
+                const select = document.querySelector(`[data-specialty-section="${section}"] .specialty-test-select`);
+                if (select) createTomSelect(select, { options: specialtyTests[section].map(t => ({value: t, text: t})) });
+            }
+            createTomSelect(document.getElementById('imagingModality'), {create: false});
+            createTomSelect(document.getElementById('imagingRegion'), {create: false});
+            createTomSelect(document.getElementById('imagingView'), {create: false});
+
+            createTomSelect(document.getElementById('generalSearchSelect'), {
+                options: allTestsForGeneralSearch,
+                optgroupField: 'group',
+                labelField: 'text',
+                searchField: ['text', 'group'],
+                onItemAdd: handleGeneralSearchAdd,
+                onItemRemove: handleGeneralSearchRemove,
+                onChange: handleGeneralSearchChange
+            });
+            
+            const sectionOptions = [
+                ...Object.keys(labTests).map(k => ({ value: k, text: k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) })),
+                { value: 'imaging', text: 'Imaging' },
+                ...Object.keys(specialtyTests).map(k => ({ value: k, text: k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }))
+            ];
+            createTomSelect(document.getElementById('attachFileSectionSelect'), { options: sectionOptions, create: false });
+            createTomSelect(document.getElementById('attachFileTestSelect'), { create: true });
+        }
+        
+        let isSyncing = false;
+
+        function handleGeneralSearchAdd(value, $item) {
+            if (isSyncing) return;
+            isSyncing = true;
+
+            const testData = allTestsForGeneralSearch.find(t => t.value === value);
+            if (!testData) { isSyncing = false; return; }
+
+            if (testData.section === 'imaging') {
+                const modalitySelect = document.getElementById('imagingModality').tomselect;
+                const regionSelect = document.getElementById('imagingRegion').tomselect;
+                modalitySelect.setValue(testData.modality, true);
+                setTimeout(() => regionSelect.addItem(testData.region), 50);
+            } else if (testData.section === 'ecg') {
+            } else {
+                const sectionEl = document.querySelector(`[data-lab-section="${testData.section}"], [data-specialty-section="${testData.section}"]`);
+                if (sectionEl) {
+                    const select = sectionEl.querySelector('.lab-test-select, .specialty-test-select');
+                    if (select && select.tomselect) {
+                        select.tomselect.addItem(testData.text);
+                        select.dispatchEvent(new Event('change'));
+                    }
+                }
+            }
+            isSyncing = false;
+        }
+        
+        function handleGeneralSearchRemove(value) {
+            if (isSyncing) return;
+            isSyncing = true;
+
+            const testData = allTestsForGeneralSearch.find(t => t.value === value);
+            if (!testData) { isSyncing = false; return; }
+
+            if (testData.section === 'imaging') {
+            } else if (testData.section === 'ecg') {
+            } else {
+                 const sectionEl = document.querySelector(`[data-lab-section="${testData.section}"], [data-specialty-section="${testData.section}"]`);
+                if (sectionEl) {
+                    const select = sectionEl.querySelector('.lab-test-select, .specialty-test-select');
+                    if (select && select.tomselect) {
+                        select.tomselect.removeItem(testData.text);
+                        select.dispatchEvent(new Event('change'));
+                    }
+                }
+            }
+            isSyncing = false;
+        }
+
+        function handleGeneralSearchChange(values) {
+            const generalHemNotes = document.querySelector('.general-hematology-notes');
+            const generalHistoNotes = document.querySelector('.general-histopathology-notes');
+
+            const needsHemNotes = values.some(v => v.startsWith('hematology#') && (v.includes('Blood Film') || v.includes('Bone Marrow')));
+            const needsHistoNotes = values.some(v => v.startsWith('histopathology#'));
+
+            generalHemNotes.style.display = needsHemNotes ? 'block' : 'none';
+            generalHistoNotes.style.display = needsHistoNotes ? 'block' : 'none';
+        }
+
+// START: Replacement for the setupEventListeners function
+function setupEventListeners() {
+    const urlParams = new URLSearchParams(window.location.search);
+    fromDashboard = urlParams.get('from'); 
+    patientId = urlParams.get('patientId');
+    if (!patientId || fromDashboard !== 'cardiology-dashboard.html') { 
+        document.querySelector('.max-w-7xl').innerHTML = `<div class="section-card text-center"><h2 class="text-2xl font-bold text-red-600">Error: Missing Information</h2><p class="mt-4 text-gray-700">Patient ID or return dashboard not specified.</p></div>`; 
+        return; 
+    }
+    
+    // Show/hide specialty sections based on originating dashboard
+    if (fromDashboard.includes('ent-dashboard')) {
+        document.querySelector('[data-specialty-section="audiometry"]').style.display = 'block';
+    }
+    if (fromDashboard.includes('ophthalmology-dashboard')) {
+        document.querySelector('[data-specialty-section="optometry"]').style.display = 'block';
+    }
+
+    // Main Page Buttons
+    document.getElementById('backButton').addEventListener('click', () => saveAndProceed(`cardiology-physicalexam.html?from=${fromDashboard}&patientId=${patientId}`));
+    document.getElementById('nextButton').addEventListener('click', () => {
+        const specialtyTreatmentMap = { 'cardiology-dashboard.html': 'cardiologytreatment.html' };
+        const destination = specialtyTreatmentMap[fromDashboard] || 'treatment.html';
+        saveAndProceed(`${destination}?from=${fromDashboard}&patientId=${patientId}`);
+    });
+    document.getElementById('backToDashboardButton').addEventListener('click', () => { if (confirm("Are you sure? Unsaved changes will be lost.")) { sessionStorage.removeItem(patientDataSessionKey); sessionStorage.removeItem('currentPatientRecordOwner'); window.location.href = fromDashboard; } });
+    
+    // Dynamic Selects
+    document.querySelectorAll('.lab-test-select').forEach(select => select.addEventListener('change', handleLabSelectionChange));
+    document.getElementById('imagingModality').addEventListener('change', handleImagingModalityChange);
+    document.getElementById('imagingRegion').addEventListener('change', handleImagingRegionChange);
+    
+    // Order Buttons
+    document.querySelectorAll('.order-linked-btn, .order-unlinked-btn').forEach(btn => btn.addEventListener('click', (event) => {
+        const type = event.target.dataset.type;
+        const isLinked = event.target.classList.contains('order-linked-btn');
+        isLinked ? handleOrderLinkedClick(event.target, type) : handleOrderUnlinkedClick(event.target, type);
+    }));
+    document.getElementById('generalOrderLinkedBtn').addEventListener('click', handleGeneralOrderClick);
+    document.getElementById('generalOrderUnlinkedBtn').addEventListener('click', handleGeneralOrderClick);
+
+    // --- NEW ATTACH LOGIC ---
+    // General Attach Button
+    document.getElementById('generalAttachBtn').addEventListener('click', () => configureAttachModal(null));
+    // Section-specific Attach Buttons
+    document.querySelectorAll('.attach-btn').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            const sectionEl = event.target.closest('[data-lab-section], [data-specialty-section], [data-section-id]');
+            const sectionId = sectionEl.dataset.labSection || sectionEl.dataset.specialtySection || sectionEl.dataset.sectionId;
+            configureAttachModal(sectionId);
+        });
+    });
+
+    // Modal Listeners
+    const attachModal = document.getElementById('attachFileModal');
+    attachModal.querySelectorAll('.close-modal-button').forEach(btn => btn.addEventListener('click', () => attachModal.classList.remove('active')));
+    
+    // Listener for section dropdown in modal
+    document.getElementById('attachFileSectionSelect').addEventListener('change', (event) => {
+        const sectionId = event.target.value;
+        if (sectionId) {
+            populateSpecificTestSelect(sectionId);
+            document.getElementById('dateGroup').style.display = 'block';
+        } else {
+            document.getElementById('attachTestGroup').style.display = 'none';
+            document.getElementById('dateGroup').style.display = 'none';
+        }
+    });
+
+    // Final Attach Button in Modal
+    document.getElementById('finalAttachBtn').addEventListener('click', () => {
+        const sectionSelect = document.getElementById('attachFileSectionSelect').tomselect;
+        const testSelect = document.getElementById('attachFileTestSelect').tomselect;
+        const dateInput = document.getElementById('attachFileDateInput');
+        
+        let sectionId = currentAttachContext.sectionId || sectionSelect.getValue();
+        let testName = testSelect.getValue();
+        let investigationDate = dateInput.value;
+
+        if (!sectionId || !testName || !investigationDate) {
+            alert("Please ensure Section, Specific Investigation, and Date are all selected.");
+            return;
+        }
+
+        // Programmatically create a file input to open the file dialog
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.multiple = false; // We process one file at a time for renaming
+        fileInput.onchange = (e) => {
+            if (e.target.files.length === 0) return;
+            const originalFile = e.target.files[0];
+            const extension = originalFile.name.split('.').pop();
+            const newFilename = `${testName.replace(/\s/g, '_')}-${formatDateForFilename(investigationDate)}.${extension}`;
+            
+            // Create a new File object with the new name
+            const newFile = new File([originalFile], newFilename, { type: originalFile.type });
+            
+            if (!tempAttachedFiles[sectionId]) {
+                tempAttachedFiles[sectionId] = [];
+            }
+            tempAttachedFiles[sectionId].push(newFile); 
+            
+            rerenderFileList(sectionId);
+            attachModal.classList.remove('active');
+        };
+        fileInput.click();
+    });
+
+    const orderModal = document.getElementById('orderModal');
+    orderModal.querySelectorAll('.close-modal-button').forEach(btn => btn.addEventListener('click', () => orderModal.classList.remove('active')));
+}
+// END: Replacement for the setupEventListeners function
+
+        function handleGeneralOrderClick(event) {
+            const generalSelect = document.getElementById('generalSearchSelect').tomselect;
+            const selectedItems = generalSelect.getValue();
+            if (selectedItems.length === 0) {
+                alert("Please select at least one investigation from the general search bar to order.");
+                return;
+            }
+            const firstItemData = allTestsForGeneralSearch.find(t => t.value === selectedItems[0]);
+            if (!firstItemData) return;
+
+            const type = firstItemData.type;
+            const isLinked = event.target.id === 'generalOrderLinkedBtn';
+            
+            if (isLinked) {
+                handleOrderLinkedClick(event.target, type);
+            } else {
+                handleOrderUnlinkedClick(event.target, type);
+            }
+        }
+
+        async function loadDoctorData() {
+            const docRef = doc(db, `artifacts/${appId}/public/data/doctors`, doctorUserId);
+            const docSnap = await getDoc(docRef);
+            if (!docSnap.exists() || docSnap.data().role !== 'doctor' || docSnap.data().deactivated || docSnap.data().speciality !== 'Cardiology') throw new Error('Doctor access denied');
+            if (docSnap.exists()) { 
+                const data = docSnap.data(); 
+                doctorName = data.name; 
+                linkedInstitutions = data.linkedInstitutions || []; 
+            }
+        }
+        
+        async function dataUrlToFile(dataUrl, fileName, fileType) {
+            const res = await fetch(dataUrl);
+            const blob = await res.blob();
+            return new File([blob], fileName, { type: fileType });
+        }
+
+        async function loadInitialDataFromSession() {
+            const sessionData = sessionStorage.getItem(patientDataSessionKey);
+            if (!sessionData || sessionStorage.getItem('currentPatientRecordOwner') !== doctorUserId) throw new Error('Invalid patient session');
+            const fullRecord = JSON.parse(sessionData);
+            if (fullRecord.patientId !== patientId) throw new Error('Patient context changed');
+            if (!fullRecord.investigation || typeof fullRecord.investigation !== 'object') return;
+            const data = fullRecord.investigation;
+            
+            if (data.uploadedFiles) {
+                for (const sectionId in data.uploadedFiles) {
+                    if (!tempAttachedFiles[sectionId]) tempAttachedFiles[sectionId] = [];
+                    const filesData = data.uploadedFiles[sectionId];
+                    for (const fileData of filesData) {
+                        if(fileData.data) {
+                             const fileObject = await dataUrlToFile(fileData.data, fileData.name, fileData.type);
+                             tempAttachedFiles[sectionId].push(fileObject);
+                        }
+                    }
+                }
+            }
+
+            for (const sectionName in data.labTests) {
+                const sectionEl = document.querySelector(`[data-lab-section="${sectionName}"]`);
+                if (sectionEl) {
+                    const select = sectionEl.querySelector('.lab-test-select');
+                    if (select && select.tomselect) {
+                        select.tomselect.setValue(data.labTests[sectionName].tests);
+                        select.dispatchEvent(new Event('change'));
+                    }
+                    const notes = sectionEl.querySelector('.clinical-notes-container textarea');
+                    if(notes) notes.value = data.labTests[sectionName].notes || '';
+                }
+            }
+            
+            const imagingModalitySelect = document.getElementById('imagingModality').tomselect;
+            imagingModalitySelect.setValue(data.imaging.modality);
+            
+            setTimeout(() => {
+                const imagingRegionSelect = document.getElementById('imagingRegion').tomselect;
+                if(data.imaging.region) imagingRegionSelect.setValue(data.imaging.region);
+                setTimeout(() => {
+                    const imagingViewSelect = document.getElementById('imagingView').tomselect;
+                    if(data.imaging.view) imagingViewSelect.setValue(data.imaging.view);
+                }, 50);
+            }, 50);
+
+            for (const sectionName in data.specialtyTests) {
+                const sectionEl = document.querySelector(`[data-specialty-section="${sectionName}"]`);
+                if (sectionEl) {
+                    const select = sectionEl.querySelector('.specialty-test-select');
+                    if (select && select.tomselect) {
+                        select.tomselect.setValue(data.specialtyTests[sectionName]);
+                    }
+                }
+            }
+            
+            document.getElementById('generalInvestigationNotes').value = data.generalNotes || '';
+            
+            for (const sectionId in tempAttachedFiles) {
+                rerenderFileList(sectionId);
+            }
+        }
+        
+        function handleLabSelectionChange(event) {
+            const select = event.target;
+            const parentSection = select.closest('[data-lab-section]');
+            const sectionName = parentSection.dataset.labSection;
+            
+            if (sectionName === 'hematology') {
+                const notesContainer = parentSection.querySelector('.hematology-notes');
+                const selectedValues = select.tomselect.getValue();
+                const needsNotes = selectedValues.some(val => val.includes('Blood Film') || val.includes('Bone Marrow'));
+                notesContainer.style.display = needsNotes ? 'block' : 'none';
+            } else if (sectionName === 'histopathology') {
+                const notesContainer = parentSection.querySelector('.histopathology-notes');
+                const selectedValues = select.tomselect.getValue();
+                notesContainer.style.display = selectedValues.length > 0 ? 'block' : 'none';
+            }
+        }
+
+        function handleImagingModalityChange(event) {
+            const modality = event.target.value;
+            const regionSelect = document.getElementById('imagingRegion').tomselect;
+            const viewSelect = document.getElementById('imagingView').tomselect;
+            const regionContainer = document.getElementById('imagingRegionContainer');
+            const viewContainer = document.getElementById('imagingViewContainer');
+            regionSelect.clear(); regionSelect.clearOptions(); viewSelect.clear(); viewSelect.clearOptions();
+            if (modality && imagingData[modality]) {
+                regionSelect.addOptions(imagingData[modality].regions.map(r => ({value: r, text: r})));
+                regionContainer.style.display = 'block'; viewContainer.style.display = 'none';
+            } else {
+                regionContainer.style.display = 'none'; viewContainer.style.display = 'none';
+            }
+        }
+
+        function handleImagingRegionChange() {
+            const modality = document.getElementById('imagingModality').value;
+            const viewSelect = document.getElementById('imagingView').tomselect;
+            const viewContainer = document.getElementById('imagingViewContainer');
+            viewSelect.clear(); viewSelect.clearOptions();
+            if (modality && imagingData[modality] && imagingData[modality].views) {
+                viewSelect.addOptions(imagingData[modality].views.map(v => ({value: v, text: v})));
+                viewContainer.style.display = 'block';
+            } else {
+                viewContainer.style.display = 'none';
+            }
+        }
+
+        function handleAttachClick(event) {
+            const sectionEl = event.target.closest('div[data-lab-section], div[data-specialty-section], .section-card');
+            const container = sectionEl.querySelector('.file-upload-area');
+            let fileInput = container.querySelector('.file-input');
+
+            if (!container.querySelector('.file-upload-container')) {
+                 container.style.display = 'block';
+                 container.innerHTML = `<div class="file-upload-container"><input type="file" multiple class="hidden file-input"><p>Click to browse or drag & drop files here</p></div><div class="file-list"></div>`;
+                 fileInput = container.querySelector('.file-input');
+                 container.querySelector('.file-upload-container').addEventListener('click', () => fileInput.click());
+                 fileInput.addEventListener('change', (e) => handleFileSelect(e, container));
+            }
+            fileInput.click();
+        }
+        
+        function renderFileItem(fileListDiv, fileName, fileSize, sectionId, fileIndex) {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.dataset.sectionId = sectionId;
+            fileItem.dataset.fileIndex = fileIndex;
+            fileItem.innerHTML = `
+                <span class="truncate w-3/5">${fileName}</span>
+                <span class="text-gray-500 text-sm">${(fileSize / 1024).toFixed(1)} KB</span>
+                <div class="flex items-center gap-2">
+                    <button type="button" class="file-action-btn view-file-btn" title="View file">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <button type="button" class="file-action-btn delete-file-btn" title="Delete file">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
+                    </button>
+                </div>
+            `;
+            fileListDiv.appendChild(fileItem);
+            fileItem.querySelector('.view-file-btn').addEventListener('click', handleViewFile);
+            fileItem.querySelector('.delete-file-btn').addEventListener('click', handleDeleteFile);
+        }
+
+        function handleFileSelect(event, container) {
+            const files = event.target.files;
+            const sectionEl = container.closest('[data-lab-section], [data-specialty-section], [data-section-id]');
+            const sectionId = sectionEl.dataset.labSection || sectionEl.dataset.specialtySection || sectionEl.dataset.sectionId;
+            
+            if (!tempAttachedFiles[sectionId]) {
+                tempAttachedFiles[sectionId] = [];
+            }
+            tempAttachedFiles[sectionId].push(...Array.from(files)); 
+            
+            rerenderFileList(sectionId);
+        }
+        
+        function rerenderFileList(sectionId) {
+            const container = document.querySelector(`[data-lab-section="${sectionId}"] .file-upload-area, [data-specialty-section="${sectionId}"] .file-upload-area, [data-section-id="${sectionId}"] .file-upload-area`);
+            if (!container) return;
+            
+            const filesForSection = tempAttachedFiles[sectionId] || [];
+            if (filesForSection.length > 0) {
+                 container.style.display = 'block';
+                 if (!container.querySelector('.file-list')) {
+                     container.innerHTML = `<div class="file-upload-container hidden"></div><div class="file-list"></div>`;
+                 }
+            } else {
+                 container.style.display = 'none';
+                 container.innerHTML = '';
+                 return;
+            }
+
+            const fileListDiv = container.querySelector('.file-list');
+            fileListDiv.innerHTML = '';
+            
+            filesForSection.forEach((file, index) => {
+                renderFileItem(fileListDiv, file.name, file.size, sectionId, index);
+            });
+        }
+
+        function handleDeleteFile(event) {
+            const fileItem = event.currentTarget.closest('.file-item');
+            const sectionId = fileItem.dataset.sectionId;
+            const fileIndex = parseInt(fileItem.dataset.fileIndex, 10);
+
+            if (tempAttachedFiles[sectionId] && tempAttachedFiles[sectionId][fileIndex]) {
+                tempAttachedFiles[sectionId].splice(fileIndex, 1);
+                rerenderFileList(sectionId);
+            }
+        }
+
+        function handleViewFile(event) {
+            const fileItem = event.currentTarget.closest('.file-item');
+            const sectionId = fileItem.dataset.sectionId;
+            const fileIndex = parseInt(fileItem.dataset.fileIndex, 10);
+
+            if (tempAttachedFiles[sectionId] && tempAttachedFiles[sectionId][fileIndex]) {
+                const file = tempAttachedFiles[sectionId][fileIndex];
+                const fileUrl = URL.createObjectURL(file);
+                window.open(fileUrl, '_blank');
+            } else {
+                alert("Could not find file data to view.");
+            }
+        }
+        
+        function showButtonFeedback(button, message = "Order Sent!") {
+            if (!button) return;
+            const originalHTML = button.innerHTML;
+            button.innerHTML = message;
+            button.disabled = true;
+
+            setTimeout(() => {
+                button.innerHTML = originalHTML;
+                button.disabled = false;
+            }, 3000);
+        }
+        
+        function handleOrderLinkedClick(btn, typeOverride = null) {
+            const type = typeOverride || btn.dataset.type;
+            if (!type) return;
+            const relevantLinkedFacilities = linkedInstitutions.filter(inst => inst.type === type);
+
+            if (relevantLinkedFacilities.length === 0) {
+                alert(`No linked ${type.replace(/_/g, ' ')} found. Please link one from your dashboard or order from a non-linked facility.`);
+                return;
+            }
+
+            if (relevantLinkedFacilities.length === 1) {
+                console.log(`Sending order to the only linked ${type}: ${relevantLinkedFacilities[0].name}`);
+                showButtonFeedback(btn);
+            } else {
+                openFacilitySelectionModal(relevantLinkedFacilities, btn, true);
+            }
+        }
+        
+        async function handleOrderUnlinkedClick(btn, typeOverride = null) {
+            const type = typeOverride || btn.dataset.type;
+            if (!type) return;
+            try {
+                const q = query(collection(db, `artifacts/${appId}/public/data/${type}`));
+                const querySnapshot = await getDocs(q);
+                const nonLinkedFacilities = querySnapshot.docs.map(doc => ({ 
+                    id: doc.id, 
+                    name: doc.data().businessName || doc.data().name,
+                    type: type
+                }));
+
+                if(nonLinkedFacilities.length === 0) {
+                    alert(`No non-linked ${type.replace(/_/g, ' ')} found in the system.`);
+                    return;
+                }
+                openFacilitySelectionModal(nonLinkedFacilities, btn, false);
+            } catch (error) {
+                console.error(`Error fetching non-linked facilities of type ${type}:`, error);
+                alert("Could not load facility list. Please try again.");
+            }
+        }
+
+        function openFacilitySelectionModal(facilities, triggerButton, isLinked) {
+            const modal = document.getElementById('orderModal');
+            const modalTitle = modal.querySelector('#modalTitle');
+            const facilitySearchSelect = document.getElementById('facilitySearch');
+            const sendOrderBtn = document.getElementById('sendOrderBtn');
+
+            modalTitle.textContent = isLinked ? `Select Linked Facility` : `Order from Non-Linked Facility`;
+
+            if (facilitySearchSelect.tomselect) facilitySearchSelect.tomselect.destroy();
+            const options = facilities.map(f => ({ value: f.id, text: f.name }));
+            createTomSelect(facilitySearchSelect, { options, placeholder: `Select a facility...`, create: false });
+            
+            const newSendOrderBtn = sendOrderBtn.cloneNode(true);
+            sendOrderBtn.parentNode.replaceChild(newSendOrderBtn, sendOrderBtn);
+
+            newSendOrderBtn.addEventListener('click', () => {
+                const selectedFacilityId = facilitySearchSelect.tomselect.getValue();
+                if (!selectedFacilityId) {
+                    alert('Please select a facility.');
+                    return;
+                }
+                const selectedFacility = facilities.find(f => f.id === selectedFacilityId);
+                console.log(`Sending order to ${isLinked ? 'linked' : 'non-linked'} facility: ${selectedFacility.name}`);
+                showButtonFeedback(triggerButton);
+                modal.classList.remove('active');
+            });
+
+            modal.classList.add('active');
+        }
+        
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        async function saveAndProceed(destination) {
+            if (!clinicalRecordReady || auth?.currentUser?.uid !== doctorUserId || sessionStorage.getItem('currentPatientRecordOwner') !== doctorUserId) { alert('Patient session not ready. Return to the dashboard and retry.'); return; }
+            const draft = JSON.parse(sessionStorage.getItem(patientDataSessionKey)) || {};
+            if (draft.patientId !== patientId) { alert('Patient context changed.'); return; }
+            document.getElementById('nextButton').disabled = true;
+            document.getElementById('nextButton').textContent = 'Saving...';
+
+            let fullPatientRecord = JSON.parse(sessionStorage.getItem(patientDataSessionKey)) || {};
+            if (typeof fullPatientRecord.investigation === 'string' && fullPatientRecord.investigation && !fullPatientRecord.legacyInvestigationText) fullPatientRecord.legacyInvestigationText = fullPatientRecord.investigation;
+            if (!fullPatientRecord.investigation || typeof fullPatientRecord.investigation !== 'object') fullPatientRecord.investigation = {};
+            
+            const investigationFormData = getInvestigationDataFromForm();
+            fullPatientRecord.investigation = { ...fullPatientRecord.investigation, ...investigationFormData };
+            
+            fullPatientRecord.investigation.uploadedFiles = {};
+
+            for (const sectionId in tempAttachedFiles) {
+                if (!fullPatientRecord.investigation.uploadedFiles[sectionId]) {
+                    fullPatientRecord.investigation.uploadedFiles[sectionId] = [];
+                }
+                for (const file of tempAttachedFiles[sectionId]) {
+                    const base64Data = await fileToBase64(file);
+                    fullPatientRecord.investigation.uploadedFiles[sectionId].push({ 
+                        name: file.name, 
+                        type: file.type,
+                        size: file.size,
+                        data: base64Data 
+                    });
+                }
+            }
+
+            sessionStorage.setItem(patientDataSessionKey, JSON.stringify(fullPatientRecord));
+            
+            window.location.href = destination;
+        }
+
+        function getInvestigationDataFromForm() {
+            const data = { 
+                labTests: {}, 
+                imaging: {}, 
+                specialtyTests: {}, 
+                generalNotes: document.getElementById('generalInvestigationNotes').value,
+                generalHemNotes: document.querySelector('.general-hematology-notes textarea').value,
+                generalHistoNotes: document.querySelector('.general-histopathology-notes textarea').value
+            };
+            document.querySelectorAll('[data-lab-section]').forEach(section => { 
+                const sectionName = section.dataset.labSection; 
+                const select = section.querySelector('.lab-test-select'); 
+                const notesEl = section.querySelector('.clinical-notes-container textarea');
+                data.labTests[sectionName] = { 
+                    tests: select.tomselect.getValue(), 
+                    notes: notesEl ? notesEl.value : '' 
+                }; 
+            });
+            data.imaging = { modality: document.getElementById('imagingModality').value, region: document.getElementById('imagingRegion').tomselect.getValue(), view: document.getElementById('imagingView').tomselect.getValue() };
+            document.querySelectorAll('[data-specialty-section]').forEach(section => { 
+                const sectionName = section.dataset.specialtySection; 
+                const select = section.querySelector('.specialty-test-select'); 
+                data.specialtyTests[sectionName] = select ? select.tomselect.getValue() : []; 
+            });
+            return data;
+        }
+
+        function createTomSelect(selector, options) {
+            if (!selector) return null;
+            if (selector.tomselect) selector.tomselect.destroy();
+            const ts = new TomSelect(selector, { ...options, persist: false });
+            selector.tomselect = ts;
+            return ts;
+        }
+    </script>
+</body>
+</html>

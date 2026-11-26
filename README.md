@@ -4,14 +4,16 @@ A system for private healthcare institutions, including doctor clinics, laborato
 
 ## Current application structure
 
-- `index.html`: Firebase authentication and role-based routing. All active doctor accounts use the unified doctor workspace, while other roles retain their individual dashboards.
+- `index.html`: Firebase authentication and role-based routing. Active cardiologists use the recovered original clinical dashboard; other doctor specialties use the unified workspace, and non-doctor roles retain their individual dashboards.
 - `doctor-workspace.html`: shared doctor interface, patient directory and consultation workflow.
 - `assets/doctor-workspace.css`: responsive workspace styling.
 - `assets/doctor-workspace.js`: doctor account verification, patient records, consultation handling and UI state.
 - `assets/firebase-config.js`: shared Firebase configuration used by login and the new workspace.
 - `psms-logo.svg`: shared brand mark.
 - `data-analytics.html`: clinical analytics for an authenticated doctor, with compatibility for both older visit date fields.
-- Existing specialty dashboards remain available as a fallback.
+- The original cardiology dashboard and the History → Cardiology Physical Examination → Investigation → Cardiology Treatment workflow have been recovered from the July 16, 2025 Netlify deployment. The original printable summary card is also restored.
+- Original structured clinical record fields are retained, with read compatibility for the temporary flat records.
+- Other existing specialty dashboards remain available as a fallback.
 
 ## Data compatibility
 

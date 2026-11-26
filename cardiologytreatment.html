@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardiology Treatment Plan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(to right bottom, #eef2ff, #e0e7ff); }
+        .section-card { background-color: white; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); margin-bottom: 1.5rem; }
+        .section-title { font-size: 1.25rem; font-weight: 700; color: #4338ca; border-bottom: 2px solid #c7d2fe; padding-bottom: 0.75rem; margin-bottom: 1.5rem; }
+        .form-label { display: block; font-weight: 600; color: #374151; margin-bottom: 0.5rem; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25); }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background-color: #4f46e5; color: white; }
+        .btn-primary:hover { background-color: #4338ca; }
+        .btn-primary:disabled { background-color: #a5b4fc; cursor: not-allowed; }
+        .btn-secondary { background-color: #e5e7eb; color: #374151; }
+        .btn-secondary:hover { background-color: #d1d5db; }
+        .btn-danger { background-color: #ef4444; color: white; }
+        .btn-danger:hover { background-color: #dc2626; }
+        .dynamic-entry { border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1rem; margin-top: 1rem; background-color: #fafafa; }
+        .ts-control { border-radius: 0.5rem !important; border: 1px solid #d1d5db !important; padding: 0.75rem !important; }
+        .ts-control.focus { border-color: #6366f1 !important; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25) !important; }
+        .ts-dropdown { background-color: white !important; z-index: 1050 !important; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content { background-color: white; padding: 2.5rem; border-radius: 1rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); width: 90%; max-width: 600px; transform: translateY(-20px); transition: transform 0.3s ease; position: relative; max-height: 90vh; overflow-y: auto; }
+        .modal-overlay.active .modal-content { transform: translateY(0); }
+        .close-modal-button { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280; }
+        .file-list { margin-top: 1rem; text-align: left; }
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background-color: #f3f4f6; border-radius: 0.375rem; margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Cardiology Treatment Plan</h1>
+        <div id="messageBox" style="display: none;" class="p-4 mb-4 rounded-md text-center"></div>
+
+        <div class="section-card">
+            <h2 class="section-title">Diagnosis</h2>
+            <div>
+                <label for="finalDiagnosis" class="form-label">Final Diagnosis / Impression</label>
+                <textarea id="finalDiagnosis" class="form-textarea" rows="3" placeholder="Enter the primary and any differential diagnoses..."></textarea>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="section-title !m-0 !p-0 !border-0">Pharmacological Treatment</h2>
+                <button id="addDrugBtn" class="btn btn-secondary">Add Medication</button>
+            </div>
+            <div id="drugList" class="space-y-4"></div>
+            <div class="mt-6 flex flex-wrap gap-4">
+                <button class="btn btn-primary order-pharmacy-btn" data-linked="true">Order from Linked Pharmacy</button>
+                <button class="btn btn-secondary order-pharmacy-btn" data-linked="false">Order from Non-Linked Pharmacy</button>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="section-title !m-0 !p-0 !border-0">Cardiology Interventions</h2>
+                <button id="addInterventionBtn" class="btn btn-secondary">Add Intervention</button>
+            </div>
+            <div id="interventionList" class="space-y-4"></div>
+        </div>
+        
+        <div class="section-card">
+            <h2 class="section-title">Medical Instructions</h2>
+            <select id="medicalInstructions" multiple placeholder="Select medical instructions..."></select>
+        </div>
+
+        <div class="mt-8 flex flex-col sm:flex-row justify-between gap-4">
+            <button id="backButton" class="btn btn-secondary">Back to Investigation</button>
+            <button id="submitButton" class="btn btn-primary">Submit and Save to Record</button>
+        </div>
+        <div class="mt-4 flex justify-center">
+             <button id="backToDashboardButton" class="btn btn-secondary">Back to Dashboard</button>
+        </div>
+    </div>
+
+    <!-- Modal for selecting a facility -->
+    <div id="facilityModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal-button">&times;</button>
+            <h3 id="facilityModalTitle" class="text-2xl font-bold text-gray-800 mb-4 text-center">Select Facility</h3>
+            <div class="form-group">
+                <label for="facilitySearch" class="form-label">Select a Facility</label>
+                <select id="facilitySearch" placeholder="Select a facility..."></select>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="btn btn-secondary close-modal-button">Cancel</button>
+                <button id="sendOrderBtn" type="button" class="btn btn-primary">Send Order</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, updateDoc, collection, serverTimestamp, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Global Config & Variables ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDMIZubC87_z2tCnURoqQIJjCWPPdWFdnk",
+            authDomain: "pcms-e1162.firebaseapp.com",
+            projectId: "pcms-e1162",
+            storageBucket: "pcms-e1162.firebasestorage.app",
+            messagingSenderId: "383068543378",
+            appId: "1:383068543378:web:00c7d2bf95f9ded63a494b",
+            measurementId: "G-4C1P3GB6PP"
+        };
+        
+        let app, db, auth, doctorUserId, fromDashboard, patientId;
+        let linkedInstitutions = [];
+        const patientDataSessionKey = 'currentPatientRecord';
+        let clinicalRecordReady = false;
+        let tempInterventionFiles = {};
+
+        // --- DOM Elements ---
+        const messageBox = document.getElementById('messageBox');
+        const submitButton = document.getElementById('submitButton');
+
+        // --- Data Definitions ---
+        const fdaApprovedDrugs = ['Lisinopril Tab', 'Amlodipine Tab', 'Metoprolol Tab', 'Atorvastatin Tab', 'Simvastatin Tab', 'Aspirin Tab', 'Clopidogrel Tab', 'Warfarin Tab', 'Rivaroxaban Tab', 'Apixaban Tab', 'Dabigatran Cap', 'Valsartan/Amlodipine Tab', 'Sacubitril/Valsartan Tab', 'Paracetamol Tab', 'Paracetamol IV'];
+        const cardiologyInterventions = {
+            'Diagnostic Procedures': ['Diagnostic Coronary Angiography (Cardiac Catheterization)', 'Right Heart Catheterization (Pulmonary Artery Catheter)', 'Invasive Hemodynamic Monitoring (LVEDP, Cardiac Output, etc.)', 'Fractional Flow Reserve (FFR) Measurement', 'Coronary Flow Reserve (CFR)', 'Intravascular Ultrasound (IVUS)', 'Optical Coherence Tomography (OCT)', 'Coronary Sinus Sampling', 'Endomyocardial Biopsy'],
+            'Percutaneous Coronary Interventions (PCI)': ['Balloon Angioplasty Only (Plain Old Balloon Angioplasty – POBA)', 'PCI with Balloon Angioplasty and Drug-Eluting Stent (DES)', 'PCI with Balloon Angioplasty and Bare-Metal Stent (BMS)', 'PCI with Direct Stenting Using Drug-Eluting Stent (No Pre-Dilation)', 'PCI with Direct Stenting Using Bare-Metal Stent (No Pre-Dilation)', 'PCI with IVUS Guidance', 'PCI with OCT Guidance', 'PCI with FFR Measurement', 'PCI with Cutting or Scoring Balloon Before Stenting', 'PCI with Drug-Coated Balloon (DCB) Only (No Stent)', 'PCI with Drug-Coated Balloon After Stenting (Hybrid)', 'PCI with Post-Dilatation Balloon Optimization', 'PCI with Rotational Atherectomy (Rotablation) and Stenting', 'PCI for Chronic Total Occlusion (CTO)'],
+            'Electrophysiology Studies and Ablations': ['Electrophysiology Study (EPS)', 'Radiofrequency Ablation for Supraventricular Tachycardia (SVT)', 'Radiofrequency Ablation for Atrial Flutter', 'Radiofrequency Ablation for Atrial Fibrillation (AF)', 'Cryoablation for Atrial Fibrillation', 'Pulmonary Vein Isolation (PVI) for Atrial Fibrillation', 'Ventricular Tachycardia (VT) Ablation', 'AV Node Ablation', 'His-Bundle or Left Bundle Area Pacing (LBBAP)'],
+            'Device Implantation Procedures': ['Temporary Transvenous Pacemaker Insertion', 'Permanent Pacemaker Implantation (Single Chamber)', 'Permanent Pacemaker Implantation (Dual Chamber)', 'Implantable Cardioverter Defibrillator (ICD) Implantation (Single Chamber)', 'Implantable Cardioverter Defibrillator (ICD) Implantation (Dual Chamber)', 'Cardiac Resynchronization Therapy Pacemaker (CRT-P) Implantation', 'Cardiac Resynchronization Therapy with Defibrillator (CRT-D) Implantation', 'Subcutaneous ICD Implantation', 'Pacemaker Lead Revision or Extraction', 'ICD Lead Revision or Extraction', 'Implantable Loop Recorder (ILR) Insertion'],
+            'Structural Heart Interventions (Catheter-Based)': ['Transcatheter Aortic Valve Replacement (TAVR / TAVI)', 'Percutaneous Balloon Aortic Valvuloplasty', 'Percutaneous Mitral Balloon Valvotomy', 'MitraClip (Percutaneous Mitral Valve Repair)', 'Atrial Septal Defect (ASD) Device Closure', 'Patent Foramen Ovale (PFO) Device Closure', 'Ventricular Septal Defect (VSD) Device Closure', 'Paravalvular Leak Closure', 'Left Atrial Appendage Occlusion (e.g., Watchman Device)', 'Alcohol Septal Ablation for Hypertrophic Cardiomyopathy'],
+            'Mechanical Circulatory Support (MCS)': ['Intra-Aortic Balloon Pump (IABP) Insertion', 'Percutaneous Left Ventricular Assist Device (Impella)', 'Veno-Arterial Extracorporeal Membrane Oxygenation (VA-ECMO) – usually team-based with intensivists', 'Hemodynamic Support During High-Risk PCI'],
+            'Other Cardiologist-Performed Procedures': ['Pericardiocentesis (Pericardial Effusion Drainage)', 'Tilt Table Test for Syncope Evaluation', 'Cardioversion (Electrical or Pharmacologic)', 'Cardiac Device Interrogation and Reprogramming', 'Stress Echocardiography (if directly supervised/performed by cardiologist)', 'Contrast Echocardiography / Bubble Study', 'Advanced Cardiac Imaging Supervision (e.g., Cardiac MRI, CT Angio reporting in some centers)']
+        };
+        const medicalInstructions = ['Low-sodium diet', 'Fluid restriction', 'Regular exercise as tolerated', 'Monitor blood pressure daily', 'Monitor weight daily', 'Smoking cessation', 'Limit alcohol intake'];
+
+        // --- Helper Functions ---
+        function showMessage(message, isError) {
+            messageBox.textContent = message;
+            messageBox.style.display = 'block';
+            messageBox.className = `p-4 mb-4 rounded-md text-center ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
+            if (!isError) setTimeout(() => { messageBox.style.display = 'none'; }, 5000);
+        }
+
+        function createTomSelect(selector, options) {
+            const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
+            if (!element) return null;
+            if (element.tomselect) element.tomselect.destroy();
+            const ts = new TomSelect(element, { ...options });
+            element.tomselect = ts;
+            return ts;
+        }
+        
+        function showButtonFeedback(button, message = "Order Sent!") {
+            if (!button) return;
+            const originalHTML = button.innerHTML;
+            button.innerHTML = message;
+            button.disabled = true;
+
+            setTimeout(() => {
+                button.innerHTML = originalHTML;
+                button.disabled = false;
+            }, 3000);
+        }
+
+        // --- Dynamic UI Rendering ---
+        function addDrugEntry(data = {}) {
+            const list = document.getElementById('drugList');
+            const entry = document.createElement('div');
+            entry.className = 'dynamic-entry';
+            entry.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                    <div class="md:col-span-6"><label class="form-label text-sm">Drug</label><select class="drug-name-select" placeholder="Select or type drug..."></select></div>
+                    <div class="md:col-span-2"><label class="form-label text-sm">Dose</label><input type="text" class="form-input text-sm drug-dose" placeholder="e.g., 500 mg"></div>
+                    <div class="md:col-span-3"><label class="form-label text-sm">Frequency</label><select class="drug-freq-select" placeholder="Select frequency..."></select></div>
+                    <div class="md:col-span-1"><button class="btn btn-danger btn-sm !p-2 remove-btn">&times;</button></div>
+                </div>
+                <div class="mt-4 flex flex-wrap gap-2 items-center nurse-order-section" style="display: none;">
+                    <span class="text-sm font-semibold text-gray-700">Administration:</span>
+                    <button class="btn btn-secondary btn-sm order-nurse-btn" data-linked="true">Order Linked Nurse</button>
+                    <button class="btn btn-secondary btn-sm order-nurse-btn" data-linked="false">Order Non-Linked Nurse</button>
+                </div>
+            `;
+            list.appendChild(entry);
+            
+            const drugSelect = createTomSelect(entry.querySelector('.drug-name-select'), { create: true, options: fdaApprovedDrugs.map(d => ({value: d, text: d})) });
+            const freqSelect = createTomSelect(entry.querySelector('.drug-freq-select'), { create: true, options: ['OD', 'BID', 'TID', 'QID', 'qHS', 'PRN'].map(f => ({value: f, text: f})) });
+
+            if (data.name) drugSelect.setValue(data.name);
+            if (data.dose) entry.querySelector('.drug-dose').value = data.dose;
+            if (data.frequency) freqSelect.setValue(data.frequency);
+
+            entry.querySelector('.remove-btn').addEventListener('click', () => entry.remove());
+            drugSelect.on('change', (value) => toggleNurseOrderSection(value, entry));
+            toggleNurseOrderSection(drugSelect.getValue(), entry);
+        }
+
+        function addInterventionEntry(data = {}) {
+            const list = document.getElementById('interventionList');
+            const entryId = `intervention-${Date.now()}`;
+            const entry = document.createElement('div');
+            entry.className = 'dynamic-entry';
+            entry.id = entryId;
+            entry.innerHTML = `
+                <div><label class="form-label text-sm">Intervention</label><select class="intervention-select" placeholder="Select intervention..."></select></div>
+                <div class="intervention-options mt-4 space-y-4"></div>
+                <div class="file-list mt-4"></div>
+                <div class="mt-4 flex justify-between items-center">
+                    <button class="btn btn-secondary btn-sm attach-report-btn">Attach Intervention Report</button>
+                    <button class="btn btn-danger btn-sm !p-2 remove-btn">&times;</button>
+                </div>
+            `;
+            list.appendChild(entry);
+
+            const interventionSelect = createTomSelect(entry.querySelector('.intervention-select'), {
+                optgroups: Object.keys(cardiologyInterventions).map(group => ({value: group, label: group})),
+                options: Object.entries(cardiologyInterventions).flatMap(([group, items]) => items.map(item => ({value: item, text: item, optgroup: group}))),
+                onChange: (value) => renderInterventionOptions(entry, value)
+            });
+
+            if (data.name) {
+                interventionSelect.setValue(data.name);
+                renderInterventionOptions(entry, data.name, data.options);
+            }
+            entry.querySelector('.remove-btn').addEventListener('click', () => entry.remove());
+            entry.querySelector('.attach-report-btn').addEventListener('click', () => {
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.multiple = true;
+                fileInput.onchange = (e) => handleInterventionFileSelect(e, entryId);
+                fileInput.click();
+            });
+        }
+
+        function renderInterventionOptions(entry, interventionName, optionsData = {}) {
+            const container = entry.querySelector('.intervention-options');
+            container.innerHTML = '';
+            if (interventionName.includes('Pacemaker')) {
+                container.innerHTML += `<div class="form-group"><label class="form-label text-sm">Pacemaker Programming</label><select class="form-select text-sm pacemaker-options"><option>VVI</option><option>DDI</option><option>DDD</option></select></div>`;
+                if(optionsData && optionsData.pacemaker) container.querySelector('.pacemaker-options').value = optionsData.pacemaker;
+            }
+            if (interventionName.includes('ICD') || interventionName.includes('CRT-D')) {
+                container.innerHTML += `<div class="form-group"><label class="form-label text-sm">ICD Programming</label><select class="form-select text-sm icd-options"><option>Standard</option><option>High-Rate</option><option>ATP Enabled</option></select></div>`;
+                if(optionsData && optionsData.icd) container.querySelector('.icd-options').value = optionsData.icd;
+            }
+        }
+        
+        function handleInterventionFileSelect(event, entryId) {
+            if (!tempInterventionFiles[entryId]) {
+                tempInterventionFiles[entryId] = [];
+            }
+            tempInterventionFiles[entryId].push(...Array.from(event.target.files));
+            renderInterventionFileList(entryId);
+        }
+
+        function renderInterventionFileList(entryId) {
+            const entry = document.getElementById(entryId);
+            if (!entry) return;
+            const fileListDiv = entry.querySelector('.file-list');
+            fileListDiv.innerHTML = '';
+            const files = tempInterventionFiles[entryId] || [];
+            files.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `<span>${file.name}</span><button class="delete-intervention-file-btn text-red-500" data-entry-id="${entryId}" data-file-index="${index}">&times;</button>`;
+                fileListDiv.appendChild(fileItem);
+            });
+            document.querySelectorAll('.delete-intervention-file-btn').forEach(btn => btn.addEventListener('click', deleteInterventionFile));
+        }
+
+        function deleteInterventionFile(event) {
+            const btn = event.currentTarget;
+            const entryId = btn.dataset.entryId;
+            const fileIndex = parseInt(btn.dataset.fileIndex, 10);
+            if (tempInterventionFiles[entryId]) {
+                tempInterventionFiles[entryId].splice(fileIndex, 1);
+                renderInterventionFileList(entryId);
+            }
+        }
+
+
+        function toggleNurseOrderSection(drugName, entry) {
+            const section = entry.querySelector('.nurse-order-section');
+            const needsNurse = ['iv', 'im', 'subcut', 'nebulized'].some(term => drugName.toLowerCase().includes(term));
+            section.style.display = needsNurse ? 'flex' : 'none';
+        }
+
+        // --- Data Handling ---
+        async function getTreatmentDataFromForm() {
+            const drugs = Array.from(document.querySelectorAll('#drugList .dynamic-entry')).map(entry => ({
+                name: entry.querySelector('.drug-name-select').value,
+                dose: entry.querySelector('.drug-dose').value,
+                frequency: entry.querySelector('.drug-freq-select').value,
+            }));
+
+            const interventions = [];
+            for (const entry of document.querySelectorAll('#interventionList .dynamic-entry')) {
+                const entryId = entry.id;
+                const interventionData = {
+                    name: entry.querySelector('.intervention-select').value,
+                    options: {
+                        pacemaker: entry.querySelector('.pacemaker-options')?.value || null,
+                        icd: entry.querySelector('.icd-options')?.value || null
+                    },
+                    reports: []
+                };
+
+                const files = tempInterventionFiles[entryId] || [];
+                for (const file of files) {
+                    const base64Data = await fileToBase64(file);
+                    interventionData.reports.push({
+                        name: file.name,
+                        type: file.type,
+                        size: file.size,
+                        data: base64Data
+                    });
+                }
+                interventions.push(interventionData);
+            }
+
+            const instructions = document.getElementById('medicalInstructions').tomselect.getValue();
+            return {
+                diagnosis: document.getElementById('finalDiagnosis').value,
+                pharmacological: drugs,
+                interventions: interventions,
+                instructions: instructions
+            };
+        }
+
+        function setTreatmentDataToForm(data) {
+            if (!data) return;
+            document.getElementById('finalDiagnosis').value = data.diagnosis || '';
+            if (data.pharmacological) data.pharmacological.forEach(addDrugEntry);
+            if (data.interventions) data.interventions.forEach(addInterventionEntry);
+            if (data.instructions) document.getElementById('medicalInstructions').tomselect.setValue(data.instructions);
+        }
+
+        async function finalSubmit() {
+            submitButton.disabled = true;
+            submitButton.textContent = 'Saving...';
+
+            if (!clinicalRecordReady || !doctorUserId || !patientId || auth?.currentUser?.uid !== doctorUserId || sessionStorage.getItem('currentPatientRecordOwner') !== doctorUserId) {
+                showMessage("Authentication or Patient ID error. Cannot save.", true);
+                submitButton.disabled = false; submitButton.textContent = 'Submit and Save to Record';
+                return;
+            }
+
+            const treatmentData = await getTreatmentDataFromForm();
+            let fullPatientRecord = JSON.parse(sessionStorage.getItem(patientDataSessionKey)) || {};
+            if (fullPatientRecord.patientId !== patientId) { showMessage('Patient context changed. Return to the dashboard.', true); submitButton.disabled = false; submitButton.textContent = 'Submit and Save to Record'; return; }
+            if (typeof fullPatientRecord.treatment === 'string' && fullPatientRecord.treatment && !fullPatientRecord.legacyTreatmentText) fullPatientRecord.legacyTreatmentText = fullPatientRecord.treatment;
+            fullPatientRecord.treatment = treatmentData;
+
+            const finalRecord = { ...fullPatientRecord, lastUpdated: serverTimestamp() };
+            delete finalRecord.patientId; 
+
+            try {
+                if (patientId.startsWith('new_')) {
+                    const patientsCollectionRef = collection(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`);
+                    const docRef = await addDoc(patientsCollectionRef, finalRecord);
+                    console.log("New patient created with ID: ", docRef.id);
+                } else {
+                    const patientDocRef = doc(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`, patientId);
+                    await updateDoc(patientDocRef, finalRecord);
+                    console.log("Patient record updated for ID: ", patientId);
+                }
+                showMessage("Patient record saved successfully!", false);
+                sessionStorage.removeItem(patientDataSessionKey);
+                sessionStorage.removeItem('currentPatientRecordOwner');
+                setTimeout(() => { window.location.href = fromDashboard; }, 1500);
+            } catch (error) {
+                console.error("Error saving patient record to Firestore: ", error);
+                showMessage("Failed to save patient record. See console for details.", true);
+                submitButton.disabled = false; submitButton.textContent = 'Submit and Save to Record';
+            }
+        }
+
+        // --- Order Logic ---
+        function handleOrder(btn, type) {
+            const isLinked = btn.dataset.linked === 'true';
+            const relevantFacilities = linkedInstitutions.filter(inst => inst.type === type);
+
+            if (isLinked) {
+                if (relevantFacilities.length === 0) {
+                    alert(`No linked ${type.replace(/_/g, ' ')} found. Please link one from your dashboard.`);
+                    return;
+                }
+                if (relevantFacilities.length === 1) {
+                    console.log(`Sending order to the only linked ${type}: ${relevantFacilities[0].name}`);
+                    showButtonFeedback(btn);
+                } else {
+                    openFacilitySelectionModal(relevantFacilities, btn, true, type);
+                }
+            } else {
+                openFacilitySelectionModal([], btn, false, type);
+            }
+        }
+
+        async function openFacilitySelectionModal(facilities, triggerButton, isLinked, type) {
+            const modal = document.getElementById('facilityModal');
+            modal.querySelector('#facilityModalTitle').textContent = `Select ${type.replace(/_/g, ' ')}`;
+            const searchSelectEl = modal.querySelector('#facilitySearch');
+            
+            if (isLinked) {
+                const options = facilities.map(f => ({ value: f.id, text: f.name }));
+                createTomSelect(searchSelectEl, { options, placeholder: `Select a facility...`, create: false });
+            } else {
+                const q = query(collection(db, `artifacts/${appId}/public/data/${type}`));
+                const querySnapshot = await getDocs(q);
+                const options = querySnapshot.docs.map(doc => ({ value: doc.id, text: doc.data().businessName || doc.data().name }));
+                createTomSelect(searchSelectEl, { options, placeholder: `Search for a facility...`, create: false });
+            }
+
+            const sendOrderBtn = modal.querySelector('#sendOrderBtn');
+            const newSendOrderBtn = sendOrderBtn.cloneNode(true);
+            sendOrderBtn.parentNode.replaceChild(newSendOrderBtn, sendOrderBtn);
+            
+            newSendOrderBtn.addEventListener('click', () => {
+                const selectedId = searchSelectEl.tomselect.getValue();
+                if (!selectedId) { alert('Please select a facility.'); return; }
+                console.log(`Sending order to ${selectedId}`);
+                showButtonFeedback(triggerButton);
+                modal.classList.remove('active');
+            });
+
+            modal.classList.add('active');
+        }
+        
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', async function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            fromDashboard = urlParams.get('from');
+            patientId = urlParams.get('patientId');
+
+            if (!patientId || fromDashboard !== 'cardiology-dashboard.html') {
+                showMessage("Error: Patient ID is missing. Please return to the dashboard and select a patient.", true);
+                document.querySelectorAll('button, input, select, textarea').forEach(el => el.disabled = true);
+                return;
+            }
+
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        doctorUserId = user.uid;
+                        const docRef = doc(db, `artifacts/${appId}/public/data/doctors`, doctorUserId);
+                        const docSnap = await getDoc(docRef);
+                        if (!docSnap.exists() || docSnap.data().role !== 'doctor' || docSnap.data().deactivated || docSnap.data().speciality !== 'Cardiology') {
+                            showMessage('An active cardiology account is required.', true); return;
+                        }
+                        linkedInstitutions = docSnap.data().linkedInstitutions || [];
+                        const sessionData = sessionStorage.getItem(patientDataSessionKey);
+                        const record = sessionData ? JSON.parse(sessionData) : null;
+                        if (!record || record.patientId !== patientId || sessionStorage.getItem('currentPatientRecordOwner') !== doctorUserId) {
+                            showMessage('Patient context changed. Return to the dashboard.', true); return;
+                        }
+                        if (record.treatment && typeof record.treatment === 'object') setTreatmentDataToForm(record.treatment);
+                        clinicalRecordReady = true;
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                });
+            } catch (e) { console.error("Firebase Init Error", e); }
+
+            createTomSelect(document.querySelector('#medicalInstructions'), { create: true, options: medicalInstructions.map(i => ({value: i, text: i})) });
+
+            document.getElementById('addDrugBtn').addEventListener('click', () => addDrugEntry());
+            document.getElementById('addInterventionBtn').addEventListener('click', () => addInterventionEntry());
+            document.querySelectorAll('.order-pharmacy-btn').forEach(btn => btn.addEventListener('click', (e) => handleOrder(e.target, 'pharmacies')));
+            document.body.addEventListener('click', (e) => {
+                if (e.target.matches('.order-nurse-btn')) {
+                    handleOrder(e.target, 'nurse_clinics');
+                }
+            });
+            document.getElementById('backButton').addEventListener('click', async () => {
+                if (!clinicalRecordReady || auth?.currentUser?.uid !== doctorUserId) { showMessage('Patient session not ready.', true); return; }
+                const data = await getTreatmentDataFromForm();
+                let record = JSON.parse(sessionStorage.getItem(patientDataSessionKey)) || {};
+                if (record.patientId !== patientId || sessionStorage.getItem('currentPatientRecordOwner') !== doctorUserId) { showMessage('Patient context changed.', true); return; }
+                if (typeof record.treatment === 'string' && record.treatment && !record.legacyTreatmentText) record.legacyTreatmentText = record.treatment;
+                record.treatment = data;
+                sessionStorage.setItem(patientDataSessionKey, JSON.stringify(record));
+                window.location.href = `investigation.html?from=${fromDashboard}&patientId=${patientId}`;
+            });
+            submitButton.addEventListener('click', finalSubmit);
+            document.getElementById('backToDashboardButton').addEventListener('click', () => {
+                 if (confirm("Are you sure you want to exit? All unsaved progress for this patient will be lost.")) {
+                    sessionStorage.removeItem(patientDataSessionKey);
+                sessionStorage.removeItem('currentPatientRecordOwner');
+                    window.location.href = fromDashboard;
+                }
+            });
+            document.querySelectorAll('.close-modal-button').forEach(btn => btn.addEventListener('click', () => btn.closest('.modal-overlay').classList.remove('active')));
+        });
+    </script>
+</body>
+</html>

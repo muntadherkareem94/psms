@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Summary Card</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #print-area, #print-area * {
+                visibility: visible;
+            }
+            #print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f4f5; /* zinc-100 */
+        }
+        .summary-card {
+            background-color: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px_6px -1px rgb(0 0 0 / 0.1), 0 2px_4px -2px rgb(0 0 0 / 0.1);
+            margin: 2rem auto;
+            max-width: 8.5in; /* Standard letter paper width */
+        }
+        .summary-header {
+            text-align: center;
+            border-bottom: 2px solid #e4e4e7; /* zinc-200 */
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .summary-section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #3f3f46; /* zinc-700 */
+            border-bottom: 1px solid #e4e4e7;
+            padding-bottom: 0.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .summary-subsection-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #52525b; /* zinc-600 */
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .summary-content {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #3f3f46;
+        }
+        .summary-content ul {
+            list-style-position: inside;
+            padding-left: 0.5rem;
+        }
+        .summary-content .data-pair {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.25rem 0;
+        }
+        .summary-content .data-pair .key {
+            font-weight: 500;
+            color: #71717a; /* zinc-500 */
+        }
+        .summary-content .data-pair .value {
+            text-align: right;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 1px solid transparent;
+        }
+        .btn-primary { background-color: #3b82f6; color: white; }
+        .btn-primary:hover { background-color: #2563eb; }
+        .btn-secondary { background-color: #e4e4e7; color: #3f3f46; }
+        .btn-secondary:hover { background-color: #d4d4d8; }
+    </style>
+</head>
+<body>
+
+    <div class="max-w-4xl mx-auto p-4 no-print">
+        <div class="flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800">Patient Summary</h1>
+            <div class="flex gap-4">
+                <button id="backToDashboardButton" class="btn btn-secondary">Back to Dashboard</button>
+                <button id="printButton" class="btn btn-primary">Print Summary</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="print-area">
+        <div class="summary-card" id="summaryCardContainer">
+            <!-- Content will be loaded here by JavaScript -->
+            <div class="text-center text-gray-500">Loading patient data...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDocFromServer } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Firebase and Global Config ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDMIZubC87_z2tCnURoqQIJjCWPPdWFdnk",
+            authDomain: "pcms-e1162.firebaseapp.com",
+            projectId: "pcms-e1162",
+            storageBucket: "pcms-e1162.firebasestorage.app",
+            messagingSenderId: "383068543378",
+            appId: "1:383068543378:web:00c7d2bf95f9ded63a494b",
+            measurementId: "G-4C1P3GB6PP"
+        };
+        
+        let app, db, auth, doctorUserId, fromDashboard, patientId;
+
+        // --- DOM Elements ---
+        const summaryCardContainer = document.getElementById('summaryCardContainer');
+        const backToDashboardButton = document.getElementById('backToDashboardButton');
+        const printButton = document.getElementById('printButton');
+
+        // --- Helper Functions ---
+        const isEmpty = (arr) => !arr || arr.length === 0;
+        const toSentenceCase = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+
+        /**
+         * Generates a narrative summary from the patient record.
+         * This function creates the main, high-level summary.
+         */
+        function generateSmartSummary(record) {
+            if (!record || !record.history) return "Not enough information to generate a summary.";
+
+            const { history, examination, treatment } = record;
+            const { demographics = {}, chiefComplaint = {}, hpi = '', pastMedical = [] } = history;
+            const { vitals = {}, cardiovascularExam = {} } = examination || {};
+            const { diagnosis: finalDiagnosis, pharmacological = [] } = treatment || {};
+            
+            const age = demographics.dob ? `${new Date(new Date() - new Date(demographics.dob)).getFullYear() - 1970}` : 'An unknown age';
+            const gender = demographics.gender || 'patient';
+
+            let summary = `This is a ${age}-year-old ${gender.toLowerCase()}`;
+            if (demographics.name) summary += `, ${demographics.name},`;
+            summary += ` who presented with a chief complaint of "${chiefComplaint.complaint || 'unspecified issue'}" for a duration of ${chiefComplaint.duration || 'an unknown period'}.`;
+            
+            if (hpi) summary += `\n\nThe history of the presenting illness is as follows: ${hpi}`;
+
+            if (!isEmpty(pastMedical)) {
+                const diseases = pastMedical.map(d => `${d.disease} (${d.control || 'status unknown'})`).join(', ');
+                summary += `\n\nThe patient has a significant past medical history of ${diseases}.`;
+            } else {
+                summary += `\n\nThe patient reports no significant past medical history.`;
+            }
+
+            if (vitals.bp || vitals.hr) {
+                summary += `\n\nOn examination, vital signs were notable for a blood pressure of ${vitals.bp || 'N/A'} mmHg and a heart rate of ${vitals.hr || 'N/A'} bpm.`;
+            }
+            
+            if (cardiovascularExam?.auscultation?.murmurPresent === 'Yes') {
+                const murmur = cardiovascularExam.auscultation.murmur;
+                summary += ` A ${murmur.timing || ''} murmur of grade ${murmur.loudness?.split(' ')[0] || ''} was noted at the ${murmur.location || 'unspecified area'}.`;
+            }
+
+            summary += `\n\nThe final diagnosis is ${finalDiagnosis || 'Not specified'}.`;
+
+            if (!isEmpty(pharmacological)) {
+                const drugs = pharmacological.map(d => `${d.name} ${d.dose} ${d.frequency}`).join(', ');
+                summary += ` The patient has been prescribed ${drugs}.`;
+            }
+
+            return summary;
+        }
+        
+        // --- Section Rendering Functions ---
+
+        function renderHistorySection(history) {
+            if (!history) return '';
+            let html = `<div class="summary-section"><h2 class="summary-section-title">History</h2><div class="summary-content">`;
+            
+            // Systemic Review
+            if (!isEmpty(history.systemicReview)) {
+                html += `<h3 class="summary-subsection-title">Systemic Review</h3><p>Positive findings on systemic review include: ${history.systemicReview.join(', ')}.</p>`;
+            }
+            
+            // Surgical History
+            if (!isEmpty(history.pastSurgical)) {
+                html += `<h3 class="summary-subsection-title">Past Surgical History</h3><ul>`;
+                history.pastSurgical.forEach(s => {
+                    html += `<li>${s.surgery || 'Unnamed surgery'} on ${s.date || 'an unknown date'}.`;
+                    if (s.complications) html += ` Complications: ${s.complications}.`;
+                    if (s.transfusion === 'yes') html += ` Required blood transfusion.`;
+                    html += `</li>`;
+                });
+                html += `</ul>`;
+            }
+
+            // Drug History
+            if (!isEmpty(history.drugHistory)) {
+                 html += `<h3 class="summary-subsection-title">Drug History</h3><ul>`;
+                 history.drugHistory.forEach(d => {
+                     let drugInfo = `<li><strong>${d.name || 'Unnamed Drug'} (${d.category || 'N/A'})</strong>`;
+                     if (d.category === 'Allergen') {
+                         drugInfo += `: Known allergen, reaction is ${d.fields['drug-allergy-severity'] || 'not specified'}.`;
+                     } else if (d.category === 'Prescription') {
+                         drugInfo += `: Taking ${d.fields['drug-dose']} ${d.fields['freq-select']}, compliance is ${d.fields['comp-select']}.`;
+                     }
+                     html += `${drugInfo}</li>`;
+                 });
+                 html += `</ul>`;
+            }
+            
+            // Social History
+            const smoking = history.socioeconomic?.smoking;
+            if (smoking && smoking.status !== 'non-smoker') {
+                html += `<h3 class="summary-subsection-title">Social History</h3><p>Patient is a ${smoking.status} with a ${smoking.packYears} pack-year history.</p>`;
+            }
+
+            // Family History
+            if (!isEmpty(history.family?.diseases)) {
+                 html += `<h3 class="summary-subsection-title">Family History</h3><p>Significant family history of ${history.family.diseases.join(', ')}.</p>`;
+            }
+
+            html += `</div></div>`;
+            return html;
+        }
+
+        function renderExaminationSection(exam) {
+            if (!exam) return '';
+            let html = `<div class="summary-section"><h2 class="summary-section-title">Physical Examination</h2><div class="summary-content">`;
+
+            // Vitals
+            html += `<h3 class="summary-subsection-title">Vital Signs</h3><p>BP: ${exam.vitals?.bp || 'N/A'}, HR: ${exam.vitals?.hr || 'N/A'} bpm, RR: ${exam.vitals?.rr || 'N/A'}, Temp: ${exam.vitals?.temp || 'N/A'}°C, SpO2: ${exam.vitals?.spo2 || 'N/A'}%.</p>`;
+            
+            // Cardiovascular
+            const cvs = exam.cardiovascularExam;
+            if (cvs) {
+                html += `<h3 class="summary-subsection-title">Cardiovascular System</h3>`;
+                let cvsSummary = [];
+                if(cvs.inspection?.findings?.length > 0) cvsSummary.push(`Inspection noted ${cvs.inspection.findings.join(', ')}.`);
+                if(cvs.palpation?.apexBeatLocation !== 'Not palpable') cvsSummary.push(`Apex beat is ${cvs.palpation.apexBeatCharacter} and located at ${cvs.palpation.apexBeatLocation}.`);
+                if(cvs.palpation?.thrillsHeaves?.length > 0 && cvs.palpation.thrillsHeaves[0] !== 'No thrills/heaves') cvsSummary.push(`Palpation revealed ${cvs.palpation.thrillsHeaves.join(', ')}.`);
+                if(cvs.auscultation?.heartSounds?.length > 0) cvsSummary.push(`Heart sounds: ${cvs.auscultation.heartSounds.join(', ')}.`);
+                if(cvs.auscultation?.extraHeartSounds?.length > 0 && cvs.auscultation.extraHeartSounds[0] !== 'None') cvsSummary.push(`Extra sounds include ${cvs.auscultation.extraHeartSounds.join(', ')}.`);
+                html += `<p>${cvsSummary.join(' ')}</p>`;
+            }
+            
+            html += `</div></div>`;
+            return html;
+        }
+
+        function renderInvestigationSection(investigation) {
+            if (!investigation) return '';
+            let html = `<div class="summary-section"><h2 class="summary-section-title">Investigations</h2><div class="summary-content">`;
+
+            // Lab Tests
+            let orderedLabs = [];
+            if (investigation.labTests) {
+                Object.values(investigation.labTests).forEach(cat => {
+                    if (!isEmpty(cat.tests)) orderedLabs = orderedLabs.concat(cat.tests);
+                });
+            }
+            if(orderedLabs.length > 0) {
+                 html += `<h3 class="summary-subsection-title">Ordered Labs</h3><p>${orderedLabs.join(', ')}.</p>`;
+            }
+
+            // Imaging
+            if (investigation.imaging && investigation.imaging.modality) {
+                html += `<h3 class="summary-subsection-title">Ordered Imaging</h3><p>${toSentenceCase(investigation.imaging.modality)} of the ${investigation.imaging.region.join(', ')}.</p>`;
+            }
+
+            // Attached Files
+            if (investigation.uploadedFiles) {
+                html += `<h3 class="summary-subsection-title">Attached Results</h3><ul>`;
+                Object.entries(investigation.uploadedFiles).forEach(([section, files]) => {
+                    if (!isEmpty(files)) {
+                        files.forEach(file => {
+                            html += `<li><strong>${toSentenceCase(section.replace(/_/g, ' '))}:</strong> ${file.name}</li>`;
+                        });
+                    }
+                });
+                html += `</ul>`;
+            }
+
+            html += `</div></div>`;
+            return html;
+        }
+        
+        function renderTreatmentSection(treatment) {
+             if (!treatment) return '';
+             let html = `<div class="summary-section"><h2 class="summary-section-title">Final Diagnosis & Treatment</h2><div class="summary-content">`;
+             html += `<p><strong>Diagnosis:</strong> ${treatment.diagnosis || 'Not specified.'}</p>`;
+             
+             if (!isEmpty(treatment.pharmacological)) {
+                 html += `<h3 class="summary-subsection-title">Pharmacological Plan</h3><ul>${treatment.pharmacological.map(d => `<li>${d.name} ${d.dose} ${d.frequency}</li>`).join('')}</ul>`;
+             }
+             if (!isEmpty(treatment.interventions)) {
+                 html += `<h3 class="summary-subsection-title">Interventional Plan</h3><ul>${treatment.interventions.map(i => `<li>${i.name}</li>`).join('')}</ul>`;
+             }
+             if (!isEmpty(treatment.instructions)) {
+                 html += `<h3 class="summary-subsection-title">Medical Instructions</h3><ul>${treatment.instructions.map(i => `<li>${i}</li>`).join('')}</ul>`;
+             }
+
+             html += `</div></div>`;
+             return html;
+        }
+
+        /**
+         * Renders the full patient summary card.
+         */
+        function safeSummaryValue(value) {
+            if (typeof value === 'string') return value.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+            if (Array.isArray(value)) return value.map(safeSummaryValue);
+            if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k,v]) => [k,safeSummaryValue(v)]));
+            return value;
+        }
+        function renderSummaryCard(input) {
+            const originalHistory = input.history && typeof input.history === 'object' && !Array.isArray(input.history) ? input.history : {};
+            const recordedDemo = originalHistory.demographics || {};
+            const record = safeSummaryValue({
+                ...input,
+                history: {...originalHistory, demographics: {...recordedDemo, name: recordedDemo.name ?? input.name, dob: recordedDemo.dob ?? input.dateOfBirth, gender: recordedDemo.gender ?? input.gender}, hpi: originalHistory.hpi ?? (typeof input.history === 'string' ? input.history : '')},
+                investigation: typeof input.investigation === 'object' ? input.investigation : null,
+                treatment: typeof input.treatment === 'object' ? input.treatment : null
+            });
+            summaryCardContainer.innerHTML = ''; // Clear loading message
+
+            const demographics = record.history?.demographics || {};
+            const smartSummaryText = generateSmartSummary(record);
+
+            let html = `
+                <div class="summary-header">
+                    <h1 class="text-3xl font-bold text-gray-900">${demographics.name || 'Patient Summary'}</h1>
+                    <p class="text-md text-gray-600 mt-2">
+                        DOB: ${demographics.dob || 'N/A'} | 
+                        Gender: ${demographics.gender || 'N/A'} | 
+                        Blood Group: ${demographics.bloodGroup || 'N/A'}
+                    </p>
+                </div>
+
+                <div class="summary-section">
+                    <h2 class="summary-section-title">Smart Summary</h2>
+                    <p class="summary-content whitespace-pre-wrap bg-blue-50 p-4 rounded-lg border border-blue-200">${smartSummaryText}</p>
+                </div>
+            `;
+            
+            // Render detailed sections
+            html += renderHistorySection(record.history);
+            html += renderExaminationSection(record.examination);
+            html += renderInvestigationSection(record.investigation);
+            html += renderTreatmentSection(record.treatment);
+
+            summaryCardContainer.innerHTML = html;
+            const notes = [['Medical history', input.medicalHistory], ['Medication', input.currentMedication], ['Allergies', input.allergies], ['Physical exam', input.physicalExam], ['Investigation', typeof input.investigation === 'string' ? input.investigation : input.legacyInvestigationText], ['Treatment', typeof input.treatment === 'string' ? input.treatment : input.legacyTreatmentText], ['Previous history text', input.legacyHistoryText]].filter(([,v]) => typeof v === 'string' && v.trim());
+            if (notes.length) { const section = document.createElement('div'); section.className = 'summary-section'; const h = document.createElement('h2'); h.className = 'summary-section-title'; h.textContent = 'Previously recorded notes'; section.append(h); for (const [label,value] of notes) { const p = document.createElement('p'); p.className = 'summary-content whitespace-pre-wrap'; p.textContent = label + ': ' + value; section.append(p); } summaryCardContainer.append(section); }
+        }
+
+        /**
+         * Fetches the patient record from Firestore.
+         */
+        async function fetchPatientRecord() {
+            if (!doctorUserId || !patientId) {
+                summaryCardContainer.innerHTML = `<div class="text-center text-red-600 font-semibold">Error: Missing Doctor or Patient ID. Cannot load data.</div>`;
+                return;
+            }
+
+            const patientDocRef = doc(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`, patientId);
+            try {
+                const docSnap = await getDocFromServer(patientDocRef);
+                if (docSnap.exists()) {
+                    const patientRecord = docSnap.data();
+                    renderSummaryCard(patientRecord);
+                } else {
+                    summaryCardContainer.innerHTML = `<div class="text-center text-red-600 font-semibold">Error: Patient record not found.</div>`;
+                }
+            } catch (error) {
+                console.error("Error loading patient from Firestore:", error);
+                summaryCardContainer.innerHTML = `<div class="text-center text-red-600 font-semibold">Error loading data. Please check the console.</div>`;
+            }
+        }
+
+        /**
+         * Initializes the page, gets URL params, and sets up Firebase.
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            fromDashboard = urlParams.get('from');
+            patientId = urlParams.get('patientId');
+
+            if (fromDashboard !== 'cardiology-dashboard.html' || !patientId) {
+                summaryCardContainer.innerHTML = `<div class="text-center text-red-600 font-semibold">Error: Navigation context lost. Please return to the dashboard.</div>`;
+                return;
+            }
+
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        doctorUserId = user.uid;
+                        try {
+                            const snap = await getDocFromServer(doc(db, `artifacts/${appId}/public/data/doctors`, user.uid));
+                            const doctor = snap.exists() ? snap.data() : null;
+                            if (!doctor || doctor.deactivated || doctor.role !== 'doctor' || doctor.speciality !== 'Cardiology') { window.location.replace('index.html'); return; }
+                            await fetchPatientRecord();
+                        } catch (_) { summaryCardContainer.textContent = 'Unable to verify patient access. Please retry.'; }
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                });
+            } catch (e) {
+                console.error("Firebase Init Error", e);
+                summaryCardContainer.innerHTML = `<div class="text-center text-red-600 font-semibold">Error initializing the application.</div>`;
+            }
+
+            backToDashboardButton.addEventListener('click', () => {
+                window.location.href = fromDashboard;
+            });
+
+            printButton.addEventListener('click', () => {
+                window.print();
+            });
+        });
+
+    </script>
+</body>
+</html>

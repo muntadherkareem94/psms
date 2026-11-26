@@ -147,7 +147,7 @@
                 <canvas id="ageChart"></canvas>
             </div>
             <div class="chart-card">
-                <h3>Last Recorded Patient Visits by Month</h3>
+                <h3>Patient Records by Last Recorded Activity</h3>
                 <canvas id="visitsChart"></canvas>
             </div>
             <!-- Add more chart cards as needed -->
@@ -243,7 +243,7 @@
                 '0-12': 0, '13-18': 0, '19-35': 0, '36-60': 0, '61+': 0
             };
             patients.forEach(patient => {
-                const age = calculateAge(patient.dateOfBirth);
+                const age = calculateAge(patient.history?.demographics?.dob || patient.dateOfBirth);
                 if (age !== null) {
                     if (age >= 0 && age <= 12) ageGroups['0-12']++;
                     else if (age >= 13 && age <= 18) ageGroups['13-18']++;
@@ -267,8 +267,9 @@
                     .filter(value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value))
                     .filter(value => { const parsed = new Date(value + 'T00:00:00Z'); return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value; })
                     .sort().pop();
-                if (lastRecordedVisit) {
-                    const visitDate = new Date(lastRecordedVisit + 'T00:00:00');
+                const activityDate = lastRecordedVisit ? new Date(lastRecordedVisit + 'T00:00:00') : patient.lastUpdated?.toDate?.();
+                if (activityDate instanceof Date && Number.isFinite(activityDate.getTime())) {
+                    const visitDate = activityDate;
                     // Format as YYYY-MM for consistent grouping (e.g., "2023-01")
                     const monthYear = `${visitDate.getFullYear()}-${(visitDate.getMonth() + 1).toString().padStart(2, '0')}`;
                     visitCounts[monthYear] = (visitCounts[monthYear] || 0) + 1;
@@ -290,8 +291,9 @@
 
             const genderData = { Male: 0, Female: 0, Other: 0 };
             patients.forEach(patient => {
-                if (patient.gender in genderData) {
-                    genderData[patient.gender]++;
+                const gender = patient.history?.demographics?.gender || patient.gender;
+                if (gender in genderData) {
+                    genderData[gender]++;
                 } else {
                     genderData.Other++; // Catch unexpected gender values
                 }
@@ -426,7 +428,7 @@
                         },
                         title: {
                             display: true,
-                            text: 'Last Recorded Patient Visits by Month'
+                            text: 'Patient Records by Last Recorded Activity'
                         }
                     },
                     scales: {

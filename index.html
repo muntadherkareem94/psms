@@ -224,7 +224,7 @@
                 throw accountError('account-deactivated', 'Account deactivated');
             }
             if (result.data.role !== result.role) return null;
-            if (result.role === 'doctor') return 'doctor-workspace.html';
+            if (result.role === 'doctor') return result.data.speciality === 'Cardiology' ? 'cardiology-dashboard.html' : 'doctor-workspace.html';
             return result.mapping.dashboard;
         }
 

@@ -4,14 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cardiology Dashboard</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts - Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.css" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(to right bottom, #fde68a, #fcd34d); /* Soft yellow/amber gradient */
+            background: linear-gradient(to right bottom, #fde68a, #fcd34d);
             min-height: 100vh;
             margin: 0;
             padding: 20px;
@@ -24,7 +23,7 @@
             border-radius: 1.5rem;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 1200px; /* Wider for more content */
+            max-width: 1200px;
             margin: 20px auto;
             display: flex;
             flex-direction: column;
@@ -39,12 +38,12 @@
             gap: 1rem;
         }
         .header h2 {
-            font-size: 2.25rem; /* text-4xl */
-            font-weight: 700; /* font-bold */
-            color: #1f2937; /* text-gray-800 */
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: #1f2937;
         }
         .button {
-            background: linear-gradient(to right, #fbbf24, #f59e0b); /* Amber gradient */
+            background: linear-gradient(to right, #fbbf24, #f59e0b);
             color: white;
             padding: 0.75rem 1.25rem;
             border-radius: 0.5rem;
@@ -61,50 +60,22 @@
             transform: translateY(-1px);
         }
         .button.secondary {
-            background: #cbd5e1; /* gray-300 */
-            color: #4b5563; /* gray-700 */
+            background: #cbd5e1;
+            color: #4b5563;
         }
         .button.secondary:hover {
-            background: #94a3b8; /* gray-400 */
+            background: #94a3b8;
         }
-        .button.danger {
-            background: linear-gradient(to right, #ef4444, #dc2626); /* Red gradient */
-            color: white;
-        }
-        .button.danger:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-
-        /* Message Box */
-        .message-box {
-            display: none;
-            background-color: #fffbeb; /* Lighter yellow */
-            border: 1px solid #fcd34d; /* Yellow border */
-            color: #b45309; /* Darker yellow text */
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-top: 1rem;
-            text-align: center;
-        }
-        .message-box.error {
-            background-color: #fef2f2; /* Light red */
-            border-color: #fecaca; /* Red border */
-            color: #991b1b; /* Dark red text */
-            margin-top: 1rem;
-            display: block;
-        }
-
-        /* Table styles */
         .table-container {
             overflow-x: auto;
             border-radius: 0.75rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 700px; /* Ensure table is wide enough */
+            min-width: 600px;
         }
         th, td {
             padding: 1rem;
@@ -112,25 +83,54 @@
             border-bottom: 1px solid #e2e8f0;
         }
         th {
-            background-color: #f1f5f9;
+            background-color: #f9fafb;
             font-weight: 600;
             color: #475569;
             text-transform: uppercase;
             font-size: 0.875rem;
         }
-        td {
-            background-color: white;
+        .action-buttons {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
-        tr:hover td {
-            background-color: #f1f5f9;
+        .action-link {
+            color: #2563eb;
+            font-weight: 500;
+            text-decoration: none;
+            transition: text-decoration 0.2s;
         }
-        .action-buttons button {
-            margin-right: 0.5rem;
-            font-size: 0.875rem;
-            padding: 0.5rem 0.75rem;
+        .action-link:hover {
+            text-decoration: underline;
         }
-
-        /* Modal styles */
+        .delete-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.25rem;
+            color: #ef4444;
+            border-radius: 9999px;
+            transition: background-color 0.2s;
+        }
+        .delete-button:hover {
+            color: #dc2626;
+            background-color: #fee2e2;
+        }
+        #messageBox {
+            display: none;
+            background-color: #fef3c7;
+            border: 1px solid #fcd34d;
+            color: #b45309;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        #messageBox.error {
+            background-color: #fef2f2;
+            border-color: #fecaca;
+            color: #991b1b;
+        }
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -156,49 +156,15 @@
             border-radius: 1rem;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             width: 90%;
-            max-width: 600px; /* Adjusted max-width for modals */
+            max-width: 600px;
             transform: translateY(-20px);
             transition: transform 0.3s ease;
             position: relative;
-            max-height: 90vh; /* Allow scrolling if content is long */
+            max-height: 90vh;
             overflow-y: auto;
         }
         .modal-overlay.active .modal-content {
             transform: translateY(0);
-        }
-        .modal-content h3 {
-            font-size: 1.875rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            color: #1f2937;
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #4b5563;
-        }
-        .form-group input, .form-group textarea, .form-group select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            transition: border-color 0.2s;
-        }
-        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-            outline: none;
-            border-color: #f59e0b; /* Amber focus */
-        }
-        .modal-buttons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 1rem;
-            margin-top: 1.5rem;
         }
         .close-modal-button {
             position: absolute;
@@ -213,61 +179,194 @@
         .close-modal-button:hover {
             color: #1f2937;
         }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #4b5563;
+        }
+        .form-group select, .form-group textarea, .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .ts-wrapper.form-select .ts-control {
+            padding: 0.75rem !important;
+            border-radius: 0.5rem !important;
+            border: 1px solid #d1d5db !important;
+            font-size: 1rem !important;
+        }
+        .ts-wrapper.form-select.focus .ts-control {
+            border-color: #f59e0b !important;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25) !important;
+        }
+        .ts-dropdown {
+            background-color: white !important; 
+            border-radius: 0.5rem !important;
+            border: 1px solid #d1d5db !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+            z-index: 1001 !important;
+        }
+        .ts-dropdown .option.active {
+            background-color: #fef3c7 !important;
+            color: #b45309 !important;
+        }
+        .ts-control .item {
+            background-color: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fcd34d;
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+        .notification-item {
+            background-color: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: background-color 0.2s ease;
+        }
+        .notification-item.unread {
+            background-color: #fffbeb;
+            border-color: #fcd34d;
+        }
+        .notification-item:hover {
+            background-color: #f9fafb;
+        }
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .notification-meta {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        .notification-message {
+            margin-top: 0.5rem;
+            color: #374151;
+        }
+        .notification-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.6em;
+            font-size: 0.75em;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.375rem;
+        }
+        .badge-info {
+            background-color: #bfdbfe;
+            color: #1e40af;
+        }
+        .badge-success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .badge-warning {
+            background-color: #fef3c7;
+            color: #b45309;
+        }
+        .badge-danger {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        .notification-count {
+            background-color: #ef4444;
+            color: white;
+            border-radius: 9999px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            min-width: 20px;
+            text-align: center;
+        }
+        .notification-bell-container {
+            position: relative;
+            display: inline-flex;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h2 class="text-4xl font-bold text-gray-800">Cardiology Dashboard</h2>
-            <button id="logoutButton" class="button secondary">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h10a1 1 0 001-1V4a1 1 0 00-1-1H3zm2 5a1 1 0 011-1h6a1 1 0 110 2H6a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 110 2H6a1 1 0 01-1-1z" clip-rule="evenodd" />
-                </svg>
-                Logout
-            </button>
+            <div class="flex items-center gap-4">
+                <button id="notificationButton" class="button secondary notification-bell-container w-40 justify-center"> 
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                    </svg>
+                    Notifications
+                    <span id="notificationCount" class="notification-count hidden">0</span>
+                </button>
+                <button id="logoutButton" class="button secondary w-40 justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h10a1 1 0 001-1V4a1 1 0 00-1-1H3zm2 5a1 1 0 011-1h6a1 1 0 110 2H6a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 110 2H6a1 1 0 01-1-1z" clip-rule="evenodd" /></svg>
+                    Logout
+                </button>
+            </div>
         </div>
 
         <p class="text-xl font-semibold text-gray-700 mb-6" id="doctorGreeting">Welcome, Dr. <span id="doctorName" class="font-bold text-amber-700"></span> (<span id="doctorSpeciality">Cardiology</span>)!</p>
 
-        <div id="messageBox" class="message-box"></div>
+        <div id="messageBox" class="p-4 rounded-md text-center"></div>
 
-        <div class="flex flex-wrap gap-4 mb-8">
-            <button id="addPatientButton" class="button">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                </svg>
+        <div class="flex flex-wrap gap-4 mb-4">
+            <button id="addNewPatientButton" class="button">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" /></svg>
                 Add New Patient
             </button>
-            <button id="sendConsultButton" class="button">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                </svg>
-                Send Consult
-            </button>
-            <button id="myConsultsButton" class="button secondary">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M2.929 17.071A10.003 10.003 0 0010 20a9.972 9.972 0 006.126-2.165L19.464 19l-.91-2.61a9.957 9.957 0 002.34-6.39A10.003 10.003 0 0010 0 10.003 10.003 0 000 10c0 2.923 1.155 5.584 2.929 7.071zM10 18a8 8 0 100-16 8 8 0 000 16zM6.707 9.293a1 1 0 00-1.414 1.414L8.586 13H5a1 1 0 100 2h3.586l-2.293 2.293a1 1 0 101.414 1.414L10 14.414l2.293 2.293a1 1 0 101.414-1.414L11.414 13H15a1 1 0 100-2h-3.586l2.293-2.293a1 1 0 00-1.414-1.414L10 10.586l-2.293-2.293a1 1 0 00-1.414 0z" clip-rule="evenodd" />
-                </svg>
-                My Consults
-            </button>
             <button id="myLinksButton" class="button secondary">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5.656 5.656a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 005.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 010-2.828z" clip-rule="evenodd" />
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5.656 10.828a2 2 0 11-2.828-2.828l3-3a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 005.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5z" clip-rule="evenodd" /></svg>
                 My Links
             </button>
-            <button id="viewAnalyticsButton" class="button secondary">
+            <button id="consultsButton" class="button secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 9a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H9a2 2 0 01-2-2V9z" /><path fill-rule="evenodd" d="M2.928 5.828a1 1 0 001.414 0L7 2.121V1a1 1 0 10-2 0v.121L2.929 4.414a1 1 0 000 1.414zM16 7a1 1 0 011-1h.121L19.88 2.93a1 1 0 010 1.414L17.07 7.071A1 1 0 0116 7zM2.928 14.172a1 1 0 000 1.414L5.828 18H7a1 1 0 100-2H5.828l-2.9-2.9a1 1 0 00-1.414 0zM17.07 12.929a1 1 0 00-1.414 0L13 15.828V17a1 1 0 102 0v-.121l2.9-2.9a1 1 0 000-1.414z" clip-rule="evenodd" /></svg>
+                Consults
+            </button>
+            <button id="dataAnalysisButton" class="button secondary">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                    <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
+                    <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
                 </svg>
-                View Data Analytics
+                Data Analysis
             </button>
         </div>
-        
-        <!-- Patient Records Section -->
+
         <div class="main-content mt-8 p-6 bg-gray-50 rounded-lg shadow-inner">
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4">My Patient Records</h3>
+            <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                <h3 class="text-2xl font-semibold text-gray-800">Cardiology Patient Records</h3>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="simpleSearchInput" placeholder="Search by name..." class="form-group input w-48">
+                    <button id="advancedSearchBtn" class="button secondary">Advanced</button>
+                </div>
+            </div>
             <div class="table-container">
                 <table id="patientsTable">
                     <thead>
@@ -275,790 +374,438 @@
                             <th>Name</th>
                             <th>Date of Birth</th>
                             <th>Gender</th>
-                            <th>Contact No.</th>
+                            <th>Phone Number</th>
                             <th>Last Visit</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="patientsTableBody">
-                        <!-- Patient data will be loaded here by JavaScript -->
-                        <tr><td colspan="6" class="text-center py-4 text-gray-500">Loading patient records...</td></tr>
+                        <!-- Patient data will be loaded here -->
                     </tbody>
                 </table>
             </div>
         </div>
-
-        <div class="main-content mt-8 p-6 bg-gray-50 rounded-lg shadow-inner">
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Cardiac Patient Management</h3>
-            <p class="text-gray-600">This section focuses on managing patients with cardiovascular conditions. You can track vital signs, review ECGs, and manage treatment plans.</p>
-            <!-- Future content like patient lists filtered by cardiac conditions, vital sign charts, ECG uploads/reviews -->
-        </div>
-
-        <div class="main-content mt-8 p-6 bg-gray-50 rounded-lg shadow-inner">
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Intervention & Procedures Schedule</h3>
-            <p class="text-gray-600">View and manage schedules for cardiac interventions, surgeries, and follow-up procedures.</p>
-            <!-- Future content like surgical schedules, catheterization lab bookings -->
-        </div>
     </div>
 
-    <!-- Add/Edit Patient Modal -->
-    <div id="patientModalOverlay" class="modal-overlay">
+    <!-- Advanced Search Modal -->
+    <div id="advancedSearchModal" class="modal-overlay">
         <div class="modal-content">
-            <button class="close-modal-button" id="closePatientModal">&times;</button>
-            <h3 id="patientModalTitle">Add New Patient</h3>
-            <form id="patientForm">
-                <input type="hidden" id="patientId">
+            <button id="closeAdvancedSearchModal" class="close-modal-button">&times;</button>
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">Advanced Search</h3>
+            <div class="space-y-4">
                 <div class="form-group">
-                    <label for="patientName">Patient Name</label>
-                    <input type="text" id="patientName" required>
-                </div>
-                <div class="form-group">
-                    <label for="dateOfBirth">Date of Birth</label>
-                    <input type="date" id="dateOfBirth" required>
-                </div>
-                <div class="form-group">
-                    <label for="gender">Gender</label>
-                    <select id="gender" required>
-                        <option value="">Select Gender</option>
+                    <label for="filterGender">Gender</label>
+                    <select id="filterGender" class="form-group select">
+                        <option value="">Any</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
-                        <option value="Other">Other</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="contactNumber">Contact Number</label>
-                    <input type="text" id="contactNumber">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label for="filterMinAge">Min Age</label>
+                        <input type="number" id="filterMinAge" class="form-group input" placeholder="e.g., 30">
+                    </div>
+                    <div class="form-group">
+                        <label for="filterMaxAge">Max Age</label>
+                        <input type="number" id="filterMaxAge" class="form-group input" placeholder="e.g., 40">
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="address">Address</label>
-                    <textarea id="address" rows="2"></textarea>
+                    <label for="filterLastVisit">Last Visit After</label>
+                    <input type="date" id="filterLastVisit" class="form-group input">
                 </div>
-                <div class="form-group">
-                    <label for="lastVisit">Last Visit Date</label>
-                    <input type="date" id="lastVisit">
-                </div>
-                <div class="form-group">
-                    <label for="history">History (Placeholder)</label>
-                    <textarea id="history" rows="3" placeholder="Patient medical history..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="physicalExam">Physical Examination (Placeholder)</label>
-                    <textarea id="physicalExam" rows="3" placeholder="Physical examination findings..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="investigation">Investigation (Placeholder)</label>
-                    <textarea id="investigation" rows="3" placeholder="Lab tests, imaging results..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="treatment">Treatment (Placeholder)</label>
-                    <textarea id="treatment" rows="3" placeholder="Prescriptions, procedures, follow-up plan..."></textarea>
-                </div>
-                <div class="modal-buttons">
-                    <button type="button" id="cancelPatientModal" class="button secondary">Cancel</button>
-                    <button type="submit" class="button">Save Patient</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Send Consult Modal -->
-    <div id="sendConsultModalOverlay" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal-button" id="closeSendConsultModal">&times;</button>
-            <h3>Send Consultation</h3>
-            <form id="sendConsultForm">
-                <div class="form-group">
-                    <label for="consultRecipient">Recipient Specialty</label>
-                    <select id="consultRecipient" required>
-                        <option value="">Select Specialty</option>
-                        <option value="General Practice">General Practice</option>
-                        <option value="Pediatrics">Pediatrics</option>
-                        <option value="Dermatology">Dermatology</option>
-                        <option value="Orthopedics">Orthopedics</option>
-                        <option value="Neurology">Neurology</option>
-                        <option value="Oncology">Oncology</option>
-                        <option value="Gastroenterology">Gastroenterology</option>
-                        <option value="Ophthalmology">Ophthalmology</option>
-                        <option value="ENT">ENT</option>
-                        <option value="Gynecology">Gynecology</option>
-                        <option value="Urology">Urology</option>
-                        <option value="Psychiatry">Psychiatry</option>
-                        <option value="General Surgery">General Surgery</option>
-                        <option value="Plastic Surgery">Plastic Surgery</option>
-                        <option value="Neurosurgery">Neurosurgery</option>
-                        <option value="Thoracic Surgery">Thoracic Surgery</option>
-                        <option value="Vascular Surgery">Vascular Surgery</option>
-                        <option value="Cardiothoracic Surgery">Cardiothoracic Surgery</option>
-                        <option value="Critical Care">Critical Care</option>
-                        <option value="Emergency Medicine">Emergency Medicine</option>
-                        <option value="Intensive Care Medicine">Intensive Care Medicine</option>
-                        <!-- Add other relevant specialties as needed -->
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="consultPatientName">Patient Name for Consult</label>
-                    <input type="text" id="consultPatientName" placeholder="e.g., John Doe" required>
-                </div>
-                <div class="form-group">
-                    <label for="consultSubject">Subject</label>
-                    <input type="text" id="consultSubject" required>
-                </div>
-                <div class="form-group">
-                    <label for="consultMessage">Message</label>
-                    <textarea id="consultMessage" rows="5" placeholder="Reason for consult, relevant findings, specific questions..."></textarea>
-                </div>
-                <div class="modal-buttons">
-                    <button type="button" id="cancelSendConsultModal" class="button secondary">Cancel</button>
-                    <button type="submit" class="button">Send Consult</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- My Consults Modal -->
-    <div id="myConsultsModalOverlay" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal-button" id="closeMyConsultsModal">&times;</button>
-            <h3>My Received Consultations</h3>
-            <div id="receivedConsultsList" class="mt-4">
-                <p class="text-gray-600 italic">No received consultations yet.</p>
-                <!-- Received consults will be listed here dynamically -->
             </div>
             <div class="modal-buttons">
-                <button type="button" id="closeMyConsultsModalBottom" class="button secondary">Close</button>
+                <button id="resetFiltersBtn" class="button secondary">Reset</button>
+                <button id="applyFiltersBtn" class="button">Apply Filters</button>
             </div>
         </div>
     </div>
-
+    
     <!-- My Links Modal -->
     <div id="myLinksModalOverlay" class="modal-overlay">
         <div class="modal-content">
             <button class="close-modal-button" id="closeMyLinksModal">&times;</button>
-            <h3>My Clinic Links</h3>
-            <div class="mt-4">
-                <p class="text-gray-600 mb-4">Here you can manage links to other departments or clinics for seamless communication.</p>
-                <ul class="list-disc list-inside text-gray-700">
-                    <li><a href="nurse-clinic-dashboard.html" class="text-blue-600 hover:underline">Nurse Clinic Dashboard</a></li>
-                    <li><a href="laboratory-dashboard.html" class="text-blue-600 hover:underline">Laboratory Dashboard</a></li>
-                    <li><a href="radiology-clinic-dashboard.html" class="text-blue-600 hover:underline">Radiology Clinic Dashboard</a></li>
-                    <li><a href="neurophysiology-clinic-dashboard.html" class="text-blue-600 hover:underline">Neurophysiology Clinic Dashboard</a></li>
-                    <li><a href="optometry-clinic-dashboard.html" class="text-blue-600 hover:underline">Optometry Clinic Dashboard</a></li>
-                    <li><a href="ent-nurse-clinic-dashboard.html" class="text-blue-600 hover:underline">ENT Nurse Clinic Dashboard</a></li>
-                    <li><a href="midwife-clinic-dashboard.html" class="text-blue-600 hover:underline">Midwife Clinic Dashboard</a></li>
-                    <li><a href="cast-room-nurse-clinic-dashboard.html" class="text-blue-600 hover:underline">Cast Room Nurse Clinic Dashboard</a></li>
-                    <li><a href="echocardiography-clinic-dashboard.html" class="text-blue-600 hover:underline">Echocardiography Clinic Dashboard</a></li>
-                    <li><a href="audiometry-clinic-dashboard.html" class="text-blue-600 hover:underline">Audiometry Clinic Dashboard</a></li>
-                    <!-- Add more links as needed -->
-                </ul>
-            </div>
-            <div class="modal-buttons">
-                <button type="button" id="closeMyLinksModalBottom" class="button secondary">Close</button>
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center">My Linked Institutions & Doctors</h3>
+            
+            <div class="space-y-6">
+                <div>
+                    <h4 class="text-xl font-semibold text-gray-700 mb-2">Link Institutions</h4>
+                    <p class="text-gray-600 mb-4">Link with other healthcare institutions to streamline referrals and data sharing.</p>
+                    
+                    <div class="form-group">
+                        <label for="linkInstitutionType" class="form-label">Institution Type</label>
+                        <select id="linkInstitutionType" class="form-select">
+                            <option value="">Select Type</option>
+                            <option value="labs">Laboratory</option>
+                            <option value="radiology_clinics">Radiology Clinic</option>
+                            <option value="echocardiography_clinics">Echocardiography Clinic</option>
+                            <option value="pharmacies">Pharmacy</option>
+                            <option value="nurse_clinics">Nurse Clinic</option>
+                            <option value="neurophysiology_clinics">Neurophysiology Clinic</option>
+                            <option value="optometry_clinics">Optometry Clinic</option>
+                            <option value="ent_nurse_clinics">ENT Nurse Clinic</option>
+                            <option value="midwife_clinics">Midwife Clinic</option>
+                            <option value="cast_room_nurse_clinics">Cast Room Nurse Clinic</option>
+                            <option value="audiometry_clinics">Audiometry Clinic</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="institutionSelectContainer" style="display:none;">
+                        <label for="linkedInstitutionSelect" class="form-label">Search & Link Institution</label>
+                        <select id="linkedInstitutionSelect" multiple placeholder="Type to search and link..."></select>
+                    </div>
+                    <div id="currentLinkedInstitutions" class="mt-4 p-3 bg-gray-100 rounded-lg">
+                        <p class="font-semibold text-gray-700 mb-2">Currently Linked:</p>
+                        <ul id="linkedInstitutionsList" class="list-disc list-inside text-gray-600"></ul>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-xl font-semibold text-gray-700 mb-2">Link Other Doctors for Consults</h4>
+                    <p class="text-gray-600 mb-4">Link with other specialists to send patient consults.</p>
+                    
+                    <div class="form-group">
+                        <label for="linkDoctorSpeciality" class="form-label">Doctor Specialty</label>
+                        <select id="linkDoctorSpeciality" class="form-select">
+                            <option value="">Select Specialty</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="doctorSelectContainer" style="display:none;">
+                        <label for="linkedDoctorSelect" class="form-label">Search & Link Doctor</label>
+                        <select id="linkedDoctorSelect" multiple placeholder="Type to search and link..."></select>
+                    </div>
+                    <div id="currentLinkedDoctors" class="mt-4 p-3 bg-gray-100 rounded-lg">
+                        <p class="font-semibold text-gray-700 mb-2">Currently Linked:</p>
+                        <ul id="linkedDoctorsList" class="list-disc list-inside text-gray-600"></ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Confirm Delete Modal (Re-used from previous doctor-dashboard) -->
-    <div id="confirmModalOverlay" class="modal-overlay">
-        <div class="modal-content">
-            <h3 id="confirmModalTitle">Confirm Action</h3>
-            <p id="confirmModalMessage" class="text-center mb-6"></p>
-            <div class="modal-buttons justify-center">
-                <button type="button" id="cancelConfirm" class="button secondary">Cancel</button>
-                <button type="button" id="confirmAction" class="button danger">Confirm</button>
+    <!-- Consults Modal -->
+    <div id="consultsModalOverlay" class="modal-overlay">
+        <div class="modal-content max-w-2xl">
+            <button class="close-modal-button" id="closeConsultsModal">&times;</button>
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center">Patient Consults</h3>
+
+            <div class="flex justify-center gap-4 mb-6">
+                <button id="showSentConsultsBtn" class="button">Sent Consults</button>
+                <button id="showReceivedConsultsBtn" class="button secondary">Received Consults</button>
+                <button id="showConsultsRecordBtn" class="button secondary">Consults Record</button>
+            </div>
+
+            <div id="sentConsultsSection" class="space-y-4">
+                <h4 class="text-xl font-semibold text-gray-700 mb-2">Send New Consult</h4>
+                <div class="form-group">
+                    <label for="consultPatientSelect" class="form-label">Select Patient</label>
+                    <select id="consultPatientSelect" class="form-select"><option value="">Select a patient...</option></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Send To:</label>
+                    <div class="flex gap-4">
+                        <label class="inline-flex items-center"><input type="radio" name="sendToType" value="myLinks" class="form-radio" checked><span class="ml-2">My Links</span></label>
+                        <label class="inline-flex items-center"><input type="radio" name="sendToType" value="nonLinks" class="form-radio"><span class="ml-2">Non-Links</span></label>
+                    </div>
+                </div>
+                <div id="myLinksRecipientContainer">
+                    <div class="form-group">
+                        <label for="consultRecipientTypeMyLinks" class="form-label">Recipient Type (My Links)</label>
+                        <select id="consultRecipientTypeMyLinks" class="form-select"><option value="">Select Type</option><option value="doctor">Doctor</option><option value="institution">Institution</option></select>
+                    </div>
+                    <div class="form-group" id="consultRecipientSelectMyLinksContainer" style="display:none;">
+                        <label for="consultRecipientSelectMyLinks" class="form-label">Select Linked Recipient</label>
+                        <select id="consultRecipientSelectMyLinks" class="form-select"><option value="">Select recipient</option></select>
+                    </div>
+                </div>
+                <div id="nonLinksRecipientContainer" style="display:none;">
+                    <div class="form-group">
+                        <label for="consultRecipientTypeNonLinks" class="form-label">Recipient Type (Non-Links)</label>
+                        <select id="consultRecipientTypeNonLinks" class="form-select"><option value="">Select Type</option><option value="doctor">Doctor</option><option value="labs">Laboratory</option><option value="radiology_clinics">Radiology Clinic</option><option value="echocardiography_clinics">Echocardiography Clinic</option><option value="pharmacies">Pharmacy</option><option value="nurse_clinics">Nurse Clinic</option><option value="neurophysiology_clinics">Neurophysiology Clinic</option><option value="optometry_clinics">Optometry Clinic</option><option value="ent_nurse_clinics">ENT Nurse Clinic</option><option value="midwife_clinics">Midwife Clinic</option><option value="cast_room_nurse_clinics">Cast Room Nurse Clinic</option><option value="audiometry_clinics">Audiometry Clinic</option></select>
+                    </div>
+                    <div class="form-group" id="consultRecipientSelectNonLinksContainer" style="display:none;">
+                        <label for="consultRecipientSelectNonLinks" class="form-label">Search All Recipient</label>
+                        <select id="consultRecipientSelectNonLinks" class="form-select"><option value="">Search recipient</option></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="consultMessage" class="form-label">Consult Message</label>
+                    <textarea id="consultMessage" class="form-textarea" rows="4" placeholder="Enter message..."></textarea>
+                </div>
+                <button id="sendConsultButton" class="button w-full">Send Consult</button>
+                <h4 class="text-xl font-semibold text-gray-700 mt-8 mb-2">My Sent Consults</h4>
+                <div id="sentConsultsList" class="space-y-4"><p class="text-gray-500 text-center">No sent consults.</p></div>
+            </div>
+            <div id="receivedConsultsSection" class="space-y-4" style="display:none;">
+                <h4 class="text-xl font-semibold text-gray-700 mb-2">My Received Consults</h4>
+                <div id="receivedConsultsList" class="space-y-4"><p class="text-gray-500 text-center">No received consults.</p></div>
+            </div>
+            <div id="consultsRecordSection" class="space-y-4" style="display:none;">
+                <h4 class="text-xl font-semibold text-gray-700 mb-2">All Consult Records</h4>
+                <div id="allConsultsList" class="space-y-4"><p class="text-gray-500 text-center">No records.</p></div>
             </div>
         </div>
     </div>
 
+    <div id="viewPatientRecordModalOverlay" class="modal-overlay">
+        <div class="modal-content max-w-4xl">
+            <button class="close-modal-button" id="closeViewPatientRecordModal">&times;</button>
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center">Patient Record Summary</h3>
+            <div id="patientRecordSummaryContent" class="space-y-4 text-left"></div>
+        </div>
+    </div>
 
+    <div id="notificationModalOverlay" class="modal-overlay">
+        <div class="modal-content max-w-xl">
+            <button class="close-modal-button" id="closeNotificationModal">&times;</button>
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 text-center">Notifications</h3>
+            <div id="notificationList" class="space-y-3"><p class="text-gray-500 text-center">No notifications.</p></div>
+            <div class="modal-buttons"><button id="markAllReadButton" class="button secondary">Mark All As Read</button></div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <script type="module">
-        // Firebase imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, onSnapshot, updateDoc, arrayUnion, arrayRemove, deleteDoc, addDoc, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global variables provided by the Canvas environment
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "AIzaSyDMIZubC87_z2tCnURoqQIJjCWPPdWFdnk", authDomain: "pcms-e1162.firebaseapp.com", projectId: "pcms-e1162", storageBucket: "pcms-e1162.firebasestorage.app", messagingSenderId: "383068543378", appId: "1:383068543378:web:00c7d2bf95f9ded63a494b", measurementId: "G-4C1P3GB6PP" }; 
         
-        // ==================================================================================================
-        // IMPORTANT: If running this HTML file directly from your local file system (e.g., C:/),
-        //            you MUST replace the object below with your actual Firebase project config.
-        //            You can find this in your Firebase console under Project settings -> Your apps.
-        // ==================================================================================================
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "AIzaSyDMIZubC87_z2tCnURoqQIJjCWPPdWFdnk",
-            authDomain: "pcms-e1162.firebaseapp.com",
-            projectId: "pcms-e1162",
-            storageBucket: "pcms-e1162.firebasestorage.app",
-            messagingSenderId: "383068543378",
-            appId: "1:383068543378:web:00c7d2bf95f9ded63a494b",
-            measurementId: "G-4C1P3GB6PP"
-        }; 
-        
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? initialAuthToken : null;
+        let app, db, auth, doctorUserId, doctorSpeciality, doctorName;
+        let allPatients = [], linkedInstitutions = [], linkedDoctors = [], allSentConsults = [], allReceivedConsults = [];
 
-        let app;
-        let db;
-        let auth;
-        let doctorUserId = null; 
-        let doctorSpeciality = 'Cardiology'; // This dashboard is hardcoded for Cardiology
-
-        // DOM Elements
-        const logoutButton = document.getElementById('logoutButton');
-        const doctorNameSpan = document.getElementById('doctorName');
-        const doctorSpecialitySpan = document.getElementById('doctorSpeciality');
-        const messageBox = document.getElementById('messageBox');
-
-        const addPatientButton = document.getElementById('addPatientButton');
-        const sendConsultButton = document.getElementById('sendConsultButton');
-        const myConsultsButton = document.getElementById('myConsultsButton');
-        const myLinksButton = document.getElementById('myLinksButton');
-        const viewAnalyticsButton = document.getElementById('viewAnalyticsButton');
-        const patientsTableBody = document.getElementById('patientsTableBody');
-
-        // Patient Modal Elements
-        const patientModalOverlay = document.getElementById('patientModalOverlay');
-        const closePatientModalButton = document.getElementById('closePatientModal');
-        const cancelPatientModalButton = document.getElementById('cancelPatientModal');
-        const patientForm = document.getElementById('patientForm');
-        const patientModalTitle = document.getElementById('patientModalTitle');
-        const patientIdInput = document.getElementById('patientId');
-        const patientNameInput = document.getElementById('patientName');
-        const dateOfBirthInput = document.getElementById('dateOfBirth');
-        const genderInput = document.getElementById('gender');
-        const contactNumberInput = document.getElementById('contactNumber');
-        const addressInput = document.getElementById('address');
-        const lastVisitInput = document.getElementById('lastVisit');
-        const historyInput = document.getElementById('history');
-        const physicalExamInput = document.getElementById('physicalExam');
-        const investigationInput = document.getElementById('investigation');
-        const treatmentInput = document.getElementById('treatment');
-
-        // Send Consult Modal Elements
-        const sendConsultModalOverlay = document.getElementById('sendConsultModalOverlay');
-        const closeSendConsultModalButton = document.getElementById('closeSendConsultModal');
-        const cancelSendConsultModalButton = document.getElementById('cancelSendConsultModal');
-        const sendConsultForm = document.getElementById('sendConsultForm');
-        const consultRecipientSelect = document.getElementById('consultRecipient');
-        const consultPatientNameInput = document.getElementById('consultPatientName');
-        const consultSubjectInput = document.getElementById('consultSubject');
-        const consultMessageInput = document.getElementById('consultMessage');
-
-        // My Consults Modal Elements
-        const myConsultsModalOverlay = document.getElementById('myConsultsModalOverlay');
-        const closeMyConsultsModalButton = document.getElementById('closeMyConsultsModal');
-        const closeMyConsultsModalBottomButton = document.getElementById('closeMyConsultsModalBottom');
-        const receivedConsultsListDiv = document.getElementById('receivedConsultsList');
-
-        // My Links Modal Elements
-        const myLinksModalOverlay = document.getElementById('myLinksModalOverlay');
-        const closeMyLinksModalButton = document.getElementById('closeMyLinksModal');
-        const closeMyLinksModalBottomButton = document.getElementById('closeMyLinksModalBottom');
-
-        // Confirm Modal Elements
-        const confirmModalOverlay = document.getElementById('confirmModalOverlay');
-        const confirmModalTitle = document.getElementById('confirmModalTitle');
-        const confirmModalMessage = document.getElementById('confirmModalMessage');
-        const cancelConfirmButton = document.getElementById('cancelConfirm');
-        const confirmActionButton = document.getElementById('confirmAction');
-
-        let currentActionPatient = null; // Store patient data for confirm dialog actions
-
-        // Mapping of doctor specialities to their specific dashboards (for links in "My Links")
-        const doctorSpecialityDashboards = {
-            'General Practice': 'general-practice-dashboard.html',
-            'Cardiology': 'cardiology-dashboard.html', // Current dashboard
-            'Pediatrics': 'pediatrics-dashboard.html',
-            'Dermatology': 'dermatology-dashboard.html',
-            'Orthopedics': 'orthopedics-dashboard.html',
-            'Neurology': 'neurology-dashboard.html',
-            'Oncology': 'oncology-dashboard.html',
-            'Gastroenterology': 'gastroenterology-dashboard.html',
-            'Ophthalmology': 'ophthalmology-dashboard.html',
-            'ENT': 'ent-dashboard.html', 
-            'Gynecology': 'gynecology-dashboard.html',
-            'Urology': 'urology-dashboard.html',
-            'Psychiatry': 'psychiatry-dashboard.html',
-            'General Surgery': 'general-surgery-dashboard.html',
-            'Plastic Surgery': 'plastic-surgery-dashboard.html',
-            'Neurosurgery': 'neurosurgery-dashboard.html',
-            'Thoracic Surgery': 'thoracic-surgery-dashboard.html',
-            'Vascular Surgery': 'vascular-surgery-dashboard.html',
-            'Cardiothoracic Surgery': 'cardiothoracic-surgery-dashboard.html', 
-            'Critical Care': 'critical-care-dashboard.html', 
-            'Emergency Medicine': 'emergency-medicine-dashboard.html', 
-            'Intensive Care Medicine': 'intensive-care-medicine-dashboard.html' 
+        const dom = {
+            logoutButton: document.getElementById('logoutButton'),
+            doctorNameSpan: document.getElementById('doctorName'),
+            messageBox: document.getElementById('messageBox'),
+            addNewPatientButton: document.getElementById('addNewPatientButton'),
+            patientsTableBody: document.getElementById('patientsTableBody'),
+            dataAnalysisButton: document.getElementById('dataAnalysisButton'),
+            simpleSearchInput: document.getElementById('simpleSearchInput'),
+            advancedSearchBtn: document.getElementById('advancedSearchBtn'),
+            advancedSearchModal: document.getElementById('advancedSearchModal'),
+            closeAdvancedSearchModal: document.getElementById('closeAdvancedSearchModal'),
+            applyFiltersBtn: document.getElementById('applyFiltersBtn'),
+            resetFiltersBtn: document.getElementById('resetFiltersBtn'),
+            myLinksButton: document.getElementById('myLinksButton'),
+            myLinksModalOverlay: document.getElementById('myLinksModalOverlay'),
+            closeMyLinksModal: document.getElementById('closeMyLinksModal'),
+            linkInstitutionTypeSelect: document.getElementById('linkInstitutionType'),
+            institutionSelectContainer: document.getElementById('institutionSelectContainer'),
+            linkedInstitutionsList: document.getElementById('linkedInstitutionsList'),
+            linkDoctorSpecialitySelect: document.getElementById('linkDoctorSpeciality'),
+            doctorSelectContainer: document.getElementById('doctorSelectContainer'),
+            linkedDoctorsList: document.getElementById('linkedDoctorsList'),
+            consultsButton: document.getElementById('consultsButton'),
+            consultsModalOverlay: document.getElementById('consultsModalOverlay'),
+            closeConsultsModal: document.getElementById('closeConsultsModal'),
+            showSentConsultsBtn: document.getElementById('showSentConsultsBtn'),
+            showReceivedConsultsBtn: document.getElementById('showReceivedConsultsBtn'),
+            showConsultsRecordBtn: document.getElementById('showConsultsRecordBtn'),
+            sentConsultsSection: document.getElementById('sentConsultsSection'),
+            receivedConsultsSection: document.getElementById('receivedConsultsSection'),
+            consultsRecordSection: document.getElementById('consultsRecordSection'),
+            sendToTypeRadios: document.querySelectorAll('input[name="sendToType"]'),
+            myLinksRecipientContainer: document.getElementById('myLinksRecipientContainer'),
+            nonLinksRecipientContainer: document.getElementById('nonLinksRecipientContainer'),
+            consultRecipientTypeMyLinksSelect: document.getElementById('consultRecipientTypeMyLinks'),
+            consultRecipientSelectMyLinksContainer: document.getElementById('consultRecipientSelectMyLinksContainer'),
+            consultRecipientTypeNonLinksSelect: document.getElementById('consultRecipientTypeNonLinks'),
+            consultRecipientSelectNonLinksContainer: document.getElementById('consultRecipientSelectNonLinksContainer'),
+            consultMessageTextarea: document.getElementById('consultMessage'),
+            sendConsultButton: document.getElementById('sendConsultButton'),
+            sentConsultsList: document.getElementById('sentConsultsList'),
+            receivedConsultsList: document.getElementById('receivedConsultsList'),
+            allConsultsList: document.getElementById('allConsultsList'),
+            viewPatientRecordModalOverlay: document.getElementById('viewPatientRecordModalOverlay'),
+            closeViewPatientRecordModal: document.getElementById('closeViewPatientRecordModal'),
+            patientRecordSummaryContent: document.getElementById('patientRecordSummaryContent'),
+            notificationButton: document.getElementById('notificationButton'),
+            notificationCountSpan: document.getElementById('notificationCount'),
+            notificationModalOverlay: document.getElementById('notificationModalOverlay'),
+            closeNotificationModal: document.getElementById('closeNotificationModal'),
+            notificationList: document.getElementById('notificationList'),
+            markAllReadButton: document.getElementById('markAllReadButton'),
         };
 
-        // Mapping of roles to dashboard filenames for "My Links" to clinics/labs
-        const clinicLabDashboards = {
-            'nurse_clinic': 'nurse-clinic-dashboard.html',
-            'laboratory': 'laboratory-dashboard.html',
-            'radiology_clinic': 'radiology-clinic-dashboard.html',
-            'neurophysiology_clinic': 'neurophysiology-clinic-dashboard.html',
-            'optometry_clinic': 'optometry-clinic-dashboard.html',
-            'ent_nurse_clinic': 'ent-nurse-clinic-dashboard.html',
-            'midwife_clinic': 'midwife-clinic-dashboard.html',
-            'cast_room_nurse_clinic': 'cast-room-nurse-clinic-dashboard.html',
-            'echocardiography_clinic': 'echocardiography-clinic-dashboard.html',
-            'audiometry_clinic': 'audiometry-clinic-dashboard.html'
-        };
+        let tomSelects = {};
 
+        const allDoctorSpecialities = { 'General Practice': 'General Practice', 'Cardiology': 'Cardiology', 'Pediatrics': 'Pediatrics', 'Dermatology': 'Dermatology', 'Orthopedics': 'Orthopedics', 'Neurology': 'Neurology', 'Oncology': 'Oncology', 'Gastroenterology': 'Gastroenterology', 'Ophthalmology': 'Ophthalmology', 'ENT': 'ENT', 'Gynecology': 'Gynecology', 'Urology': 'Urology', 'Psychiatry': 'Psychiatry', 'General Surgery': 'General Surgery', 'Plastic Surgery': 'Plastic Surgery', 'Neurosurgery': 'Neurosurgery', 'Thoracic Surgery': 'Thoracic Surgery', 'Vascular Surgery': 'Vascular Surgery', 'Cardiothoracic Surgery': 'Cardiothoracic Surgery', 'Critical Care': 'Critical Care', 'Emergency Medicine': 'Emergency Medicine', 'Intensive Care Medicine': 'Intensive Care Medicine' };
+        const institutionTypes = { 'labs': { collection: 'labs', nameField: 'businessName', displayName: 'Laboratory' }, 'radiology_clinics': { collection: 'radiology_clinics', nameField: 'businessName', displayName: 'Radiology Clinic' }, 'echocardiography_clinics': { collection: 'echocardiography_clinics', nameField: 'businessName', displayName: 'Echocardiography Clinic' }, 'pharmacies': { collection: 'pharmacies', nameField: 'businessName', displayName: 'Pharmacy' }, 'nurse_clinics': { collection: 'nurse_clinics', nameField: 'businessName', displayName: 'Nurse Clinic' }, 'neurophysiology_clinics': { collection: 'neurophysiology_clinics', nameField: 'businessName', displayName: 'Neurophysiology Clinic' }, 'optometry_clinics': { collection: 'optometry_clinics', nameField: 'businessName', displayName: 'Optometry Clinic' }, 'ent_nurse_clinics': { collection: 'ent_nurse_clinics', nameField: 'businessName', displayName: 'ENT Nurse Clinic' }, 'midwife_clinics': { collection: 'midwife_clinics', nameField: 'businessName', displayName: 'Midwife Clinic' }, 'cast_room_nurse_clinics': { collection: 'cast_room_nurse_clinics', nameField: 'businessName', displayName: 'Cast Room Nurse Clinic' }, 'audiometry_clinics': { collection: 'audiometry_clinics', nameField: 'businessName', displayName: 'Audiometry Clinic' }, };
 
-        /**
-         * Displays a message in the message box.
-         * @param {string} message - The message to display.
-         * @param {boolean} isError - True if it's an error message, false otherwise.
-         */
-        function showMessage(message, isError) {
-            messageBox.textContent = message;
-            messageBox.style.display = 'block';
-            if (isError) {
-                messageBox.classList.remove('bg-fffbeb', 'border-fcd34d', 'text-b45309');
-                messageBox.classList.add('error');
-            } else {
-                messageBox.classList.remove('error');
-                messageBox.classList.add('bg-fffbeb', 'border-fcd34d', 'text-b45309');
-            }
-            if (!isError) {
-                setTimeout(() => {
-                    messageBox.style.display = 'none';
-                }, 5000);
-            }
+        function showMessage(message, isError) { dom.messageBox.textContent = message; dom.messageBox.style.display = 'block'; dom.messageBox.className = `p-4 rounded-md text-center ${isError ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'}`; if (!isError) setTimeout(() => { dom.messageBox.style.display = 'none'; }, 5000); }
+        async function handleLogout() { try { if (auth && auth.currentUser) await signOut(auth); sessionStorage.removeItem('currentPatientRecord'); sessionStorage.removeItem('currentPatientRecordOwner'); window.location.href = 'index.html'; } catch (error) { showMessage("Failed to log out.", true); } }
+        function redirectToLoginWithError(message) { sessionStorage.setItem('loginErrorMessage', message); window.location.href = 'index.html'; }
+
+        async function deletePatient(patientId) {
+            if (!doctorUserId) return;
+            showCustomConfirm("Delete Patient Record", "Are you sure you want to permanently delete this patient record?", async () => {
+                try {
+                    await deleteDoc(doc(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`, patientId));
+                    showMessage("Patient record deleted.", false);
+                } catch (error) { showMessage("Failed to delete patient record.", true); }
+            });
         }
 
-        /**
-         * Handles the logout process.
-         */
-        async function handleLogout() {
-            try {
-                if (auth && auth.currentUser) {
-                    await signOut(auth);
-                    console.log("Doctor logged out successfully.");
-                    window.location.href = 'index.html'; 
-                } else {
-                    console.warn("No active user to log out or auth object not initialized.");
-                    window.location.href = 'index.html'; 
-                }
-            } catch (error) {
-                console.error("Error during logout:", error);
-                showMessage("Failed to log out. Please try again.", true);
-            }
+        // The original History page stores demographics inside history.
+        // Also display records created by the temporary flat form.
+        function patientDemographics(patient) {
+            const current = patient.history?.demographics || {};
+            return {
+                name: current.name || patient.name || '',
+                dob: current.dob || patient.dateOfBirth || '',
+                gender: current.gender || patient.gender || '',
+                phoneNumber: current.phoneNumber || patient.contactNumber || ''
+            };
+        }
+        function recordDate(patient) {
+            if (patient.lastUpdated && typeof patient.lastUpdated.toDate === 'function') return patient.lastUpdated.toDate();
+            if (patient.lastUpdated && Number.isFinite(patient.lastUpdated.seconds)) return new Date(patient.lastUpdated.seconds * 1000);
+            const date = [patient.lastVisit, patient.lastVisitDate].filter(x => typeof x === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x)).sort().pop();
+            return date ? new Date(date + 'T00:00:00') : null;
+        }
+        function escapePatientText(value) {
+            return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
         }
 
-        /**
-         * Redirects to the login page with an optional error message.
-         * @param {string} message - The message to display.
-         */
-        function redirectToLoginWithError(message) {
-            sessionStorage.setItem('loginErrorMessage', message);
-            window.location.href = 'index.html';
-        }
-
-        /**
-         * Shows a given modal overlay.
-         * @param {HTMLElement} modalOverlayElement - The modal overlay DOM element.
-         */
-        function showModal(modalOverlayElement) {
-            modalOverlayElement.classList.add('active');
-        }
-
-        /**
-         * Hides a given modal overlay.
-         * @param {HTMLElement} modalOverlayElement - The modal overlay DOM element.
-         */
-        function hideModal(modalOverlayElement) {
-            modalOverlayElement.classList.remove('active');
-        }
-
-        /**
-         * Shows the patient add/edit modal.
-         * @param {Object|null} patient - Patient data to pre-fill the form, or null for a new patient.
-         */
-        function showPatientModal(patient = null) {
-            patientForm.reset(); // Reset form first
-            patientIdInput.value = patient ? patient.id : '';
-            patientModalTitle.textContent = patient ? 'Edit Patient' : 'Add New Patient';
-
-            if (patient) {
-                patientNameInput.value = patient.name || '';
-                dateOfBirthInput.value = patient.dateOfBirth || '';
-                genderInput.value = patient.gender || '';
-                contactNumberInput.value = patient.contactNumber || '';
-                addressInput.value = patient.address || '';
-                lastVisitInput.value = patient.lastVisit || '';
-                historyInput.value = patient.history || '';
-                physicalExamInput.value = patient.physicalExam || '';
-                investigationInput.value = patient.investigation || '';
-                treatmentInput.value = patient.treatment || '';
-            }
-            showModal(patientModalOverlay);
-        }
-
-        /**
-         * Shows the confirmation modal for delete actions.
-         * @param {string} title - Title for the confirmation modal.
-         * @param {string} message - Message for the confirmation modal.
-         * @param {Object} patient - The patient object associated with the action.
-         * @param {Function} actionCallback - The function to call if confirmed.
-         */
-        function showConfirmModal(title, message, patient, actionCallback) {
-            confirmModalTitle.textContent = title;
-            confirmModalMessage.textContent = message;
-            currentActionPatient = { patient, actionCallback }; // Store patient and callback
-            showModal(confirmModalOverlay);
-        }
-
-        /**
-         * Renders patients into the table.
-         * @param {Array<Object>} patients - Array of patient objects.
-         */
-        function renderPatients(patients) {
-            patientsTableBody.innerHTML = ''; // Clear existing rows
+        function renderPatientsTable(patients) {
+            dom.patientsTableBody.innerHTML = '';
             if (patients.length === 0) {
-                patientsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">No patients found. Click "Add New Patient" to get started.</td></tr>';
+                dom.patientsTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">No patients found.</td></tr>';
                 return;
             }
             patients.forEach(patient => {
-                const row = patientsTableBody.insertRow();
+                const lastVisit = recordDate(patient)?.toLocaleDateString() || 'N/A';
+                
+                const name = escapePatientText(patientDemographics(patient).name || 'N/A');
+                const dob = escapePatientText(patientDemographics(patient).dob || 'N/A');
+                const gender = escapePatientText(patientDemographics(patient).gender || 'N/A');
+                const phoneNumber = escapePatientText(patientDemographics(patient).phoneNumber || 'N/A');
+
+                const row = dom.patientsTableBody.insertRow();
                 row.innerHTML = `
-                    <td class="whitespace-nowrap">${patient.name}</td>
-                    <td>${patient.dateOfBirth}</td>
-                    <td>${patient.gender}</td>
-                    <td>${patient.contactNumber || 'N/A'}</td>
-                    <td>${patient.lastVisit || 'N/A'}</td>
-                    <td class="action-buttons whitespace-nowrap">
-                        <button class="button secondary edit-button" data-id="${patient.id}">Edit</button>
-                        <button class="button danger delete-button" data-id="${patient.id}">Delete</button>
+                    <td>${name}</td>
+                    <td>${dob}</td>
+                    <td>${gender}</td>
+                    <td>${phoneNumber}</td>
+                    <td>${lastVisit}</td>
+                    <td class="action-buttons">
+                        <a href="summarycard.html?from=cardiology-dashboard.html&patientId=${encodeURIComponent(patient.id)}" class="action-link">View</a>
+                        <a href="history-page.html?from=cardiology-dashboard.html&patientId=${encodeURIComponent(patient.id)}" class="action-link">Edit</a>
+                        <button class="delete-button" data-id="${escapePatientText(patient.id)}" title="Delete Patient Record"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg></button>
                     </td>
                 `;
             });
-            attachPatientButtonListeners();
+            dom.patientsTableBody.querySelectorAll('.delete-button').forEach(button => button.addEventListener('click', (event) => deletePatient(event.currentTarget.dataset.id)));
+        }
+        
+        function filterPatients() {
+            const searchTerm = dom.simpleSearchInput.value.toLowerCase();
+            const gender = document.getElementById('filterGender').value;
+            const minAge = parseInt(document.getElementById('filterMinAge').value, 10) || 0;
+            const maxAge = parseInt(document.getElementById('filterMaxAge').value, 10) || Infinity;
+            const lastVisitDate = document.getElementById('filterLastVisit').value ? new Date(document.getElementById('filterLastVisit').value) : null;
+            
+            const filtered = allPatients.filter(p => {
+                const patientName = patientDemographics(p).name || '';
+                const patientGender = patientDemographics(p).gender || '';
+                const patientDob = patientDemographics(p).dob;
+
+                const nameMatch = patientName.toLowerCase().includes(searchTerm);
+                const genderMatch = gender ? patientGender === gender : true;
+                const ageMatch = patientDob ? (new Date(new Date() - new Date(patientDob)).getFullYear() - 1970) >= minAge && (new Date(new Date() - new Date(patientDob)).getFullYear() - 1970) <= maxAge : true;
+                const lastVisitMatch = lastVisitDate ? (recordDate(p) && recordDate(p) >= lastVisitDate) : true;
+                
+                return nameMatch && genderMatch && ageMatch && lastVisitMatch;
+            });
+            renderPatientsTable(filtered);
         }
 
-        /**
-         * Attaches event listeners to the action buttons in the patient table.
-         */
-        function attachPatientButtonListeners() {
-            document.querySelectorAll('.edit-button').forEach(button => {
-                button.onclick = async (event) => {
-                    const patientId = event.target.dataset.id;
-                    const patientDocRef = doc(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`, patientId);
-                    try {
-                        const docSnap = await getDoc(patientDocRef);
-                        if (docSnap.exists()) {
-                            showPatientModal({ id: docSnap.id, ...docSnap.data() });
-                        } else {
-                            showMessage("Patient not found.", true);
-                        }
-                    } catch (error) {
-                        console.error("Error fetching patient for edit:", error);
-                        showMessage("Error loading patient data for edit. Check console.", true);
-                    }
-                };
-            });
-            document.querySelectorAll('.delete-button').forEach(button => {
-                button.onclick = async (event) => {
-                    const patientId = event.target.dataset.id;
-                    const patientDocRef = doc(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`, patientId);
-                    try {
-                        const docSnap = await getDoc(patientDocRef);
-                        if (docSnap.exists()) {
-                            const patientData = { id: docSnap.id, ...docSnap.data() };
-                            showConfirmModal(
-                                'Delete Patient',
-                                `Are you sure you want to delete patient ${patientData.name}? This action cannot be undone.`,
-                                patientData,
-                                deletePatient
-                            );
-                        } else {
-                            showMessage("Patient not found for deletion.", true);
-                        }
-                    } catch (error) {
-                        console.error("Error fetching patient for delete confirmation:", error);
-                        showMessage("Error loading patient data for deletion. Check console.", true);
-                    }
-                };
+        async function fetchPatients() {
+            if (!doctorUserId) return;
+            const q = collection(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`);
+            
+            onSnapshot(q, (snapshot) => {
+                allPatients = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a,b) => (recordDate(b)?.getTime() || 0) - (recordDate(a)?.getTime() || 0));
+                filterPatients(); 
+                if (tomSelects.consultPatient) tomSelects.consultPatient.destroy();
+                const patientOptions = allPatients.map(p => ({ id: p.id, name: patientDemographics(p).name || `Patient ${p.id}` }));
+                tomSelects.consultPatient = new TomSelect('#consultPatientSelect', { valueField: 'id', labelField: 'name', searchField: 'name', options: patientOptions, placeholder: 'Select a patient...', create: false });
+            }, (error) => {
+                console.error("Error fetching patients:", error);
+                showMessage("Could not load patient records.", true);
             });
         }
 
-        /**
-         * Adds a new patient or updates an existing one.
-         * @param {Event} event - The form submission event.
-         */
-        patientForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const patientId = patientIdInput.value;
-            const patientData = {
-                name: patientNameInput.value.trim(),
-                dateOfBirth: dateOfBirthInput.value,
-                gender: genderInput.value,
-                contactNumber: contactNumberInput.value.trim(),
-                address: addressInput.value.trim(),
-                lastVisit: lastVisitInput.value,
-                history: historyInput.value.trim(),
-                physicalExam: physicalExamInput.value.trim(),
-                investigation: investigationInput.value.trim(),
-                treatment: treatmentInput.value.trim(),
-                specialty: doctorSpeciality // Associate patient with this specialty
-            };
-
-            if (!patientData.name || !patientData.dateOfBirth || !patientData.gender) {
-                showMessage("Patient Name, Date of Birth, and Gender are required.", true);
-                return;
-            }
-
-            try {
-                if (patientId) {
-                    // Update existing patient
-                    const patientDocRef = doc(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`, patientId);
-                    await updateDoc(patientDocRef, patientData);
-                    showMessage("Patient updated successfully!", false);
-                } else {
-                    // Add new patient
-                    const patientsCollectionRef = collection(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`);
-                    await addDoc(patientsCollectionRef, patientData);
-                    showMessage("Patient added successfully!", false);
-                }
-                hideModal(patientModalOverlay);
-            } catch (error) {
-                console.error("Error saving patient:", error);
-                showMessage("Failed to save patient. Please try again.", true);
-            }
+        // --- All other functions from the original file are preserved here ---
+        async function fetchLinkedEntities() { if (!doctorUserId) return; const doctorDocRef = doc(db, `artifacts/${appId}/public/data/doctors`, doctorUserId); onSnapshot(doctorDocRef, (docSnap) => { if (docSnap.exists()) { const doctorData = docSnap.data(); linkedInstitutions = doctorData.linkedInstitutions || []; linkedDoctors = doctorData.linkedDoctors || []; renderLinkedEntities(); if (dom.consultsModalOverlay.classList.contains('active') && document.querySelector('input[name="sendToType"]:checked').value === 'myLinks') { populateConsultRecipientSelectMyLinks(); } } }, (error) => console.error("Error fetching linked entities:", error)); }
+        function renderLinkedEntities() { dom.linkedInstitutionsList.innerHTML = linkedInstitutions.length === 0 ? '<li class="text-gray-500">No institutions linked.</li>' : linkedInstitutions.map(link => `<li class="flex justify-between items-center py-1"><span>${link.name} (${link.typeDisplayName})</span><button class="text-red-500 hover:text-red-700 text-sm ml-2 unlink-btn" data-id="${link.id}" data-type="${link.type}">Unlink</button></li>`).join(''); dom.linkedDoctorsList.innerHTML = linkedDoctors.length === 0 ? '<li class="text-gray-500">No doctors linked.</li>' : linkedDoctors.map(link => `<li class="flex justify-between items-center py-1"><span>Dr. ${link.name} (${link.speciality})</span><button class="text-red-500 hover:text-red-700 text-sm ml-2 unlink-btn" data-id="${link.id}" data-type="doctor">Unlink</button></li>`).join(''); dom.myLinksModalOverlay.querySelectorAll('.unlink-btn').forEach(button => button.addEventListener('click', (event) => unlinkEntity(event.target.dataset.id, event.target.dataset.type))); }
+        async function unlinkEntity(id, type) { if (!doctorUserId) return; const doctorDocRef = doc(db, `artifacts/${appId}/public/data/doctors`, doctorUserId); const fieldToUpdate = type === 'doctor' ? 'linkedDoctors' : 'linkedInstitutions'; const arrayToRemove = (type === 'doctor' ? linkedDoctors : linkedInstitutions).filter(e => e.id === id); if (arrayToRemove.length > 0) { try { await updateDoc(doctorDocRef, { [fieldToUpdate]: arrayRemove(arrayToRemove[0]) }); showMessage(`Successfully unlinked.`, false); } catch (error) { showMessage("Failed to unlink.", true); } } }
+        function initTomSelect(selector, config) { if (tomSelects[selector]) tomSelects[selector].destroy(); tomSelects[selector] = new TomSelect(selector, config); }
+        function initInstitutionLinkTomSelect() { initTomSelect('#linkedInstitutionSelect', { valueField: 'id', labelField: 'name', searchField: ['name', 'email'], options: [], render: { option: (item, escape) => `<div><span class="font-bold">${escape(item.name)}</span><br><span class="text-sm text-gray-500">${escape(item.email)} - ${escape(item.typeDisplayName)}</span></div>`, item: (item, escape) => `<div class="item">${escape(item.name)} (${escape(item.typeDisplayName)})</div>` }, onItemAdd: async (value) => { const selectedItem = tomSelects['#linkedInstitutionSelect'].options[value]; if (selectedItem && doctorUserId) { const doctorDocRef = doc(db, `artifacts/${appId}/public/data/doctors`, doctorUserId); try { await updateDoc(doctorDocRef, { linkedInstitutions: arrayUnion({ id: selectedItem.id, name: selectedItem.name, email: selectedItem.email, type: selectedItem.type, typeDisplayName: selectedItem.typeDisplayName }) }); showMessage(`Linked with ${selectedItem.name}.`, false); } catch (error) { showMessage("Failed to link institution.", true); tomSelects['#linkedInstitutionSelect'].removeItem(value, true); } } } }); }
+        async function populateInstitutionLinkSelect() { const type = dom.linkInstitutionTypeSelect.value; if (!type || !institutionTypes[type]) { dom.institutionSelectContainer.style.display = 'none'; tomSelects['#linkedInstitutionSelect'].clearOptions(); return; } dom.institutionSelectContainer.style.display = 'block'; tomSelects['#linkedInstitutionSelect'].clearOptions(); tomSelects['#linkedInstitutionSelect'].clear(); const { collection: collectionName, nameField, displayName: typeDisplayName } = institutionTypes[type]; const q = query(collection(db, `artifacts/${appId}/public/data/${collectionName}`)); try { const querySnapshot = await getDocs(q); const options = querySnapshot.docs.map(doc => { const data = doc.data(); return { id: doc.id, name: data[nameField] || data.name || 'Unnamed', email: data.username || 'No Email', type: type, typeDisplayName: typeDisplayName }; }); tomSelects['#linkedInstitutionSelect'].addOptions(options); tomSelects['#linkedInstitutionSelect'].setValue(linkedInstitutions.filter(inst => inst.type === type).map(inst => inst.id)); } catch (error) { showMessage(`Failed to load ${typeDisplayName} list.`, true); } }
+        function initDoctorLinkTomSelect() { initTomSelect('#linkedDoctorSelect', { valueField: 'id', labelField: 'name', searchField: ['name', 'email'], options: [], render: { option: (item, escape) => `<div><span class="font-bold">${escape(item.name)}</span><br><span class="text-sm text-gray-500">${escape(item.email)} - ${escape(item.speciality)}</span></div>`, item: (item, escape) => `<div class="item">Dr. ${escape(item.name)} (${escape(item.speciality)})</div>` }, onItemAdd: async (value) => { const selectedItem = tomSelects['#linkedDoctorSelect'].options[value]; if (selectedItem && doctorUserId) { const doctorDocRef = doc(db, `artifacts/${appId}/public/data/doctors`, doctorUserId); try { await updateDoc(doctorDocRef, { linkedDoctors: arrayUnion({ id: selectedItem.id, name: selectedItem.name, email: selectedItem.email, speciality: selectedItem.speciality }) }); showMessage(`Linked with Dr. ${selectedItem.name}.`, false); } catch (error) { showMessage("Failed to link doctor.", true); tomSelects['#linkedDoctorSelect'].removeItem(value, true); } } } }); }
+        async function populateDoctorLinkSelect() { const specialty = dom.linkDoctorSpecialitySelect.value; if (!specialty) { dom.doctorSelectContainer.style.display = 'none'; tomSelects['#linkedDoctorSelect'].clearOptions(); return; } dom.doctorSelectContainer.style.display = 'block'; tomSelects['#linkedDoctorSelect'].clearOptions(); tomSelects['#linkedDoctorSelect'].clear(); const q = query(collection(db, `artifacts/${appId}/public/data/doctors`), where('speciality', '==', specialty)); try { const querySnapshot = await getDocs(q); const options = querySnapshot.docs.map(doc => { const data = doc.data(); if (doc.id === doctorUserId) return null; return { id: doc.id, name: data.name || 'Unnamed Doctor', email: data.username || 'No Email', speciality: data.speciality }; }).filter(Boolean); tomSelects['#linkedDoctorSelect'].addOptions(options); tomSelects['#linkedDoctorSelect'].setValue(linkedDoctors.filter(d => d.speciality === specialty).map(d => d.id)); } catch (error) { showMessage(`Failed to load doctors for ${specialty}.`, true); } }
+        function populateConsultPatientSelect(patients) { if (tomSelects.consultPatient) tomSelects.consultPatient.destroy(); const patientOptions = patients.map(p => ({ id: p.id, name: patientDemographics(p).name || `Patient ${p.id}` })); tomSelects.consultPatient = new TomSelect('#consultPatientSelect', { valueField: 'id', labelField: 'name', searchField: 'name', options: patientOptions, placeholder: 'Select a patient...', create: false }); }
+        function populateConsultRecipientSelectMyLinks() { if (tomSelects.consultRecipientSelectMyLinks) tomSelects.consultRecipientSelectMyLinks.destroy(); const recipientType = dom.consultRecipientTypeMyLinksSelect.value; let options = []; if (recipientType === 'institution') { options = linkedInstitutions.map(inst => ({ id: inst.id, name: inst.name, type: inst.type, typeDisplayName: inst.typeDisplayName, collection: inst.type })); } else if (recipientType === 'doctor') { options = linkedDoctors.map(doc => ({ id: doc.id, name: `Dr. ${doc.name}`, speciality: doc.speciality, collection: 'doctors' })); } tomSelects.consultRecipientSelectMyLinks = new TomSelect('#consultRecipientSelectMyLinks', { valueField: 'id', labelField: 'name', searchField: 'name', options: options, placeholder: 'Select a linked recipient...', create: false, render: { option: (item, escape) => item.typeDisplayName ? `<div><span class="font-bold">${escape(item.name)}</span><br><span class="text-sm text-gray-500">${escape(item.typeDisplayName)}</span></div>` : `<div><span class="font-bold">${escape(item.name)}</span><br><span class="text-sm text-gray-500">${escape(item.speciality)}</span></div>`, item: (item, escape) => item.typeDisplayName ? `<div class="item">${escape(item.name)} (${escape(item.typeDisplayName)})</div>` : `<div class="item">${escape(item.name)} (${escape(item.speciality)})</div>` } }); dom.consultRecipientSelectMyLinksContainer.style.display = recipientType ? 'block' : 'none'; }
+        async function populateConsultRecipientSelectNonLinks() { if (tomSelects.consultRecipientSelectNonLinks) tomSelects.consultRecipientSelectNonLinks.destroy(); const recipientType = dom.consultRecipientTypeNonLinksSelect.value; let options = []; if (recipientType) { let collectionName, nameField, displayName; if (recipientType === 'doctor') { collectionName = 'doctors'; nameField = 'name'; displayName = 'Doctor'; } else { const instType = institutionTypes[recipientType]; if (instType) { collectionName = instType.collection; nameField = instType.nameField; displayName = instType.displayName; } } if (collectionName) { const q = query(collection(db, `artifacts/${appId}/public/data/${collectionName}`)); try { const querySnapshot = await getDocs(q); options = querySnapshot.docs.map(doc => { const data = doc.data(); if (recipientType === 'doctor' && doc.id === doctorUserId) return null; return { id: doc.id, name: data[nameField] || data.name || 'Unnamed', email: data.username || 'No Email', type: recipientType, typeDisplayName: displayName, speciality: data.speciality }; }).filter(Boolean); } catch (error) { showMessage(`Failed to load list for ${displayName}.`, true); } } } tomSelects.consultRecipientSelectNonLinks = new TomSelect('#consultRecipientSelectNonLinks', { valueField: 'id', labelField: 'name', searchField: ['name', 'email', 'speciality'], options: options, placeholder: 'Search for any recipient...', create: false, render: { option: (item, escape) => item.type === 'doctor' ? `<div><span class="font-bold">Dr. ${escape(item.name)}</span><br><span class="text-sm text-gray-500">${escape(item.email)} - ${escape(item.speciality)}</span></div>` : `<div><span class="font-bold">${escape(item.name)}</span><br><span class="text-sm text-gray-500">${escape(item.email)} - ${escape(item.typeDisplayName)}</span></div>`, item: (item, escape) => item.type === 'doctor' ? `<div class="item">Dr. ${escape(item.name)} (${escape(item.speciality)})</div>` : `<div class="item">${escape(item.name)} (${escape(item.typeDisplayName)})</div>` } }); dom.consultRecipientSelectNonLinksContainer.style.display = recipientType ? 'block' : 'none'; }
+        async function sendConsult() { const patientId = tomSelects.consultPatient.getValue(); const sendToOption = document.querySelector('input[name="sendToType"]:checked').value; let recipientId, recipientType, recipientName, recipientSpecialityOrTypeDisplayName, recipientCollectionKey, recipientData; if (sendToOption === 'myLinks') { recipientId = tomSelects.consultRecipientSelectMyLinks.getValue(); recipientData = tomSelects.consultRecipientSelectMyLinks.options[recipientId]; if (recipientData) { recipientType = recipientData.type; recipientName = recipientData.name; recipientSpecialityOrTypeDisplayName = recipientData.speciality || recipientData.typeDisplayName; recipientCollectionKey = recipientData.collection; } } else { recipientId = tomSelects.consultRecipientSelectNonLinks.getValue(); recipientData = tomSelects.consultRecipientSelectNonLinks.options[recipientId]; if (recipientData) { recipientType = recipientData.type; recipientName = recipientData.name; recipientSpecialityOrTypeDisplayName = recipientData.speciality || recipientData.typeDisplayName; recipientCollectionKey = recipientType; } } const message = dom.consultMessageTextarea.value.trim(); if (!patientId || !recipientId || !recipientType || !message) { showMessage("Please select a patient, recipient, and enter a message.", true); return; } const patientRecord = allPatients.find(p => p.id === patientId); if (!patientRecord) { showMessage("Selected patient record not found.", true); return; } dom.sendConsultButton.disabled = true; dom.sendConsultButton.textContent = "Sending..."; try { const sentConsultRef = await addDoc(collection(db, `artifacts/${appId}/doctors/${doctorUserId}/sent_consults`), { patientId: patientId, patientSummary: { name: patientRecord.history?.demographics?.name, dob: patientRecord.history?.demographics?.dob, gender: patientRecord.history?.demographics?.gender, chiefComplaint: patientRecord.history?.chiefComplaint?.complaint || 'N/A' }, fullPatientRecord: JSON.stringify(patientRecord), recipientId: recipientId, recipientName: recipientName, recipientType: recipientType, recipientSpeciality: recipientSpecialityOrTypeDisplayName, message: message, timestamp: new Date(), status: 'Sent', replies: [] }); let recipientCollectionPath = recipientType === 'doctor' ? `artifacts/${appId}/public/data/doctors/${recipientId}/received_consults` : `artifacts/${appId}/public/data/${recipientCollectionKey}/${recipientId}/received_consults`; const receivedConsultRef = await addDoc(collection(db, recipientCollectionPath), { patientId: patientId, patientSummary: { name: patientRecord.history?.demographics?.name, dob: patientRecord.history?.demographics?.dob, gender: patientRecord.history?.demographics?.gender, chiefComplaint: patientRecord.history?.chiefComplaint?.complaint || 'N/A' }, fullPatientRecord: JSON.stringify(patientRecord), senderId: doctorUserId, senderName: doctorName, senderSpeciality: doctorSpeciality, message: message, timestamp: new Date(), status: 'Received', read: false, replies: [], senderConsultDocId: sentConsultRef.id, recipientConsultDocId: null }); await updateDoc(sentConsultRef, { recipientConsultDocId: receivedConsultRef.id }); await updateDoc(receivedConsultRef, { senderConsultDocId: sentConsultRef.id }); let notificationRecipientCollectionPath = recipientType === 'doctor' ? `artifacts/${appId}/doctors/${recipientId}/notifications` : `artifacts/${appId}/public/data/${recipientCollectionKey}/${recipientId}/notifications`; await addDoc(collection(db, notificationRecipientCollectionPath), { type: 'new_consult', senderId: doctorUserId, senderName: doctorName, senderSpeciality: doctorSpeciality, patientName: patientRecord.history?.demographics?.name, message: `New consult from Dr. ${doctorName} for patient ${patientRecord.history?.demographics?.name}.`, timestamp: new Date(), read: false, consultId: receivedConsultRef.id }); showMessage("Consult sent successfully!", false); tomSelects.consultPatient.clear(); if (sendToOption === 'myLinks') tomSelects.consultRecipientSelectMyLinks.clear(); else tomSelects.consultRecipientSelectNonLinks.clear(); dom.consultMessageTextarea.value = ''; toggleConsultRecipientSelects(); } catch (error) { console.error("Error sending consult:", error); showMessage("Failed to send consult. Please try again.", true); } finally { dom.sendConsultButton.disabled = false; dom.sendConsultButton.textContent = "Send Consult"; } }
+        async function fetchSentConsults() { if (!doctorUserId) return; const q = query(collection(db, `artifacts/${appId}/doctors/${doctorUserId}/sent_consults`), orderBy('timestamp', 'desc')); onSnapshot(q, (snapshot) => { allSentConsults = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderSentConsults(allSentConsults); renderAllConsults(); }, (error) => showMessage("Could not load sent consults.", true)); }
+        function renderSentConsults(consults) { dom.sentConsultsList.innerHTML = consults.length === 0 ? '<p class="text-gray-500 text-center">No sent consults yet.</p>' : consults.map(consult => `<div class="p-4 border border-gray-200 rounded-lg bg-gray-50"><p class="font-semibold">To: ${consult.recipientName || 'Unknown'} (${consult.recipientSpeciality})</p><p class="text-sm text-gray-600">Patient: ${consult.patientSummary?.name || 'Unknown'} (DOB: ${consult.patientSummary?.dob || 'N/A'})</p><p class="text-sm text-gray-600">Sent: ${consult.timestamp?.toDate().toLocaleString() || 'N/A'}</p><p class="mt-2 text-gray-700 italic">"${consult.message.substring(0, 100)}${consult.message.length > 100 ? '...' : ''}"</p><button class="text-blue-600 hover:underline text-sm mt-2 view-record-btn" data-record='${consult.fullPatientRecord}'>View Patient Record</button>${renderReplies(consult.replies, consult.id, 'sent')}</div>`).join(''); setupViewRecordButtons(); }
+        async function fetchReceivedConsults() { if (!doctorUserId) return; const q = query(collection(db, `artifacts/${appId}/public/data/doctors/${doctorUserId}/received_consults`), orderBy('timestamp', 'desc')); onSnapshot(q, (snapshot) => { allReceivedConsults = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderReceivedConsults(allReceivedConsults); renderAllConsults(); }, (error) => showMessage("Could not load received consults.", true)); }
+        function renderReceivedConsults(consults) { dom.receivedConsultsList.innerHTML = consults.length === 0 ? '<p class="text-gray-500 text-center">No received consults yet.</p>' : consults.map(consult => `<div class="p-4 border border-gray-200 rounded-lg ${consult.read ? 'bg-white' : 'bg-blue-50 border-blue-200'}"><p class="font-semibold">From: Dr. ${consult.senderName || 'Unknown'} (${consult.senderSpeciality})</p><p class="text-sm text-gray-600">Patient: ${consult.patientSummary?.name || 'Unknown'} (DOB: ${consult.patientSummary?.dob || 'N/A'})</p><p class="text-sm text-gray-600">Received: ${consult.timestamp?.toDate().toLocaleString() || 'N/A'}</p><p class="mt-2 text-gray-700 italic">"${consult.message.substring(0, 100)}${consult.message.length > 100 ? '...' : ''}"</p><div class="flex justify-between items-center mt-2"><button class="text-blue-600 hover:underline text-sm view-record-btn" data-record='${consult.fullPatientRecord}' data-consult-id="${consult.id}">View Patient Record</button>${!consult.read ? '<span class="text-blue-500 font-bold text-xs">NEW</span>' : ''}<button class="button secondary text-sm reply-btn" data-consult-id="${consult.id}" data-sender-id="${consult.senderId}" data-sender-consult-id="${consult.senderConsultDocId}">Reply</button></div><div class="reply-section mt-4" style="display:none;"><textarea class="form-textarea reply-message" rows="2" placeholder="Type your reply here..."></textarea><button class="button mt-2 send-reply-btn" data-consult-id="${consult.id}" data-sender-id="${consult.senderId}" data-sender-consult-id="${consult.senderConsultDocId}">Send Reply</button></div>${renderReplies(consult.replies, consult.id, 'received')}</div>`).join(''); setupViewRecordButtons(); setupReplyButtons(); }
+        function renderAllConsults() { dom.allConsultsList.innerHTML = ''; const combinedConsults = [...allSentConsults, ...allReceivedConsults].sort((a, b) => b.timestamp.toDate() - a.timestamp.toDate()); if (combinedConsults.length === 0) { dom.allConsultsList.innerHTML = '<p class="text-gray-500 text-center">No consult records yet.</p>'; return; } dom.allConsultsList.innerHTML = combinedConsults.map(consult => { const date = consult.timestamp?.toDate().toLocaleString() || 'N/A'; const patientName = consult.patientSummary?.name || 'Unknown'; let headerText, fromTo; if (consult.senderId === doctorUserId) { headerText = `Sent to: ${consult.recipientName} (${consult.recipientSpeciality})`; fromTo = 'sent'; } else { headerText = `From: Dr. ${consult.senderName} (${consult.senderSpeciality})`; fromTo = 'received'; } return `<div class="p-4 border border-gray-200 rounded-lg ${fromTo === 'received' && !consult.read ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'}"><p class="font-semibold">${headerText}</p><p class="text-sm text-gray-600">Patient: ${patientName} (DOB: ${consult.patientSummary?.dob || 'N/A'})</p><p class="text-sm text-gray-600">${fromTo === 'sent' ? 'Sent' : 'Received'}: ${date}</p><p class="mt-2 text-gray-700 italic">"${consult.message.substring(0, 100)}${consult.message.length > 100 ? '...' : ''}"</p><div class="flex justify-between items-center mt-2"><button class="text-blue-600 hover:underline text-sm view-record-btn" data-record='${consult.fullPatientRecord}' data-consult-id="${consult.id}">View Patient Record</button>${fromTo === 'received' && !consult.read ? '<span class="text-blue-500 font-bold text-xs">NEW</span>' : ''}${fromTo === 'received' ? `<button class="button secondary text-sm reply-btn" data-consult-id="${consult.id}" data-sender-id="${consult.senderId}" data-sender-consult-id="${consult.senderConsultDocId}">Reply</button>` : ''}</div><div class="reply-section mt-4" style="display:none;"><textarea class="form-textarea reply-message" rows="2" placeholder="Type your reply here..."></textarea><button class="button mt-2 send-reply-btn" data-consult-id="${consult.id}" data-sender-id="${consult.senderId}" data-sender-consult-id="${consult.senderConsultDocId}">Send Reply</button></div>${renderReplies(consult.replies, consult.id, fromTo)}</div>`; }).join(''); setupViewRecordButtons(); setupReplyButtons(); }
+        function renderReplies(replies, consultId, type) { if (!replies || replies.length === 0) return ''; let repliesHtml = `<div class="mt-4 pt-2 border-t border-gray-200"><p class="font-semibold text-gray-700 mb-2">Replies:</p><div class="space-y-2">`; replies.sort((a, b) => a.timestamp.toDate() - b.timestamp.toDate()).forEach(reply => { const replyDate = reply.timestamp?.toDate().toLocaleString() || 'N/A'; const replySender = reply.senderName || 'Unknown'; const isMyReply = reply.senderId === doctorUserId; repliesHtml += `<div class="p-3 rounded-lg ${isMyReply ? 'bg-indigo-50 text-indigo-800' : 'bg-gray-100 text-gray-700'}"><p class="text-sm font-semibold">${isMyReply ? 'My Reply' : `Reply from ${replySender}`}</p><p class="text-xs text-gray-500">${replyDate}</p><p class="mt-1 text-sm">${reply.message}</p></div>`; }); repliesHtml += `</div></div>`; return repliesHtml; }
+        function setupViewRecordButtons() { document.querySelectorAll('.view-record-btn').forEach(button => button.addEventListener('click', (event) => { const fullRecordString = event.target.dataset.record; const consultId = event.target.dataset.consultId; try { const patientRecord = JSON.parse(fullRecordString); displayPatientRecordSummary(patientRecord); dom.viewPatientRecordModalOverlay.classList.add('active'); if (consultId && !patientRecord.read) markConsultAsRead(consultId); } catch (e) { showMessage("Could not display patient record.", true); } })); }
+        function setupReplyButtons() { dom.consultsModalOverlay.querySelectorAll('.reply-btn').forEach(button => button.addEventListener('click', (event) => { const parent = event.target.closest('.p-4'); const replySection = parent.querySelector('.reply-section'); if (replySection) replySection.style.display = replySection.style.display === 'none' ? 'block' : 'none'; })); dom.consultsModalOverlay.querySelectorAll('.send-reply-btn').forEach(button => button.addEventListener('click', async (event) => { const consultId = event.target.dataset.consultId; const senderId = event.target.dataset.senderId; const senderConsultDocId = event.target.dataset.senderConsultId; const parent = event.target.closest('.p-4'); const replyMessageTextarea = parent.querySelector('.reply-message'); const replyMessage = replyMessageTextarea.value.trim(); if (!replyMessage) { showMessage("Reply message cannot be empty.", true); return; } await sendReply(consultId, senderId, senderConsultDocId, replyMessage); replyMessageTextarea.value = ''; parent.querySelector('.reply-section').style.display = 'none'; })); }
+        async function sendReply(consultId, originalSenderId, originalSenderConsultDocId, replyMessage) { if (!doctorUserId || !consultId || !originalSenderId || !originalSenderConsultDocId || !replyMessage) { showMessage("Missing data to send reply.", true); return; } try { const reply = { senderId: doctorUserId, senderName: doctorName, message: replyMessage, timestamp: new Date() }; const receivedConsultDocRef = doc(db, `artifacts/${appId}/public/data/doctors/${doctorUserId}/received_consults`, consultId); await updateDoc(receivedConsultDocRef, { replies: arrayUnion(reply) }); const sentConsultDocRef = doc(db, `artifacts/${appId}/doctors/${originalSenderId}/sent_consults`, originalSenderConsultDocId); await updateDoc(sentConsultDocRef, { replies: arrayUnion(reply) }); await addDoc(collection(db, `artifacts/${appId}/doctors/${originalSenderId}/notifications`), { type: 'consult_reply', senderId: doctorUserId, senderName: doctorName, patientName: allReceivedConsults.find(c => c.id === consultId)?.patientSummary?.name || 'Unknown', message: `Dr. ${doctorName} replied to your consult for patient ${allReceivedConsults.find(c => c.id === consultId)?.patientSummary?.name || 'Unknown'}.`, timestamp: new Date(), read: false, consultId: originalSenderConsultDocId }); showMessage("Reply sent successfully!", false); } catch (error) { showMessage("Failed to send reply.", true); } }
+        function displayPatientRecordSummary(record) { dom.patientRecordSummaryContent.innerHTML = ''; const renderSection = (title, data, isArray = false) => { if (!data || (Object.keys(data).length === 0 && !isArray) || (isArray && data.length === 0)) return ''; let content = `<h4 class="font-bold text-lg mt-4 mb-2 text-gray-800">${title}</h4>`; if (isArray) { content += `<ul class="list-disc list-inside text-gray-700">`; data.forEach(item => { if (typeof item === 'object' && item !== null) { const displayItems = Object.entries(item).map(([k, v]) => typeof v === 'object' && v !== null && !Array.isArray(v) ? `${k}: {${Object.entries(v).map(([subK, subV]) => `${subK}: ${subV}`).join(', ')}}` : `${k}: ${v}`).join(', '); content += `<li>${displayItems}</li>`; } else { content += `<li>${item}</li>`; } }); content += `</ul>`; } else { content += `<div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-gray-700">`; for (const key in data) { if (data[key] !== undefined && data[key] !== null) { let value = data[key]; if (typeof value === 'object' && value !== null && !Array.isArray(value)) value = JSON.stringify(value); else if (Array.isArray(value)) value = value.join(', '); content += `<div><span class="font-semibold">${key}:</span> ${value}</div>`; } } content += `</div>`; } return content; }; dom.patientRecordSummaryContent.innerHTML += renderSection('Demographics', record.history?.demographics); dom.patientRecordSummaryContent.innerHTML += renderSection('Chief Complaint', record.history?.chiefComplaint); if (record.history?.hpi) dom.patientRecordSummaryContent.innerHTML += `<h4 class="font-bold text-lg mt-4 mb-2 text-gray-800">History of Presenting Complaint</h4><p class="text-gray-700">${record.history.hpi}</p>`; dom.patientRecordSummaryContent.innerHTML += renderSection('Systemic Review', record.history?.systemicReview, true); dom.patientRecordSummaryContent.innerHTML += renderSection('Past Medical History', record.history?.pastMedical, true); dom.patientRecordSummaryContent.innerHTML += renderSection('Past Surgical History', record.history?.pastSurgical, true); dom.patientRecordSummaryContent.innerHTML += renderSection('Drug History', record.history?.drugHistory, true); dom.patientRecordSummaryContent.innerHTML += renderSection('Socioeconomic History (Smoking)', record.history?.socioeconomic?.smoking); dom.patientRecordSummaryContent.innerHTML += renderSection('Socioeconomic History (Dermatology)', record.history?.dermatology, true); dom.patientRecordSummaryContent.innerHTML += renderSection('Socioeconomic History (Alcohol)', record.history?.socioeconomic?.alcohol, true); dom.patientRecordSummaryContent.innerHTML += renderSection('Occupational History', record.history?.occupational, true); if (record.history?.demographics?.gender === 'Female') dom.patientRecordSummaryContent.innerHTML += renderSection('Gynecological History', record.history?.gynecological); dom.patientRecordSummaryContent.innerHTML += renderSection('Family History', record.history?.family); dom.patientRecordSummaryContent.innerHTML += renderSection('Travel History', record.history?.travel, true); dom.patientRecordSummaryContent.innerHTML += renderSection('Sexual History', record.history?.sexual); dom.patientRecordSummaryContent.innerHTML += renderSection('ENT History', record.history?.ent, true); dom.patientRecordSummaryContent.innerHTML += renderSection('Visual History', record.history?.visual, true); if (record.examination) { dom.patientRecordSummaryContent.innerHTML += `<h3 class="font-bold text-xl mt-6 mb-2 text-gray-800">Physical Examination</h3>`; dom.patientRecordSummaryContent.innerHTML += renderSection('General Survey', record.examination.generalSurvey); dom.patientRecordSummaryContent.innerHTML += renderSection('Vital Signs', record.examination.vitals); dom.patientRecordSummaryContent.innerHTML += renderSection('Anthropometrics', record.examination.anthropometrics); dom.patientRecordSummaryContent.innerHTML += renderSection('Hand Examination', record.examination.hand); dom.patientRecordSummaryContent.innerHTML += renderSection('Eyes Examination', record.examination.eyes); dom.patientRecordSummaryContent.innerHTML += renderSection('Mouth Examination', record.examination.mouth); dom.patientRecordSummaryContent.innerHTML += renderSection('Leg Edema', { 'Edema Type': record.examination.legEdema }); dom.patientRecordSummaryContent.innerHTML += renderSection('Lymph Nodes', record.examination.lymphNodes); dom.patientRecordSummaryContent.innerHTML += renderSection('JVP', record.examination.jvp); dom.patientRecordSummaryContent.innerHTML += renderSection('Cardiovascular Exam', record.examination.cardiovascularExam); dom.patientRecordSummaryContent.innerHTML += renderSection('Peripheral Vascular Exam', record.examination.peripheralVascularExam); dom.patientRecordSummaryContent.innerHTML += renderSection('Respiratory Brief', record.examination.respiratoryBrief); } if (record.investigation) { dom.patientRecordSummaryContent.innerHTML += `<h3 class="font-bold text-xl mt-6 mb-2 text-gray-800">Investigations</h3>`; if (record.investigation.uploadedFiles) { dom.patientRecordSummaryContent.innerHTML += `<h4 class="font-bold text-lg mt-4 mb-2 text-gray-800">Uploaded Investigation Results</h4>`; for (const invType in record.investigation.uploadedFiles) { if (record.investigation.uploadedFiles[invType].length > 0) { dom.patientRecordSummaryContent.innerHTML += `<p class="font-semibold text-gray-700">${invType.replace(/-/g, ' ').toUpperCase()}:</p><ul class="list-disc list-inside text-gray-600">`; record.investigation.uploadedFiles[invType].forEach(file => { const date = new Date(file.timestamp).toLocaleString(); dom.patientRecordSummaryContent.innerHTML += `<li><a href="${file.url}" target="_blank" class="text-blue-600 hover:underline">${file.name}</a> (${date})</li>`; }); dom.patientRecordSummaryContent.innerHTML += `</ul>`; } } } if (record.investigation.generalNotes) dom.patientRecordSummaryContent.innerHTML += `<h4 class="font-bold text-lg mt-4 mb-2 text-gray-800">General Investigation Notes</h4><p class="text-gray-700">${record.investigation.generalNotes}</p>`; } if (record.treatment) { dom.patientRecordSummaryContent.innerHTML += `<h3 class="font-bold text-xl mt-6 mb-2 text-gray-800">Treatment Plan</h3>`; dom.patientRecordSummaryContent.innerHTML += renderSection('Diagnosis', { 'Final Diagnosis': record.treatment.diagnosis }); dom.patientRecordSummaryContent.innerHTML += `<div class="subsection-title">Treatment Plan</div><p class="p-4 bg-gray-50 rounded-lg whitespace-pre-wrap">${record.treatment.plan}</p>`; dom.patientRecordSummaryContent.innerHTML += `<div class="subsection-title">Follow-up</div><p class="p-4 bg-gray-50 rounded-lg">${record.treatment.followUp}</p>`; } }
+        async function markConsultAsRead(consultId) { if (!doctorUserId || !consultId) return; try { await updateDoc(doc(db, `artifacts/${appId}/public/data/doctors/${doctorUserId}/received_consults`, consultId), { read: true }); } catch (error) { console.error("Error marking consult as read:", error); } }
+        async function fetchNotifications() { if (!doctorUserId) return; const q = query(collection(db, `artifacts/${appId}/doctors/${doctorUserId}/notifications`), orderBy('timestamp', 'desc')); onSnapshot(q, (snapshot) => renderNotifications(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))), (error) => showMessage("Could not load notifications.", true)); }
+        function renderNotifications(notifications) { dom.notificationList.innerHTML = ''; let unreadCount = 0; if (notifications.length === 0) { dom.notificationList.innerHTML = '<p class="text-gray-500 text-center">No new notifications.</p>'; dom.notificationCountSpan.classList.add('hidden'); return; } notifications.forEach(notification => { if (!notification.read) unreadCount++; const date = notification.timestamp?.toDate().toLocaleString() || 'N/A'; let badgeClass = 'badge-info', typeText = 'General Update'; switch (notification.type) { case 'new_consult': badgeClass = 'badge-success'; typeText = 'New Consult'; break; case 'consult_reply': badgeClass = 'badge-info'; typeText = 'Consult Reply'; break; case 'lab_result': badgeClass = 'badge-warning'; typeText = 'Lab Result'; break; case 'echo_result': badgeClass = 'badge-warning'; typeText = 'Echo Result'; break; case 'drug_dispensed': badgeClass = 'badge-info'; typeText = 'Drug Dispensed'; break; case 'radiology_result': badgeClass = 'badge-warning'; typeText = 'Radiology Result'; break; } const listItem = document.createElement('div'); listItem.className = `notification-item ${notification.read ? '' : 'unread'}`; listItem.innerHTML = `<div class="notification-header"><span><span class="badge ${badgeClass}">${typeText}</span> ${notification.patientName ? `for Patient: ${notification.patientName}` : ''}</span><span class="notification-meta">${date}</span></div><p class="notification-message">${notification.message}</p><div class="notification-actions">${!notification.read ? `<button class="button secondary text-xs mark-read-btn" data-id="${notification.id}">Mark as Read</button>` : ''}<button class="button secondary text-xs delete-notification-btn" data-id="${notification.id}">Delete</button></div>`; dom.notificationList.appendChild(listItem); }); if (unreadCount > 0) { dom.notificationCountSpan.textContent = unreadCount; dom.notificationCountSpan.classList.remove('hidden'); } else { dom.notificationCountSpan.classList.add('hidden'); } document.querySelectorAll('.mark-read-btn').forEach(button => button.addEventListener('click', (event) => markNotificationAsRead(event.target.dataset.id))); document.querySelectorAll('.delete-notification-btn').forEach(button => button.addEventListener('click', (event) => deleteNotification(event.target.dataset.id))); }
+        async function markNotificationAsRead(notificationId) { if (!doctorUserId || !notificationId) return; try { await updateDoc(doc(db, `artifacts/${appId}/doctors/${doctorUserId}/notifications`, notificationId), { read: true }); } catch (error) { showMessage("Failed to mark notification as read.", true); } }
+        async function deleteNotification(notificationId) { if (!doctorUserId || !notificationId) return; showCustomConfirm("Delete Notification", "Are you sure you want to delete this notification?", async () => { try { await deleteDoc(doc(db, `artifacts/${appId}/doctors/${doctorUserId}/notifications`, notificationId)); showMessage("Notification deleted.", false); } catch (error) { showMessage("Failed to delete notification.", true); } }); }
+        async function markAllNotificationsAsRead() { if (!doctorUserId) return; try { const q = query(collection(db, `artifacts/${appId}/doctors/${doctorUserId}/notifications`), where('read', '==', false)); const snapshot = await getDocs(q); const batch = db.batch(); snapshot.docs.forEach(docSnap => batch.update(docSnap.ref, { read: true })); await batch.commit(); showMessage("All notifications marked as read.", false); } catch (error) { showMessage("Failed to mark all notifications as read.", true); } }
+        async function initializeFirebase() { try { if (!app) { app = initializeApp(firebaseConfig); db = getFirestore(app); auth = getAuth(app); } onAuthStateChanged(auth, async (user) => { if (user) { doctorUserId = user.uid; const doctorDocRef = doc(db, `artifacts/${appId}/public/data/doctors`, user.uid); try { const doctorDocSnap = await getDoc(doctorDocRef); if (doctorDocSnap.exists()) { const doctorData = doctorDocSnap.data(); if (doctorData.deactivated) { await signOut(auth); redirectToLoginWithError("Your account is deactivated."); } else if (doctorData.role === 'doctor' && doctorData.speciality === 'Cardiology') { dom.doctorNameSpan.textContent = doctorData.name || 'Doctor'; doctorName = doctorData.name || 'Doctor'; doctorSpeciality = doctorData.speciality; fetchPatients(); fetchLinkedEntities(); fetchSentConsults(); fetchReceivedConsults(); fetchNotifications(); } else { await signOut(auth); redirectToLoginWithError("Access denied. Not a Cardiology account."); } } else { await signOut(auth); redirectToLoginWithError("Doctor account record not found."); } } catch (firestoreError) { await signOut(auth); redirectToLoginWithError("Error loading account data."); } } else { redirectToLoginWithError("Please log in."); } }); } catch (error) { redirectToLoginWithError("Failed to initialize app."); } }
+        let confirmActionCallback = null;
+        function showCustomConfirm(title, message, callback) { const confirmModalOverlay = document.createElement('div'); confirmModalOverlay.id = 'customConfirmModalOverlay'; confirmModalOverlay.className = 'modal-overlay active'; confirmModalOverlay.innerHTML = `<div class="modal-content max-w-sm"><h3 class="text-xl font-bold text-gray-800 mb-4 text-center">${title}</h3><p class="text-gray-700 text-center mb-6">${message}</p><div class="modal-buttons justify-center"><button id="customConfirmCancelBtn" class="button secondary">Cancel</button><button id="customConfirmOkBtn" class="button">OK</button></div></div>`; document.body.appendChild(confirmModalOverlay); confirmActionCallback = callback; document.getElementById('customConfirmCancelBtn').addEventListener('click', () => { document.body.removeChild(confirmModalOverlay); confirmActionCallback = null; }); document.getElementById('customConfirmOkBtn').addEventListener('click', () => { if (confirmActionCallback) confirmActionCallback(); document.body.removeChild(confirmModalOverlay); confirmActionCallback = null; }); }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeFirebase();
+            dom.logoutButton.addEventListener('click', handleLogout);
+            dom.addNewPatientButton.addEventListener('click', () => { sessionStorage.removeItem('currentPatientRecord'); sessionStorage.removeItem('currentPatientRecordOwner'); window.location.href = `history-page.html?from=cardiology-dashboard.html`; });
+            dom.dataAnalysisButton.addEventListener('click', () => window.location.href = 'data-analytics.html');
+            dom.simpleSearchInput.addEventListener('input', filterPatients);
+            dom.advancedSearchBtn.addEventListener('click', () => dom.advancedSearchModal.classList.add('active'));
+            dom.closeAdvancedSearchModal.addEventListener('click', () => dom.advancedSearchModal.classList.remove('active'));
+            dom.applyFiltersBtn.addEventListener('click', () => { filterPatients(); dom.advancedSearchModal.classList.remove('active'); });
+            dom.resetFiltersBtn.addEventListener('click', () => { document.getElementById('filterGender').value = ''; document.getElementById('filterMinAge').value = ''; document.getElementById('filterMaxAge').value = ''; document.getElementById('filterLastVisit').value = ''; filterPatients(); });
+            dom.myLinksButton.addEventListener('click', () => { dom.myLinksModalOverlay.classList.add('active'); dom.linkDoctorSpecialitySelect.innerHTML = '<option value="">Select Specialty</option>'; for (const speciality in allDoctorSpecialities) { if (speciality === doctorSpeciality) continue; const option = document.createElement('option'); option.value = speciality; option.textContent = allDoctorSpecialities[speciality]; dom.linkDoctorSpecialitySelect.appendChild(option); } initInstitutionLinkTomSelect(); initDoctorLinkTomSelect(); populateInstitutionLinkSelect(); populateDoctorLinkSelect(); });
+            dom.closeMyLinksModal.addEventListener('click', () => dom.myLinksModalOverlay.classList.remove('active'));
+            dom.linkInstitutionTypeSelect.addEventListener('change', populateInstitutionLinkSelect);
+            dom.linkDoctorSpecialitySelect.addEventListener('change', populateDoctorLinkSelect);
+            dom.consultsButton.addEventListener('click', () => { dom.consultsModalOverlay.classList.add('active'); dom.showSentConsultsBtn.click(); populateConsultPatientSelect(allPatients); toggleConsultRecipientSelects(); });
+            dom.closeConsultsModal.addEventListener('click', () => dom.consultsModalOverlay.classList.remove('active'));
+            dom.showSentConsultsBtn.addEventListener('click', () => { dom.sentConsultsSection.style.display = 'block'; dom.receivedConsultsSection.style.display = 'none'; dom.consultsRecordSection.style.display = 'none'; dom.showSentConsultsBtn.classList.remove('secondary'); dom.showReceivedConsultsBtn.classList.add('secondary'); dom.showConsultsRecordBtn.classList.add('secondary'); fetchSentConsults(); });
+            dom.showReceivedConsultsBtn.addEventListener('click', () => { dom.receivedConsultsSection.style.display = 'block'; dom.sentConsultsSection.style.display = 'none'; dom.consultsRecordSection.style.display = 'none'; dom.showReceivedConsultsBtn.classList.remove('secondary'); dom.showSentConsultsBtn.classList.add('secondary'); dom.showConsultsRecordBtn.classList.add('secondary'); fetchReceivedConsults(); });
+            dom.showConsultsRecordBtn.addEventListener('click', () => { dom.consultsRecordSection.style.display = 'block'; dom.sentConsultsSection.style.display = 'none'; dom.receivedConsultsSection.style.display = 'none'; dom.showConsultsRecordBtn.classList.remove('secondary'); dom.showSentConsultsBtn.classList.add('secondary'); dom.showReceivedConsultsBtn.classList.add('secondary'); renderAllConsults(); });
+            dom.sendToTypeRadios.forEach(radio => radio.addEventListener('change', toggleConsultRecipientSelects));
+            function toggleConsultRecipientSelects() { const selectedOption = document.querySelector('input[name="sendToType"]:checked').value; dom.myLinksRecipientContainer.style.display = selectedOption === 'myLinks' ? 'block' : 'none'; dom.nonLinksRecipientContainer.style.display = selectedOption === 'nonLinks' ? 'block' : 'none'; if (selectedOption === 'myLinks') { if (tomSelects.consultRecipientSelectNonLinks) tomSelects.consultRecipientSelectNonLinks.clear(); populateConsultRecipientSelectMyLinks(); } else { if (tomSelects.consultRecipientSelectMyLinks) tomSelects.consultRecipientSelectMyLinks.clear(); populateConsultRecipientSelectNonLinks(); } }
+            dom.consultRecipientTypeMyLinksSelect.addEventListener('change', populateConsultRecipientSelectMyLinks);
+            dom.consultRecipientTypeNonLinksSelect.addEventListener('change', populateConsultRecipientSelectNonLinks);
+            dom.sendConsultButton.addEventListener('click', sendConsult);
+            document.querySelectorAll('.view-record-btn').forEach(b => b.addEventListener('click', (e) => {
+                const recordData = JSON.parse(e.currentTarget.dataset.record);
+                displayPatientRecordSummary(recordData);
+                dom.viewPatientRecordModalOverlay.classList.add('active');
+            }));
+            dom.closeViewPatientRecordModal.addEventListener('click', () => dom.viewPatientRecordModalOverlay.classList.remove('active'));
+            dom.notificationButton.addEventListener('click', () => dom.notificationModalOverlay.classList.add('active'));
+            dom.closeNotificationModal.addEventListener('click', () => dom.notificationModalOverlay.classList.remove('active'));
+            dom.markAllReadButton.addEventListener('click', markAllNotificationsAsRead);
         });
-
-        /**
-         * Deletes a patient.
-         * @param {Object} patientToDelete - The patient object to delete.
-         */
-        async function deletePatient(patientToDelete) {
-            hideModal(confirmModalOverlay);
-            try {
-                const patientDocRef = doc(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`, patientToDelete.id);
-                await deleteDoc(patientDocRef);
-                showMessage(`Patient "${patientToDelete.name}" deleted successfully!`, false);
-            } catch (error) {
-                console.error("Error deleting patient:", error);
-                showMessage("Failed to delete patient. Please try again.", true);
-            }
-        }
-
-        /**
-         * Handles sending a consultation request.
-         */
-        sendConsultForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const recipientSpecialty = consultRecipientSelect.value;
-            const patientName = consultPatientNameInput.value.trim();
-            const subject = consultSubjectInput.value.trim();
-            const message = consultMessageInput.value.trim();
-
-            if (!recipientSpecialty || !patientName || !subject || !message) {
-                showMessage("Please fill all consult fields.", true);
-                return;
-            }
-
-            try {
-                // Find all doctors with the recipient specialty
-                const doctorsCollectionRef = collection(db, `artifacts/${appId}/public/data/doctors`);
-                const q = query(doctorsCollectionRef, where("speciality", "==", recipientSpecialty), where("deactivated", "==", false));
-                const querySnapshot = await getDocs(q);
-
-                if (querySnapshot.empty) {
-                    showMessage(`No active doctors found for ${recipientSpecialty}.`, true);
-                    return;
-                }
-
-                // For simplicity, send consult to the first found active doctor of that specialty
-                // In a real app, you might pick based on availability, load, etc.
-                const recipientDoctor = querySnapshot.docs[0].id; // Get the UID of the recipient doctor
-
-                const consultData = {
-                    fromDoctorId: doctorUserId,
-                    fromDoctorName: doctorNameSpan.textContent, // Use displayed name
-                    fromDoctorSpecialty: doctorSpeciality,
-                    toDoctorId: recipientDoctor, // The UID of the recipient doctor
-                    toSpecialty: recipientSpecialty,
-                    patientName: patientName,
-                    subject: subject,
-                    message: message,
-                    status: 'pending', // e.g., 'pending', 'read', 'responded'
-                    timestamp: serverTimestamp() // Firestore timestamp
-                };
-
-                // Store consult in a subcollection under the recipient doctor's private data
-                const recipientConsultsCollectionRef = collection(db, `artifacts/${appId}/doctors/${recipientDoctor}/received_consults`);
-                await addDoc(recipientConsultsCollectionRef, consultData);
-
-                showMessage("Consultation sent successfully!", false);
-                hideModal(sendConsultModalOverlay);
-                sendConsultForm.reset();
-            } catch (error) {
-                console.error("Error sending consult:", error);
-                showMessage("Failed to send consult. Please try again.", true);
-            }
-        });
-
-        /**
-         * Fetches and displays received consultations.
-         */
-        async function fetchReceivedConsults() {
-            receivedConsultsListDiv.innerHTML = '<p class="text-gray-600 italic">Loading received consultations...</p>';
-            if (!doctorUserId) {
-                receivedConsultsListDiv.innerHTML = '<p class="text-gray-600 italic">Please log in to view consults.</p>';
-                return;
-            }
-
-            try {
-                const consultsCollectionRef = collection(db, `artifacts/${appId}/doctors/${doctorUserId}/received_consults`);
-                // Listen for real-time updates for received consults
-                onSnapshot(consultsCollectionRef, (snapshot) => {
-                    if (snapshot.empty) {
-                        receivedConsultsListDiv.innerHTML = '<p class="text-gray-600 italic">No received consultations yet.</p>';
-                        return;
-                    }
-                    receivedConsultsListDiv.innerHTML = ''; // Clear previous list
-                    snapshot.docs.forEach(docSnap => {
-                        const consult = docSnap.data();
-                        const consultItem = document.createElement('div');
-                        consultItem.className = 'bg-gray-100 p-3 rounded-lg mb-2 shadow-sm';
-                        consultItem.innerHTML = `
-                            <p class="font-semibold">From: Dr. ${consult.fromDoctorName} (${consult.fromDoctorSpecialty})</p>
-                            <p class="font-semibold">Patient: ${consult.patientName}</p>
-                            <p class="font-semibold">Subject: ${consult.subject}</p>
-                            <p class="text-sm text-gray-700">${consult.message}</p>
-                            <p class="text-xs text-gray-500 mt-1">Status: ${consult.status} | Received: ${consult.timestamp ? new Date(consult.timestamp.toDate()).toLocaleString() : 'N/A'}</p>
-                            <!-- Add buttons for 'Mark as Read', 'Reply' etc. here later -->
-                        `;
-                        receivedConsultsListDiv.appendChild(consultItem);
-                    });
-                }, (error) => {
-                    console.error("Error fetching received consults:", error);
-                    receivedConsultsListDiv.innerHTML = '<p class="text-red-600">Error loading consults. Please try again.</p>';
-                });
-
-            } catch (error) {
-                console.error("Error setting up consults listener:", error);
-                showMessage("Failed to load received consults.", true);
-            }
-        }
-
-
-        /**
-         * Initializes Firebase and sets up authentication listener.
-         */
-        async function initializeFirebase() {
-            try {
-                if (!app) {
-                    app = initializeApp(firebaseConfig);
-                    db = getFirestore(app);
-                    auth = getAuth(app);
-                }
-
-                if (initialAuthToken) {
-                    try { await signInWithCustomToken(auth, initialAuthToken); } catch (e) { console.warn("Custom token sign-in failed or expired:", e.message); }
-                }
-
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        doctorUserId = user.uid;
-
-                        // Fetch doctor's details from Firestore
-                        const doctorDocRef = doc(db, `artifacts/${appId}/public/data/doctors`, user.uid);
-                        try {
-                            const doctorDocSnap = await getDoc(doctorDocRef);
-
-                            if (doctorDocSnap.exists()) {
-                                const doctorData = doctorDocSnap.data();
-                                if (doctorData.deactivated) {
-                                    await signOut(auth);
-                                    redirectToLoginWithError("Your account is deactivated. Please contact support.");
-                                    return;
-                                } 
-                                // Ensure the role and speciality match the dashboard
-                                else if (doctorData.role === 'doctor' && doctorData.speciality === doctorSpeciality) { 
-                                    doctorNameSpan.textContent = doctorData.name || 'Doctor';
-                                    console.log(`${doctorSpeciality} Dashboard: User authenticated and data loaded.`);
-                                    messageBox.style.display = 'none'; 
-
-                                    // Set up real-time listener for patients specific to this doctor
-                                    const patientsCollectionRef = collection(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`);
-                                    onSnapshot(patientsCollectionRef, (snapshot) => {
-                                        const patients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                                        renderPatients(patients);
-                                        console.log(`${doctorSpeciality} Dashboard: Patients rendered.`);
-                                    }, (error) => {
-                                        console.error("Error fetching patients:", error);
-                                        showMessage("Error loading patient data. Please try again.", true);
-                                    });
-
-                                } else {
-                                    // User is authenticated but not the expected role/speciality, redirect
-                                    await signOut(auth);
-                                    redirectToLoginWithError(`Access denied. Please log in with a ${doctorSpeciality} Doctor account.`);
-                                    return;
-                                }
-                            } else {
-                                // User document not found in doctors collection, redirect
-                                await signOut(auth);
-                                redirectToLoginWithError("Doctor account record not found. Please contact support.");
-                                return;
-                            }
-                        } catch (firestoreError) {
-                            console.error("Error fetching doctor user document:", firestoreError);
-                            await signOut(auth); // Sign out the user if there's a Firestore error
-                            redirectToLoginWithError("Error loading account data. Please try again or contact support. (Details: " + firestoreError.message + ")");
-                            return;
-                        }
-                    } else {
-                        doctorUserId = null;
-                        console.log(`${doctorSpeciality} Dashboard: User signed out or no user. Redirecting to login.`);
-                        redirectToLoginWithError(`Please log in to access the ${doctorSpeciality} Dashboard.`);
-                        return;
-                    }
-                });
-
-            } catch (error) {
-                console.error(`Error initializing Firebase for ${doctorSpeciality} Dashboard:`, error);
-                redirectToLoginWithError("Failed to initialize app. Please try again. (Details: " + error.message + ")");
-            }
-        }
-
-        // Event Listeners
-        logoutButton.addEventListener('click', handleLogout);
-        addPatientButton.addEventListener('click', () => showPatientModal());
-        viewAnalyticsButton.addEventListener('click', () => {
-            window.location.href = 'data-analytics.html';
-        });
-
-        // Modals Close Buttons
-        closePatientModalButton.addEventListener('click', () => hideModal(patientModalOverlay));
-        cancelPatientModalButton.addEventListener('click', () => hideModal(patientModalOverlay));
-
-        closeSendConsultModalButton.addEventListener('click', () => hideModal(sendConsultModalOverlay));
-        cancelSendConsultModalButton.addEventListener('click', () => hideModal(sendConsultModalOverlay));
-        sendConsultButton.addEventListener('click', () => showModal(sendConsultModalOverlay));
-
-        closeMyConsultsModalButton.addEventListener('click', () => hideModal(myConsultsModalOverlay));
-        closeMyConsultsModalBottomButton.addEventListener('click', () => hideModal(myConsultsModalOverlay));
-        myConsultsButton.addEventListener('click', () => {
-            showModal(myConsultsModalOverlay);
-            fetchReceivedConsults(); // Fetch consults when modal is opened
-        });
-
-        closeMyLinksModalButton.addEventListener('click', () => hideModal(myLinksModalOverlay));
-        closeMyLinksModalBottomButton.addEventListener('click', () => hideModal(myLinksModalOverlay));
-        myLinksButton.addEventListener('click', () => showModal(myLinksModalOverlay));
-
-        confirmActionButton.addEventListener('click', () => {
-            if (currentActionPatient && currentActionPatient.actionCallback) {
-                currentActionPatient.actionCallback(currentActionPatient.patient);
-            }
-        });
-        cancelConfirmButton.addEventListener('click', () => hideModal(confirmModalOverlay));
-
-
-        // Initialize Firebase when the window loads
-        window.onload = initializeFirebase;
     </script>
 </body>
 </html>

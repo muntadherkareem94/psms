@@ -209,6 +209,9 @@ async function handleSession(user) {
     if(!snap.exists() || !validDoctor(snap.data())){
       await rejectAccount(snap.exists()&&snap.data().deactivated?'Your account is deactivated. Please contact support.':'This workspace requires an active doctor account.'); return;
     }
+    // The restored cardiology workflow stores structured clinical records.
+    // Never edit these records with the simplified workspace form.
+    if (snap.data().speciality === 'Cardiology') { window.location.replace('cardiology-dashboard.html'); return; }
     setProfile(snap.data());fillSpecialties();showView('patients');renderPatients();renderConsults();
     unsubscribers.push(fs.onSnapshot(profileRef(uid),{includeMetadataChanges:true},s=>{
       if(!current(token) || s.metadata.fromCache) return;

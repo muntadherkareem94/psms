@@ -1,0 +1,1887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient History</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to bottom, #f0f9ff, #e0f2fe);
+        }
+        .section-card {
+            background-color: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            margin-bottom: 1.5rem;
+        }
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e3a8a;
+            border-bottom: 2px solid #dbeafe;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+        .form-input:disabled, .form-select:disabled {
+            background-color: #f3f4f6;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #374151;
+        }
+        .ts-dropdown {
+            background-color: white !important;
+            z-index: 50 !important;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        .ts-control {
+            border-radius: 0.5rem !important;
+            border: 1px solid #d1d5db !important;
+            padding: 0.75rem !important;
+        }
+        .ts-control.focus {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-primary { background-color: #2563eb; color: white; }
+        .btn-primary:hover { background-color: #1d4ed8; }
+        .btn-secondary { background-color: #e5e7eb; color: #374151; }
+        .btn-secondary:hover { background-color: #d1d5db; }
+        .btn-danger { background-color: #ef4444; color: white; }
+        .btn-danger:hover { background-color: #dc2626; }
+        .dynamic-entry {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            background-color: #fafafa;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Patient Medical History</h1>
+        <div id="messageBox" style="display: none;" class="p-4 mb-4 rounded-md text-center"></div>
+
+        <div class="section-card">
+            <h2 class="section-title">Patient Demographics</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div><label for="patientName" class="form-label">Patient Name</label><input type="text" id="patientName" class="form-input" placeholder="Enter full name"></div>
+                <div><label for="dob" class="form-label">Date of Birth</label><input type="date" id="dob" class="form-input"></div>
+                <div><label class="form-label">Calculated Age</label><p id="calculatedAge" class="pt-2 text-lg font-semibold text-gray-700">-- years</p></div>
+                <div><label for="patientGender" class="form-label">Gender</label><select id="patientGender" class="form-select"><option value="">Select Gender</option><option value="Male">Male</option><option value="Female">Female</option></select></div>
+                <div><label for="maritalStatus" class="form-label">Marital Status</label><select id="maritalStatus" class="form-select"><option>Single</option><option>Married</option><option>Widowed</option><option>Divorced</option><option>Prefer not to say</option></select></div>
+                <div><label for="occupation" class="form-label">Occupation</label><input type="text" id="occupation" class="form-input" placeholder="e.g., Engineer"></div>
+                <div><label for="bloodGroup" class="form-label">Blood Group</label><select id="bloodGroup" class="form-select"><option>Unknown</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+                <div><label for="address" class="form-label">Address (Governorate)</label><select id="address" class="form-select"><option>Al Anbar</option><option>Babil</option><option>Baghdad</option><option>Basra</option><option>Dhi Qar</option><option>Al-Qādisiyyah</option><option>Diyala</option><option>Duhok</option><option>Erbil</option><option>Karbala</option><option>Kirkuk</option><option>Maysan</option><option>Muthanna</option><option>Najaf</option><option>Nineveh</option><option>Saladin</option><option>Sulaymaniyah</option><option>Wasit</option><option>Halabja</option></select></div>
+                <div><label for="phoneNumber" class="form-label">Phone Number</label><input type="tel" id="phoneNumber" class="form-input" placeholder="e.g., 07xxxxxxxxx"></div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">Chief Complaint</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-2"><label for="chiefComplaint" class="form-label">Complaint</label><input type="text" id="chiefComplaint" class="form-input" placeholder="e.g., Chest Pain"></div>
+                <div><label for="complaintDuration" class="form-label">Duration</label><input type="text" id="complaintDuration" class="form-input" placeholder="e.g., 2 hours"></div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2 class="section-title">History of Presenting Complaint (HPI)</h2>
+            <textarea id="hpi" class="form-textarea" rows="4" placeholder="Describe the main reason for the visit using SOCRATES, etc."></textarea>
+        </div>
+
+        <div class="section-card" id="systemicReviewSection">
+            <h2 class="section-title">Systemic Review</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-8">
+                <div class="space-y-2"><h3 class="font-semibold text-gray-700 border-b pb-1 mb-2">General</h3><label class="checkbox-label"><input type="checkbox" data-symptom="Fever"> Fever</label><label class="checkbox-label"><input type="checkbox" data-symptom="Chills, Rigors"> Chills, Rigors</label><label class="checkbox-label"><input type="checkbox" data-symptom="Weight Loss"> Weight Loss</label><label class="checkbox-label"><input type="checkbox" data-symptom="Night Sweats"> Night Sweats</label></div>
+                <div class="space-y-2"><h3 class="font-semibold text-gray-700 border-b pb-1 mb-2">Nervous</h3><label class="checkbox-label"><input type="checkbox" data-symptom="Headache"> Headache</label><label class="checkbox-label"><input type="checkbox" data-symptom="Weakness"> Weakness</label><label class="checkbox-label"><input type="checkbox" data-symptom="Parasthesia"> Parasthesia</label><label class="checkbox-label"><input type="checkbox" data-symptom="LOC"> LOC</label><label class="checkbox-label"><input type="checkbox" data-symptom="Seizure"> Seizure</label><label class="checkbox-label"><input type="checkbox" data-symptom="Vertigo"> Vertigo</label></div>
+                <div class="space-y-2"><h3 class="font-semibold text-gray-700 border-b pb-1 mb-2">Cardiovascular (CVS)</h3><label class="checkbox-label"><input type="checkbox" data-symptom="Chest Pain"> Chest Pain</label><label class="checkbox-label"><input type="checkbox" data-symptom="Palpitation"> Palpitation</label><label class="checkbox-label"><input type="checkbox" data-symptom="Dyspnea"> Dyspnea</label><label class="checkbox-label"><input type="checkbox" data-symptom="Orthopnea"> Orthopnea</label><label class="checkbox-label"><input type="checkbox" data-symptom="P.N.D."> P.N.D.</label><label class="checkbox-label"><input type="checkbox" data-symptom="Syncope"> Syncope</label><label class="checkbox-label"><input type="checkbox" data-symptom="Edema"> Edema</label><label class="checkbox-label"><input type="checkbox" data-symptom="Claudication"> Claudication</label></div>
+                <div class="space-y-2"><h3 class="font-semibold text-gray-700 border-b pb-1 mb-2">Respiratory</h3><label class="checkbox-label"><input type="checkbox" data-symptom="Cough"> Cough</label><label class="checkbox-label"><input type="checkbox" data-symptom="Sputum"> Sputum</label><label class="checkbox-label"><input type="checkbox" data-symptom="Hemoptysis"> Hemoptysis</label><label class="checkbox-label"><input type="checkbox" data-symptom="Wheeze"> Wheeze</label><label class="checkbox-label"><input type="checkbox" data-symptom="Hoarseness"> Hoarseness</label></div>
+                <div class="space-y-2"><h3 class="font-semibold text-gray-700 border-b pb-1 mb-2">Gastrointestinal (GIT)</h3><label class="checkbox-label"><input type="checkbox" data-symptom="Anorexia"> Anorexia</label><label class="checkbox-label"><input type="checkbox" data-symptom="Nausea"> Nausea</label><label class="checkbox-label"><input type="checkbox" data-symptom="Vomiting"> Vomiting</label><label class="checkbox-label"><input type="checkbox" data-symptom="Hematemesis"> Hematemesis</label><label class="checkbox-label"><input type="checkbox" data-symptom="Dysphagia"> Dysphagia</label><label class="checkbox-label"><input type="checkbox" data-symptom="Heartburn"> Heartburn</label><label class="checkbox-label"><input type="checkbox" data-symptom="Abdominal Pain"> Abdominal Pain</label><label class="checkbox-label"><input type="checkbox" data-symptom="Jaundice"> Jaundice</label><label class="checkbox-label"><input type="checkbox" data-symptom="Diarrhea"> Diarrhea</label><label class="checkbox-label"><input type="checkbox" data-symptom="Constipation"> Constipation</label><label class="checkbox-label"><input type="checkbox" data-symptom="Melena"> Melena</label><label class="checkbox-label"><input type="checkbox" data-symptom="Rectal Bleeding"> Rectal Bleeding</label></div>
+                <div class="space-y-2"><h3 class="font-semibold text-gray-700 border-b pb-1 mb-2">Musculoskeletal</h3><label class="checkbox-label"><input type="checkbox" data-symptom="Pain"> Pain</label><label class="checkbox-label"><input type="checkbox" data-symptom="Arthralgia"> Arthralgia</label><label class="checkbox-label"><input type="checkbox" data-symptom="Myalgia"> Myalgia</label><label class="checkbox-label"><input type="checkbox" data-symptom="Back Pain"> Back Pain</label><label class="checkbox-label"><input type="checkbox" data-symptom="Stiffness"> Stiffness</label></div>
+                <div class="space-y-2"><h3 class="font-semibold text-gray-700 border-b pb-1 mb-2">Urological</h3><label class="checkbox-label"><input type="checkbox" data-symptom="Frequency"> Frequency</label><label class="checkbox-label"><input type="checkbox" data-symptom="Urgency"> Urgency</label><label class="checkbox-label"><input type="checkbox" data-symptom="Dysuria"> Dysuria</label><label class="checkbox-label"><input type="checkbox" data-symptom="Hematuria"> Hematuria</label><label class="checkbox-label"><input type="checkbox" data-symptom="Loin Pain"> Loin Pain</label><label class="checkbox-label"><input type="checkbox" data-symptom="Polyuria"> Polyuria</label><label class="checkbox-label"><input type="checkbox" data-symptom="Oligouria"> Oligouria</label></div>
+                <div class="space-y-2"><h3 class="font-semibold text-gray-700 border-b pb-1 mb-2">Endocrine</h3><label class="checkbox-label"><input type="checkbox" data-symptom="Heat Intolerance"> Heat Intolerance</label><label class="checkbox-label"><input type="checkbox" data-symptom="Cold Intolerance"> Cold Intolerance</label><label class="checkbox-label"><input type="checkbox" data-symptom="Neck Swelling"> Neck Swelling</label><label class="checkbox-label"><input type="checkbox" data-symptom="Thirst"> Thirst</label><label class="checkbox-label"><input type="checkbox" data-symptom="Hirsutism"> Hirsutism</label></div>
+                <div class="space-y-2"><h3 class="font-semibold text-gray-700 border-b pb-1 mb-2">Hematological</h3><label class="checkbox-label"><input type="checkbox" data-symptom="Anemia"> Anemia</label><label class="checkbox-label"><input type="checkbox" data-symptom="Bleeding"> Bleeding</label><label class="checkbox-label"><input type="checkbox" data-symptom="Thrombosis"> Thrombosis</label><label class="checkbox-label"><input type="checkbox" data-symptom="Transfusion Hx"> Transfusion Hx</label></div>
+                <div class="space-y-2"><h3 class="font-semibold text-gray-700 border-b pb-1 mb-2">Integumentary</h3><label class="checkbox-label"><input type="checkbox" data-symptom="Skin Rash"> Skin Rash</label><label class="checkbox-label"><input type="checkbox" data-symptom="Itching"> Itching</label><label class="checkbox-label"><input type="checkbox" data-symptom="Hair Loss"> Hair Loss</label><label class="checkbox-label"><input type="checkbox" data-symptom="Nail Changes"> Nail Changes</label><label class="checkbox-label"><input type="checkbox" data-symptom="Ulceration"> Ulceration</label></div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="flex justify-between items-center mb-4"><h2 class="section-title !m-0 !p-0 !border-0">Past Medical History</h2><button id="addDiseaseBtn" class="btn btn-secondary">Add Disease</button></div>
+            <div id="diseaseList" class="space-y-4"></div>
+        </div>
+
+        <div class="section-card">
+            <div class="flex justify-between items-center mb-4"><h2 class="section-title !m-0 !p-0 !border-0">Past Surgical History</h2><button id="addSurgeryBtn" class="btn btn-secondary">Add Surgery</button></div>
+            <div id="surgeryList" class="space-y-4"></div>
+        </div>
+
+        <div class="section-card">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="section-title !m-0 !p-0 !border-0">Drug History</h2>
+                <button id="addDrugBtn" class="btn btn-secondary">Add Drug</button>
+            </div>
+            <div id="drugList" class="space-y-4"></div>
+        </div>
+        
+        <div class="section-card">
+            <h2 class="section-title">Socioeconomic History</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="border p-4 rounded-lg">
+                     <label class="form-label">Smoking Status</label><select id="smokingStatus" class="form-select"><option value="non-smoker">Non-smoker</option><option value="ex-smoker">Ex-smoker</option><option value="current-smoker">Current Smoker</option></select>
+                     <div id="smokerCalculator" class="mt-4 space-y-2" style="display:none;"><input type="number" id="cigsPerDay" class="form-input" placeholder="Cigarettes per day"><input type="number" id="yearsSmoked" class="form-input" placeholder="Years smoked"><p class="text-right font-semibold">Pack-Years: <span id="packYearsResult">0</span></p></div>
+                </div>
+                <div class="border p-4 rounded-lg">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="form-label !mb-0">Alcohol Consumption</label>
+                        <button id="addDrinkBtn" class="btn btn-secondary btn-sm">Add Drink</button>
+                    </div>
+                    <div id="alcoholList" class="space-y-2"></div>
+                    <div class="mt-4 pt-2 border-t text-right">
+                        <p class="font-semibold text-lg">Total Units/Week: <span id="alcoholTotalUnits">0.0</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-6 pt-6 border-t">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Pet History</h3>
+                <div>
+                    <label for="hadPet" class="form-label">Have you ever had a pet at home?</label>
+                    <select id="hadPet" class="form-select">
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                    </select>
+                </div>
+                <div id="petDetailsContainer" class="mt-4" style="display: none;">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="font-semibold">Pet Details</h4>
+                        <button id="addPetBtn" class="btn btn-secondary">Add Pet</button>
+                    </div>
+                    <div id="petList" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="flex justify-between items-center mb-4"><h2 class="section-title !m-0 !p-0 !border-0">Occupational History</h2><button id="addOccupationBtn" class="btn btn-secondary">Add Occupational Exposure</button></div>
+            <div id="occupationList" class="space-y-4"></div>
+        </div>
+
+    <div class="section-card" id="gocmsHistorySection">
+    <h2 class="section-title">Gynecological, Obstetrical, Contraception and Menopausal Status</h2>
+    <div id="gocmsStatusMessage" class="p-3 text-center font-bold text-lg bg-blue-100 text-blue-800 rounded-lg mb-4" style="display: none;"></div>
+    
+    <div class="space-y-4">
+
+        <div>
+            <label for="hadMenstrualCycle" class="form-label">Have you ever had a menstrual cycle before?</label>
+            <select id="hadMenstrualCycle" class="form-select">
+                <option value="">Select...</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+            </select>
+        </div>
+
+        <div id="gocmsQuestionsContainer" class="space-y-4" style="display: none;">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                <div><label for="gynoLMP" class="form-label">Last Menstrual Period (LMP)</label><input type="date" id="gynoLMP" class="form-input"></div>
+                <div><label for="gynoCycleRegularity" class="form-label">Cycle Regularity</label><select id="gynoCycleRegularity" class="form-select"><option value="">Select...</option><option value="regular">Regular</option><option value="irregular">Irregular</option></select></div>
+                <div><label for="gynoCycleLength" class="form-label">Average Cycle Length (days)</label><input type="number" id="gynoCycleLength" class="form-input" placeholder="e.g., 28"></div>
+            </div>
+             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
+                <div><label for="isPregnant" class="form-label">Currently Pregnant?</label><select id="isPregnant" class="form-select"><option value="no">No</option><option value="yes">Yes</option></select></div>
+                <div><label for="isBreastfeeding" class="form-label">Currently Breastfeeding?</label><select id="isBreastfeeding" class="form-select"><option value="no">No</option><option value="yes">Yes</option></select></div>
+                <div><label for="isUsingOCP" class="form-label">Using Oral Contraceptives?</label><select id="isUsingOCP" class="form-select"><option value="no">No</option><option value="yes">Yes</option></select></div>
+            </div>
+            <div class="mt-6 pt-6 border-t">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Gynecological Symptoms</h3>
+                <div id="gynoSymptomsGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <label class="checkbox-label"><input type="checkbox" name="gynoSymptom" value="dysmenorrhea"> Dysmenorrhea</label>
+                    <label class="checkbox-label"><input type="checkbox" name="gynoSymptom" value="menorrhagia"> Menorrhagia</label>
+                    <label class="checkbox-label"><input type="checkbox" name="gynoSymptom" value="inter-menstrual bleeding"> Inter-menstrual bleeding</label>
+                    <label class="checkbox-label"><input type="checkbox" name="gynoSymptom" value="vaginal itching"> Vaginal itching</label>
+                    <label class="checkbox-label"><input type="checkbox" name="gynoSymptom" value="vaginal discharge"> Vaginal discharge</label>
+                    <label class="checkbox-label"><input type="checkbox" name="gynoSymptom" value="pelvic pain"> Pelvic pain</label>
+                    <label class="checkbox-label"><input type="checkbox" name="gynoSymptom" value="hirsutism"> Hirsutism</label>
+                    <label class="checkbox-label"><input type="checkbox" name="gynoSymptom" value="acne"> Acne</label>
+                    <label class="checkbox-label"><input type="checkbox" name="gynoSymptom" value="pre-menstrual symptoms"> Pre-menstrual symptoms</label>
+                    <label class="checkbox-label"><input type="checkbox" name="gynoSymptom" value="post-coital bleeding"> Post-coital bleeding</label>
+                    <label class="checkbox-label"><input type="checkbox" name="gynoSymptom" value="dyspareunia"> Dyspareunia</label>
+                    <label class="checkbox-label"><input type="checkbox" name="gynoSymptom" value="galactorrhea"> Galactorrhea</label>
+                    <label class="checkbox-label"><input type="checkbox" name="gynoSymptom" value="vaginal bulge or protrusion"> Vaginal bulge or protrusion</label>
+                </div>
+                <div id="vaginalDischargeDetails" class="mt-4 p-4 border border-gray-200 rounded-lg" style="display: none;">
+                    <h4 class="font-semibold text-gray-700 mb-2">Vaginal Discharge Details</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div><label for="dischargeOdor" class="form-label text-sm">Odor</label><input type="text" id="dischargeOdor" class="form-input" placeholder="e.g., Fishy, None"></div>
+                        <div><label for="dischargeColor" class="form-label text-sm">Color</label><input type="text" id="dischargeColor" class="form-input" placeholder="e.g., White, Yellow, Green"></div>
+                        <div><label for="dischargeConsistency" class="form-label text-sm">Consistency</label><input type="text" id="dischargeConsistency" class="form-input" placeholder="e.g., Watery, Thick, Curdy"></div>
+                    </div>
+                </div>
+            </div>
+        </div> <div class="mt-6 pt-6 border-t">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-800">Previous Gynecological Conditions</h3>
+                <button id="addGynoConditionBtn" class="btn btn-secondary">Add Gynecological Condition +</button>
+            </div>
+            <div id="gynoConditionList" class="space-y-4"></div>
+        </div>
+        
+        <div class="mt-6 pt-6 border-t">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-800">Previous Gynecological Procedures</h3>
+                <button id="addGynoProcedureBtn" class="btn btn-secondary">Add Gynecological Procedure +</button>
+            </div>
+            <div id="gynoProcedureList" class="space-y-4"></div>
+        </div>
+
+        <div id="obstetricalHistorySection" class="mt-6 pt-6 border-t">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Obstetrical History</h3>
+            <div>
+                <label for="everPregnant" class="form-label">Have you ever been pregnant before?</label>
+                <select id="everPregnant" class="form-select">
+                    <option value="">Select...</option>
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                </select>
+            </div>
+            <div id="obstetricalDetailsContainer" class="mt-4 space-y-4" style="display: none;">
+                <div class="p-4 bg-gray-100 rounded-lg grid grid-cols-3 gap-4 text-center">
+                    <div><label class="form-label">Gravida (G)</label><p id="gpaGravida" class="text-2xl font-bold text-blue-600">0</p></div>
+                    <div><label class="form-label">Para (P)</label><p id="gpaPara" class="text-2xl font-bold text-green-600">0</p></div>
+                    <div><label class="form-label">Abortions (A)</label><p id="gpaAbortions" class="text-2xl font-bold text-red-600">0</p></div>
+                </div>
+                <div class="flex justify-end">
+                    <button id="addPregnancyBtn" class="btn btn-secondary">Add Pregnancy</button>
+                </div>
+                <div id="pregnancyList" class="space-y-4"></div>
+            </div>
+        </div>
+
+        <div id="contraceptionHistorySection" class="mt-6 pt-6 border-t">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Contraception History</h3>
+            <div>
+                <label for="everUsedContraception" class="form-label">Have you ever used a contraceptive method?</label>
+                <select id="everUsedContraception" class="form-select">
+                    <option value="">Select...</option>
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                </select>
+            </div>
+            <div id="contraceptionDetailsContainer" class="mt-4 space-y-4" style="display: none;">
+                <div class="flex justify-end">
+                    <button id="addContraceptionBtn" class="btn btn-secondary">Add Contraceptive Method</button>
+                </div>
+                <div id="contraceptionList" class="space-y-4"></div>
+            </div>
+        </div>
+<div id="menopausalHistorySection" class="mt-6 pt-6 border-t" style="display: none;">
+    <h3 class="text-xl font-semibold text-gray-800 mb-4">Menopausal History</h3>
+    <div class="space-y-4">
+        <div>
+            <label class="form-label">Menopausal Symptoms (tick all applicable)</label>
+            <div id="menopausalSymptomsGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <label class="checkbox-label"><input type="checkbox" name="menoSymptom" value="Hot flushes"> Hot flushes</label>
+                <label class="checkbox-label"><input type="checkbox" name="menoSymptom" value="Night sweats"> Night sweats</label>
+                <label class="checkbox-label"><input type="checkbox" name="menoSymptom" value="Mood swings"> Mood swings</label>
+                <label class="checkbox-label"><input type="checkbox" name="menoSymptom" value="Vaginal dryness"> Vaginal dryness</label>
+                <label class="checkbox-label"><input type="checkbox" name="menoSymptom" value="Loss of libido"> Loss of libido</label>
+            </div>
+        </div>
+
+        <div>
+            <label for="takenHrt" class="form-label">Are you currently taking or have you previously taken HRT?</label>
+            <select id="takenHrt" class="form-select">
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+            </select>
+        </div>
+
+        <div id="hrtDetailsContainer" class="mt-4 p-4 border border-gray-200 rounded-lg space-y-4" style="display: none;">
+            <h4 class="font-semibold text-gray-700 mb-2">HRT Details</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label for="hrtStartDate" class="form-label">Start Date</label>
+                    <input type="date" id="hrtStartDate" class="form-input">
+                </div>
+                <div class="lg:col-span-2">
+                    <label for="hrtEndDateType" class="form-label">End Date</label>
+                    <div class="flex gap-2">
+                        <select id="hrtEndDateType" class="form-select w-1/2">
+                            <option value="date">Date</option>
+                            <option value="till_now">Till Now</option>
+                        </select>
+                        <input type="date" id="hrtEndDate" class="form-input w-1/2">
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label for="hrtIndication" class="form-label">Indication</label>
+                <select id="hrtIndication" multiple placeholder="Select indications..."></select>
+            </div>
+            <div>
+                <label for="hrtSideEffects" class="form-label">Side Effects</label>
+                <select id="hrtSideEffects" multiple placeholder="Select side effects..."></select>
+            </div>
+        </div>
+    </div>
+</div>
+
+    </div>
+</div>
+            <!-- Placeholder for future sections -->
+
+
+
+
+        <div class="section-card">
+            <h2 class="section-title">Family History</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="familyMedicalHistory" class="form-label">Are there any medical conditions in the family?</label>
+                    <select id="familyMedicalHistory" class="form-select">
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                    </select>
+                </div>
+                <div id="familyDetailsContainer" style="display: none;">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold text-gray-800">Family Members</h3>
+                        <button id="addFamilyMemberBtn" class="btn btn-secondary">Add Member</button>
+                    </div>
+                    <div id="familyMemberList" class="space-y-4"></div>
+                </div>
+                <div class="pt-4 border-t">
+                    <label for="familyConsanguinity" class="form-label">Is there consanguinity?</label>
+                    <select id="familyConsanguinity" class="form-select">
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                    </select>
+                </div>
+                <div id="consanguinityDegreeContainer" class="mt-4" style="display: none;">
+                    <label for="consanguinityDegree" class="form-label">Degree of Consanguinity</label>
+                    <select id="consanguinityDegree" placeholder="Select or type to add..."></select>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="flex justify-between items-center mb-4"><h2 class="section-title !m-0 !p-0 !border-0">Travel History</h2><button id="addTripBtn" class="btn btn-secondary">Add a trip</button></div>
+            <div id="tripList" class="space-y-4"></div>
+        </div>
+        
+        <div class="section-card">
+            <h2 class="section-title">Sexual History</h2>
+            <div><label class="form-label">Are you currently sexually active?</label><select id="sexuallyActive" class="form-select"><option value="">Select an option</option><option value="yes">Yes</option><option value="no">No</option><option value="not_disclosed">Prefer not to say</option></select></div>
+            <div id="sexualHistoryDetails" class="mt-6 space-y-6" style="display: none;">
+                <fieldset class="border p-4 rounded-lg"><legend class="text-lg font-semibold px-2">Partners</legend>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label for="sexualPartnersMale" class="form-label">Number of male partners (last 12 months)?</label><input type="number" id="sexualPartnersMale" class="form-input" placeholder="e.g., 1"></div>
+                        <div><label for="sexualPartnersFemale" class="form-label">Number of female partners (last 12 months)?</label><input type="number" id="sexualPartnersFemale" class="form-input" placeholder="e.g., 0"></div>
+                    </div>
+                </fieldset>
+                <fieldset class="border p-4 rounded-lg"><legend class="text-lg font-semibold px-2">Practice</legend><div id="sexualPractice" class="grid grid-cols-2 md:grid-cols-4 gap-4"><label class="checkbox-label"><input type="checkbox" value="Vaginal"> Vaginal</label><label class="checkbox-label"><input type="checkbox" value="Oral"> Oral</label><label class="checkbox-label"><input type="checkbox" value="Anal"> Anal</label><label class="checkbox-label"><input type="checkbox" value="Other"> Other</label></div></fieldset>
+                <fieldset class="border p-4 rounded-lg"><legend class="text-lg font-semibold px-2">Protection</legend><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="useProtection" class="form-label">Use protection?</label><select id="useProtection" class="form-select"><option value="no">No</option><option value="yes">Yes</option></select></div><div id="protectionTypeGroup" style="display:none;"><label for="protectionType" class="form-label">What kind?</label><select id="protectionType" class="form-select"><option>Condom</option><option>PrEP</option><option>Other</option></select></div></div></fieldset>
+                <fieldset class="border p-4 rounded-lg">
+                    <legend class="text-lg font-semibold px-2">Past STD History</legend>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="stdHistory" class="form-label">Ever diagnosed with an STD?</label>
+                            <select id="stdHistory" class="form-select">
+                                <option value="no">No</option>
+                                <option value="yes">Yes</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="stdDetailsGroup" class="mt-4 space-y-4" style="display:none;">
+                        <div>
+                            <label for="stdWhat" class="form-label">What STD?</label>
+                            <select id="stdWhat" multiple placeholder="Select or type to add..."></select>
+                        </div>
+                        <div>
+                            <label class="form-label">Were you treated?</label>
+                            <select id="stdTreated" class="form-select">
+                                <option value="no">No</option>
+                                <option value="yes">Yes</option>
+                            </select>
+                        </div>
+                        <div id="stdTreatmentKindGroup" style="display:none;">
+                             <label for="stdTreatmentKind" class="form-label">What Kind of treatment?</label>
+                             <select id="stdTreatmentKind" multiple placeholder="Select or type to add..."></select>
+                        </div>
+                        <div>
+                            <label class="form-label">Was your partner treated?</label>
+                            <select id="stdPartnerTreated" class="form-select">
+                                <option value="no">No</option>
+                                <option value="yes">Yes</option>
+                            </select>
+                        </div>
+                    </div>
+                </fieldset>
+                <fieldset class="border p-4 rounded-lg">
+                    <legend class="text-lg font-semibold px-2">Dysfunction & Abuse History</legend>
+                    <div class="space-y-4">
+                        <div id="maleSexualDysfunction" style="display:none;"><label class="form-label">History of erectile dysfunction?</label><select id="edHistory" class="form-select"><option value="no">No</option><option value="yes">Yes</option></select></div>
+                        <div id="femaleSexualDysfunction" class="space-y-2" style="display:none;"><label class="form-label">History of sexual dysfunction?</label><div id="femaleDysfunctionTypes" class="flex gap-4"><label class="checkbox-label"><input type="checkbox" value="Libido"> Libido</label><label class="checkbox-label"><input type="checkbox" value="Arousal"> Arousal</label><label class="checkbox-label"><input type="checkbox" value="Orgasm"> Orgasm</label></div></div>
+                        <div><label class="form-label">History of sexual abuse?</label><select id="abuseHistory" class="form-select"><option value="no">No</option><option value="yes">Yes</option></select></div>
+                    </div>
+                </fieldset>
+            </div>
+        </div>
+
+        <div class="section-card" id="entHistorySection">
+            <h2 class="section-title">ENT History</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <label class="checkbox-label"><input type="checkbox" data-symptom="Otalgia"> Otalgia</label><label class="checkbox-label"><input type="checkbox" data-symptom="Otorrhea"> Otorrhea</label><label class="checkbox-label"><input type="checkbox" data-symptom="Hearing loss"> Hearing loss</label><label class="checkbox-label"><input type="checkbox" data-symptom="Tinnitus"> Tinnitus</label><label class="checkbox-label"><input type="checkbox" data-symptom="Vertigo"> Vertigo</label><label class="checkbox-label"><input type="checkbox" data-symptom="Epistaxis"> Epistaxis</label><label class="checkbox-label"><input type="checkbox" data-symptom="Rhinorrhea"> Rhinorrhea</label><label class="checkbox-label"><input type="checkbox" data-symptom="Anosmia/Cacosmia"> Anosmia/Cacosmia</label>
+            </div>
+        </div>
+        
+        <div class="section-card" id="visualHistorySection">
+            <h2 class="section-title">Visual History</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <label class="checkbox-label"><input type="checkbox" data-symptom="Ocular pain"> Ocular pain</label><label class="checkbox-label"><input type="checkbox" data-symptom="Red eye"> Red eye</label><label class="checkbox-label"><input type="checkbox" data-symptom="Visual loss"> Visual loss</label><label class="checkbox-label"><input type="checkbox" data-symptom="Blurred vision"> Blurred vision</label><label class="checkbox-label"><input type="checkbox" data-symptom="Diplopia"> Diplopia</label><label class="checkbox-label"><input type="checkbox" data-symptom="Flashes and floaters"> Flashes and floaters</label><label class="checkbox-label"><input type="checkbox" data-symptom="Haloes"> Haloes</label><label class="checkbox-label"><input type="checkbox" data-symptom="Oscillopsia"> Oscillopsia</label>
+            </div>
+        </div>
+        
+        <div class="mt-8 flex justify-between gap-4">
+            <button id="backToDashboardButton" class="btn btn-secondary">Back to Dashboard</button>
+            <button id="nextButton" class="btn btn-primary">Next: Physical Examination</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDocFromServer } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDMIZubC87_z2tCnURoqQIJjCWPPdWFdnk",
+            authDomain: "pcms-e1162.firebaseapp.com",
+            projectId: "pcms-e1162",
+            storageBucket: "pcms-e1162.firebasestorage.app",
+            messagingSenderId: "383068543378",
+            appId: "1:383068543378:web:00c7d2bf95f9ded63a494b",
+            measurementId: "G-4C1P3GB6PP"
+        };
+        
+        let app, db, auth;
+        let doctorUserId = null;
+        let fromDashboard = null;
+        let patientId = null;
+        
+        const patientDataSessionKey = 'currentPatientRecord';
+        const patientOwnerSessionKey = 'currentPatientRecordOwner';
+        let clinicalRecordReady = false;
+                const updateGpa = () => {
+            let para = 0;
+            let abortions = 0;
+            const pregnancies = document.querySelectorAll('.pregnancy-entry');
+            const gravidaEl = document.getElementById('gpaGravida');
+            const paraEl = document.getElementById('gpaPara');
+            const abortionsEl = document.getElementById('gpaAbortions');
+
+            if (!gravidaEl || !paraEl || !abortionsEl) return;
+
+            gravidaEl.textContent = pregnancies.length;
+
+            pregnancies.forEach(p => {
+                const gaInput = p.querySelector('.pregnancy-ga');
+                if (gaInput && gaInput.value) {
+                    const ga = parseInt(gaInput.value, 10);
+                    if (ga >= 24) {
+                        para++;
+                    } else if (ga > 0 && ga < 24) {
+                        abortions++;
+                    }
+                }
+            });
+            paraEl.textContent = para;
+            abortionsEl.textContent = abortions;
+        };
+
+        // --- UI LOGIC (Original Script) ---
+        document.addEventListener('DOMContentLoaded', function () {
+            const createTomSelect = (selector, options) => {
+                if (!selector) return null;
+                const ts = new TomSelect(selector, { create: true, persist: false, ...options });
+                selector.tomselect = ts; // Attach instance to the element
+                return ts;
+            };
+            const getDaysDifference = (d1, d2) => d1 && d2 ? Math.ceil(Math.abs(new Date(d2) - new Date(d1)) / (1000 * 60 * 60 * 24)) : 0;
+
+                        const updateGpa = () => {
+                let para = 0;
+                let abortions = 0;
+                const pregnancies = document.querySelectorAll('.pregnancy-entry');
+                const gravidaEl = document.getElementById('gpaGravida');
+                const paraEl = document.getElementById('gpaPara');
+                const abortionsEl = document.getElementById('gpaAbortions');
+
+                if (!gravidaEl || !paraEl || !abortionsEl) return;
+
+                gravidaEl.textContent = pregnancies.length;
+
+                pregnancies.forEach(p => {
+                    const gaInput = p.querySelector('.pregnancy-ga');
+                    if (gaInput && gaInput.value) {
+                        const ga = parseInt(gaInput.value, 10);
+                        if (ga >= 24) {
+                            para++;
+                        } else if (ga > 0 && ga < 24) {
+                            abortions++;
+                        }
+                    }
+                });
+                paraEl.textContent = para;
+                abortionsEl.textContent = abortions;
+            };
+            
+            
+            const drugFieldTemplates = {
+                 Prescription: `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <div><label class="form-label">Dose</label><input type="text" class="form-input drug-dose" placeholder="e.g., 500mg"></div>
+                        <div><label class="form-label">Frequency</label><select class="freq-select"><option>OD</option><option>BID</option><option>TID</option><option>QID</option><option>PRN</option></select></div>
+                        <div><label class="form-label">Route</label><select class="route-select"><option>Oral</option><option>IV</option><option>IM</option><option>Subcutaneous</option><option>Topical</option></select></div>
+                        <div><label class="form-label">Compliance</label><select class="comp-select"><option>Compliant</option><option>Not Compliant</option><option>Fairly Compliant</option></select></div>
+                        <div class="md:col-span-2"><label class="form-label">Indication</label><input type="text" class="form-input drug-indication" placeholder="e.g., Type 2 Diabetes"></div>
+                        <div class="md:col-span-3"><label class="form-label">Side Effects</label><input type="text" class="form-input drug-side-effects" placeholder="e.g., Nausea"></div>
+                    </div>`,
+                OTC: `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <div><label class="form-label">Dose</label><input type="text" class="form-input drug-dose" placeholder="e.g., 500mg"></div>
+                        <div><label class="form-label">Frequency</label><select class="freq-select"><option>OD</option><option>BID</option><option>PRN</option></select></div>
+                        <div><label class="form-label">Route</label><select class="route-select"><option>Oral</option><option>Topical</option></select></div>
+                        <div class="md:col-span-3"><label class="form-label">Reason for Use</label><input type="text" class="form-input drug-indication" placeholder="e.g., Headache"></div>
+                    </div>`,
+                Abused: `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div><label class="form-label">Current Use?</label><select class="form-select drug-current-use"><option>Yes</option><option>No</option></select></div>
+                        <div><label class="form-label">Frequency</label><input type="text" class="form-input drug-abuse-freq" placeholder="e.g., Daily"></div>
+                        <div class="md:col-span-2"><label class="form-label">Route of Administration</label><select class="route-abuse-select" multiple><option>Oral</option><option>Nasal</option><option>Subcutaneous</option><option>Injection</option><option>Smoked</option></select></div>
+                        <div><label class="form-label">Needle Sharing?</label><select class="form-select drug-needle-sharing"><option>No</option><option>Yes</option></select></div>
+                        <div><label class="form-label">Previous Detox/Rehab?</label><select class="form-select drug-rehab"><option>No</option><option>Yes</option></select></div>
+                        <div class="md:col-span-2"><label class="form-label">Dependency Symptoms</label><textarea class="form-textarea drug-dependency-symptoms" rows="2"></textarea></div>
+                    </div>`,
+                Allergen: `
+                    <div class="grid grid-cols-1 mt-4">
+                        <div><label class="form-label">Severity of Reaction</label><select class="form-select drug-allergy-severity"><option>Simple hives and rash</option><option>Angioedema</option><option>Anaphylaxis</option></select></div>
+                    </div>`
+            };
+
+            const mainTemplates = {
+                drug: (id) => `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="md:col-span-2"><label class="form-label">Drug Name</label><select class="drug-select" placeholder="Search drug..."><option>Aspirin</option><option>Paracetamol</option><option>Heroin</option><option>Penicillin</option></select></div>
+                        <div><label class="form-label">Category</label><select class="form-select drug-category-select"><option>Prescription</option><option>OTC</option><option>Abused</option><option>Allergen</option></select></div>
+                    </div>
+                    <div class="dynamic-drug-fields"></div>
+                    <div class="text-right mt-4"><button type="button" class="btn btn-danger btn-sm remove-btn">Remove</button></div>
+                `,
+                disease: (id) => `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div><label class="form-label">Disease</label><select class="disease-select"><option>Diabetes Mellitus Type I</option><option>Diabetes Mellitus Type II</option><option>Hypertension</option><option>Chronic Kidney Disease (CKD)</option></select></div>
+                        <div><label class="form-label">Date of Diagnosis</label><input type="date" class="form-input diagnosis-date"></div>
+                        <div><label class="form-label">Duration</label><p class="pt-2 font-semibold text-gray-600 duration-label">--</p></div>
+                        <div><label class="form-label">Control</label><select class="form-select disease-control"><option>Controlled</option><option>Poorly Controlled</option><option>Fairly Controlled</option></select></div>
+                        <div><label class="form-label">Method of Control</label><select class="form-select method-of-control"><option>Medications</option><option>Life Style Modification</option><option>None</option></select></div>
+                    </div>
+                    <div class="text-right mt-4"><button type="button" class="btn btn-danger btn-sm remove-btn">Remove</button></div>
+                `,
+                surgery: (id) => `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label class="form-label">Surgery</label><select class="surgery-select"><option>Appendectomy</option><option>Cholecystectomy</option><option>Laparotomy</option></select></div>
+                        <div><label class="form-label">Date of Surgery</label><input type="date" class="form-input surgery-date"></div>
+                        <div class="md:col-span-2"><label class="form-label">Intra-operative Complications</label><input type="text" class="form-input surgery-complications" placeholder="e.g., bleeding, injury..."></div>
+                        <div><label class="form-label">Need for Blood Transfusion?</label><select class="form-select transfusion-needed"><option value="no">No</option><option value="yes">Yes</option></select></div>
+                    </div>
+                    <div class="transfusion-details mt-4 space-y-4" style="display: none;">
+                        <div><label class="form-label">Blood Component(s) Transfused</label><select class="blood-components" multiple><option>Whole blood</option><option>Packed RBC</option><option>Fresh Frozen Plasma</option><option>Cryoprecipitate</option><option>Prothrombic complex</option><option>Single donor platelet</option><option>Random donor platelet</option></select></div>
+                        <div class="pints-container grid grid-cols-2 gap-4"></div>
+                    </div>
+                    <div class="mt-4"><label class="form-label">Post-operative Complications</label><select class="post-op-complications" multiple><option>DVT</option><option>PE</option><option>MI</option><option>Surgical Site Infection</option><option>None</option></select></div>
+                    <div class="text-right mt-4"><button type="button" class="btn btn-danger btn-sm remove-btn">Remove</button></div>
+                `,
+                trip: (id) => `
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div><label class="form-label">Country</label><select class="country-select" placeholder="Search..."></select></div>
+                        <div><label class="form-label">Area</label><select class="form-select trip-area"><option>Urban</option><option>Rural</option></select></div>
+                        <div><label class="form-label">Trip Start Date</label><input type="date" class="form-input trip-start-date"></div>
+                        <div><label class="form-label">Trip End Date</label><input type="date" class="form-input trip-end-date"></div>
+                        <div class="lg:col-span-2"><label class="form-label">Trip Duration</label><p class="pt-2 font-semibold text-gray-600 duration-label">-- days</p></div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <h4 class="font-semibold text-gray-700 mb-2">Exposure & Symptoms</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="form-label">Exposure / Activities</label>
+                                <select class="exposure-activities-select" multiple placeholder="Select activities or type to add..."></select>
+                            </div>
+                            <div>
+                                <label class="form-label">Date of Exposure</label>
+                                <input type="date" class="form-input exposure-date">
+                            </div>
+                            <div>
+                                <label class="form-label">Symptoms</label>
+                                <select class="symptoms-select" multiple placeholder="Select symptoms or type to add..."></select>
+                            </div>
+                            <div>
+                                <label class="form-label">Date of Symptoms Onset</label>
+                                <input type="date" class="form-input symptom-date">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="form-label">Incubation Period</label>
+                                <p class="pt-2 font-semibold text-gray-600 incubation-label">-- days</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right mt-4"><button type="button" class="btn btn-danger btn-sm remove-btn">Remove</button></div>
+                `,
+                alcohol: (id) => `
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <div class="col-span-3"><select class="drink-type-select"><option data-abv="5">Beer (regular)</option><option data-abv="12">Wine</option><option data-abv="40">Spirits</option><option data-abv="40">Whiskey</option></select></div>
+                        <div class="col-span-2"><input type="number" class="form-input volume-input" placeholder="mL"></div>
+                        <div class="col-span-2"><input type="number" class="form-input abv-input" placeholder="% ABV"></div>
+                        <div class="col-span-2"><input type="number" class="form-input quantity-input" placeholder="Qty/wk"></div>
+                        <div class="col-span-2 text-center"><p class="font-semibold units-output">0.0</p></div>
+                        <div class="col-span-1 text-right"><button type="button" class="text-red-500 font-bold text-xl remove-btn">&times;</button></div>
+                    </div>
+                `,
+                occupation: (id) => `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div><label class="form-label">Occupation/Environment</label><select class="occupation-select"><option>Shipyard Worker</option><option>Farmer</option><option>Industrial Worker</option><option>Bakery Worker</option><option>Noisy Environment</option></select></div>
+                        <div><label class="form-label">Associated Risks/Diseases</label><select class="risks-select" multiple><option>Asbestosis</option><option>Q Fever</option><option>Dermatitis</option><option>Occupational Asthma</option><option>Hearing Loss</option></select></div>
+                        <div><label class="form-label">Duration of Exposure</label><input type="text" class="form-input occupation-duration" placeholder="e.g., 15 years"></div>
+                    </div>
+                    <div class="text-right mt-4"><button type="button" class="btn btn-danger btn-sm remove-btn">Remove</button></div>
+                `,
+                 pet: (id) => `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                        <div class="md:col-span-2"><label class="form-label">Kind of Pet</label><select class="pet-type-select" multiple placeholder="Select or type to add..."></select></div>
+                        <div><label class="form-label">Years with Pet</label><input type="number" class="form-input pet-years" placeholder="e.g., 5"></div>
+                    </div>
+                    <div class="text-right mt-4"><button type="button" class="btn btn-danger btn-sm remove-btn">Remove</button></div>
+                `,
+                familyMember: (id) => `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label class="form-label">Relationship</label><select class="family-relationship-select" placeholder="Select or type..."></select></div>
+                        <div><label class="form-label">Status</label><select class="family-status-select"><option value="alive">Alive</option><option value="deceased">Deceased</option></select></div>
+                    </div>
+                    <div class="mt-4 space-y-4">
+                        <div class="family-alive-fields">
+                             <div><label class="form-label">Age Now</label><input type="number" class="form-input family-age-now" placeholder="e.g., 55"></div>
+                        </div>
+                        <div class="family-deceased-fields" style="display: none;">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div><label class="form-label">Age of Death</label><input type="number" class="form-input family-age-death" placeholder="e.g., 50"></div>
+                                <div><label class="form-label">Cause of Death</label><select class="family-cause-death-select" placeholder="Select or type..."></select></div>
+                            </div>
+                        </div>
+                        <div><label class="form-label">Medical Condition(s)</label><select class="family-medical-condition-select" multiple placeholder="Select or type to add..."></select></div>
+                    </div>
+                    <div class="text-right mt-4"><button type="button" class="btn btn-danger btn-sm remove-btn">Remove</button></div>
+                `,
+                gynoCondition: (id) => `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label class="form-label">Gynecological Condition</label><select class="gyno-condition-select" placeholder="e.g., PCOS, Fibroids..."></select></div>
+                        <div><label class="form-label">Date of Diagnosis</label><input type="date" class="form-input gyno-condition-date"></div>
+                        <div><label class="form-label">Treatment</label><select class="gyno-condition-treatment" multiple placeholder="e.g., COCP, Myomectomy..."></select></div>
+                        <div><label class="form-label">Outcome</label><select class="gyno-condition-outcome"><option>Resolved</option><option>Recurrence</option><option>On treatment</option><option>Failure of treatment</option></select></div>
+                    </div>
+                    <div class="text-right mt-4"><button type="button" class="btn btn-danger btn-sm remove-btn">Remove</button></div>
+                `,
+                gynoProcedure: (id) => `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label class="form-label">Procedure</label><select class="gyno-procedure-select" placeholder="e.g., D&C, Hysterectomy..."></select></div>
+                        <div><label class="form-label">Date</label><input type="date" class="form-input gyno-procedure-date"></div>
+                        <div class="md:col-span-2"><label class="form-label">Indication</label><input type="text" class="form-input gyno-procedure-indication" placeholder="Reason for procedure"></div>
+                        <div class="md:col-span-2"><label class="form-label">Intra-operative Complications</label><input type="text" class="form-input gyno-procedure-intra-op" placeholder="Complications during procedure"></div>
+                        <div class="md:col-span-2"><label class="form-label">Post-operative Complications</label><input type="text" class="form-input gyno-procedure-post-op" placeholder="Complications after procedure"></div>
+                        <div class="md:col-span-2"><label class="form-label">Outcome</label><select class="gyno-procedure-outcome"><option>Resolved</option><option>Recurrence</option><option>On treatment</option><option>Failure of treatment</option></select></div>
+                    </div>
+                    <div class="text-right mt-4"><button type="button" class="btn btn-danger btn-sm remove-btn">Remove</button></div>
+                `
+                ,pregnancy: (id, pregNum) => `
+    <details class="dynamic-entry pregnancy-entry" data-preg-num="${pregNum}">
+        <summary class="font-semibold text-lg cursor-pointer flex justify-between items-center">
+            <span>Pregnancy #${pregNum}</span>
+            <button type="button" class="btn btn-danger btn-sm !p-2 !py-1 remove-btn">Remove</button>
+        </summary>
+        <div class="pregnancy-details grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
+            <input type="hidden" class="pregnancy-number" value="${pregNum}">
+            <div><label class="form-label">Year</label><input type="number" class="form-input pregnancy-year" placeholder="e.g., 2023"></div>
+            <div><label class="form-label">Gestational Age (weeks)</label><input type="number" class="form-input pregnancy-ga" min="1" max="60" placeholder="e.g., 40"></div>
+            <div><label class="form-label">Mode of Delivery</label><select class="form-select pregnancy-mod"><option>Vaginal</option><option>C/S</option><option>Assisted</option></select></div>
+            <div><label class="form-label">Baby's Sex</label><select class="form-select pregnancy-sex"><option>Male</option><option>Female</option><option>Ambiguous Genitalia</option></select></div>
+            <div><label class="form-label">Birth Weight (grams)</label><input type="number" class="form-input pregnancy-weight" placeholder="e.g., 3500"></div>
+            <div><label class="form-label">Outcome</label><select class="form-select pregnancy-outcome"><option>Alive</option><option>Stillbirth</option></select></div>
+            <div><label class="form-label">Number</label><select class="form-select pregnancy-multiplicity"><option>Single</option><option>Multiple</option></select></div>
+            <div class="lg:col-span-3"><label class="form-label">Intrapartum Complications</label><select class="pregnancy-intrapartum-complications" multiple></select></div>
+            <div class="lg:col-span-3"><label class="form-label">Post-partum Complications</label><select class="pregnancy-postpartum-complications" multiple></select></div>
+            <div class="lg:col-span-3"><label class="form-label">Medical Conditions during Pregnancy</label><select class="pregnancy-medical-conditions" multiple></select></div>
+        </div>
+        
+  
+    </details>
+`,contraception: (id) => `
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div><label class="form-label">Method</label><select class="contraception-method-select" placeholder="Select method..."></select></div>
+                        <div><label class="form-label">Start Date</label><input type="date" class="form-input contraception-start-date"></div>
+                        <div>
+                            <label class="form-label">End Date</label>
+                            <div class="flex gap-2">
+                                <select class="form-select contraception-end-date-type w-1/2"><option value="date">Date</option><option value="till_now">Till Now</option></select>
+                                <input type="date" class="form-input contraception-end-date w-1/2">
+                            </div>
+                        </div>
+                        <div class="md:col-span-3"><label class="form-label">Duration of Use</label><p class="pt-2 font-semibold text-gray-600 duration-label">--</p></div>
+                        <div><label class="form-label">Side Effects</label><select class="contraception-side-effects" multiple placeholder="Select or type..."></select></div>
+                        <div class="lg:col-span-2"><label class="form-label">Complications</label><select class="contraception-complications" multiple placeholder="Select or type..."></select></div>
+                    </div>
+                    <div class="text-right mt-4"><button type="button" class="btn btn-danger btn-sm remove-btn">Remove</button></div>
+                `
+            };
+
+          window.addDynamicEntry = (listId, templateName, data) => {
+    const list = document.getElementById(listId);
+    if (!list) return;
+    const id = `${templateName}-${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    const entryWrapper = document.createElement('div'); // Use a wrapper for easier removal
+    
+    let entryHTML;
+    if (templateName === 'pregnancy') {
+        const pregNum = list.children.length + 1;
+        entryHTML = mainTemplates[templateName](id, pregNum);
+    } else {
+        entryHTML = `<div class="dynamic-entry" id="${id}">${mainTemplates[templateName](id)}</div>`;
+    }
+    entryWrapper.innerHTML = entryHTML;
+    const entryElement = entryWrapper.firstElementChild;
+    list.appendChild(entryElement);
+    
+    const onAddCallback = window.dynamicEntryCallbacks[templateName];
+    if (onAddCallback) onAddCallback(entryElement, data);
+
+    const removeBtn = entryElement.querySelector('.remove-btn');
+    if (removeBtn) {
+        removeBtn.addEventListener('click', (e) => {
+            e.preventDefault(); // Prevent details from toggling on remove
+            entryElement.remove();
+            if(templateName === 'alcohol') updateTotalAlcoholUnits();
+            // This is the key fix for removal
+            if(templateName === 'pregnancy') {
+                // Re-number remaining pregnancies
+                const remainingPregnancies = list.querySelectorAll('.pregnancy-entry');
+                remainingPregnancies.forEach((preg, index) => {
+                    const pregNum = index + 1;
+                    preg.dataset.pregNum = pregNum;
+                    preg.querySelector('summary > span').textContent = `Pregnancy #${pregNum}`;
+                    preg.querySelector('.pregnancy-number').value = pregNum;
+                });
+                updateGpa(); 
+            }
+        });
+    }
+};
+;
+
+             window.dynamicEntryCallbacks = {
+                drug: (e, data) => { 
+                    createTomSelect(e.querySelector('.drug-select')); 
+                    const categorySelect = e.querySelector('.drug-category-select'); 
+                    const fieldsContainer = e.querySelector('.dynamic-drug-fields'); 
+                    const updateDrugFields = () => { 
+                        const category = categorySelect.value; 
+                        fieldsContainer.innerHTML = drugFieldTemplates[category] || ''; 
+                        createTomSelect(fieldsContainer.querySelector('.freq-select')); 
+                        createTomSelect(fieldsContainer.querySelector('.route-select')); 
+                        createTomSelect(fieldsContainer.querySelector('.comp-select')); 
+                        createTomSelect(fieldsContainer.querySelector('.route-abuse-select')); 
+                    }; 
+                    categorySelect.addEventListener('change', updateDrugFields); 
+                    if (data) {
+                        e.querySelector('.drug-select').tomselect.setValue(data.name);
+                        categorySelect.value = data.category;
+                    }
+                    updateDrugFields(); 
+                    if (data && data.fields) {
+                        for (const key in data.fields) {
+                            const input = e.querySelector(`.${key}`);
+                            if (input) {
+                                if (input.tomselect) input.tomselect.setValue(data.fields[key]);
+                                else input.value = data.fields[key] || '';
+                            }
+                        }
+                    }
+                },
+                disease: (e, data) => { 
+                    createTomSelect(e.querySelector('.disease-select'));
+                    const dateInput = e.querySelector('.diagnosis-date');
+                    const updateDuration = () => {
+                        const days = getDaysDifference(dateInput.value, new Date().toISOString().split('T')[0]);
+                        e.querySelector('.duration-label').textContent = `${(days / 365.25).toFixed(1)} years`;
+                    };
+                    dateInput.addEventListener('change', updateDuration);
+                    if (data) {
+                        e.querySelector('.disease-select').tomselect.setValue(data.disease);
+                        dateInput.value = data.diagnosisDate;
+                        e.querySelector('.disease-control').value = data.control;
+                        e.querySelector('.method-of-control').value = data.methodOfControl;
+                        updateDuration();
+                    }
+                },
+                surgery: (e, data) => {
+                    createTomSelect(e.querySelector('.surgery-select'));
+                    const postOpTs = createTomSelect(e.querySelector('.post-op-complications'));
+                    const bloodSelect = createTomSelect(e.querySelector('.blood-components')); 
+                    const transfusionNeeded = e.querySelector('.transfusion-needed');
+                    const pintsContainer = e.querySelector('.pints-container');
+                    transfusionNeeded.addEventListener('change', (evt) => e.querySelector('.transfusion-details').style.display = evt.target.value === 'yes' ? 'block' : 'none'); 
+                    bloodSelect.on('change', values => { 
+                        pintsContainer.innerHTML = ''; 
+                        values.forEach(val => pintsContainer.innerHTML += `<div><label class="form-label">${val} (pints)</label><input type="number" class="form-input blood-pint" data-component="${val}" placeholder="No. of pints"></div>`); 
+                    });
+                    if (data) {
+                        e.querySelector('.surgery-select').tomselect.setValue(data.surgery);
+                        e.querySelector('.surgery-date').value = data.date;
+                        e.querySelector('.surgery-complications').value = data.complications;
+                        transfusionNeeded.value = data.transfusion;
+                        transfusionNeeded.dispatchEvent(new Event('change'));
+                        if(data.postOpComplications) postOpTs.setValue(data.postOpComplications);
+                        if(data.bloodComponents && data.bloodComponents.length > 0) {
+                            const componentNames = data.bloodComponents.map(c => c.name);
+                            bloodSelect.setValue(componentNames);
+                            setTimeout(() => { 
+                                data.bloodComponents.forEach(comp => {
+                                    const pintInput = e.querySelector(`.blood-pint[data-component="${comp.name}"]`);
+                                    if(pintInput) pintInput.value = comp.pints;
+                                });
+                            }, 100);
+                        }
+                    }
+                },
+                trip: (e, data) => {
+                    createTomSelect(e.querySelector('.country-select'), { options: window.countries, valueField: 'name', labelField: 'name', searchField: 'name' });
+                    const start = e.querySelector('.trip-start-date'), end = e.querySelector('.trip-end-date');
+                    const durLabel = e.querySelector('.duration-label');
+                    const calcDur = () => durLabel.textContent = `${getDaysDifference(start.value, end.value)} days`;
+                    start.addEventListener('change', calcDur);
+                    end.addEventListener('change', calcDur);
+                    const exposureSelect = createTomSelect(e.querySelector('.exposure-activities-select'), { options: [ {value: 'none', text: 'None'}, {value: 'eating local foods', text: 'Eating local foods'}, {value: 'swimming in fresh water', text: 'Swimming in fresh water'}, {value: 'walking bare feet', text: 'Walking bare feet'}, {value: 'bitten by sandfly', text: 'Bitten by sandfly'}, ] });
+                    const symptomsSelect = createTomSelect(e.querySelector('.symptoms-select'), { options: [ {value: 'none', text: 'None'}, {value: 'Nausea', text: 'Nausea'}, {value: 'Vomiting', text: 'Vomiting'}, {value: 'Rash', text: 'Rash'}, ] });
+                    const expDateInput = e.querySelector('.exposure-date');
+                    const symDateInput = e.querySelector('.symptom-date');
+                    const incLabel = e.querySelector('.incubation-label');
+                    const calcInc = () => { if (expDateInput.disabled || symDateInput.disabled || !expDateInput.value || !symDateInput.value) { incLabel.textContent = '-- days'; return; } incLabel.textContent = `${getDaysDifference(expDateInput.value, symDateInput.value)} days`; };
+                    expDateInput.addEventListener('change', calcInc);
+                    symDateInput.addEventListener('change', calcInc);
+                    const checkExposureState = () => { const values = exposureSelect.getValue(); const isDisabled = values.length === 0 || values.includes('none'); expDateInput.disabled = isDisabled; if (isDisabled) expDateInput.value = ''; calcInc(); };
+                    const checkSymptomsState = () => { const values = symptomsSelect.getValue(); const isDisabled = values.length === 0 || values.includes('none'); symDateInput.disabled = isDisabled; if (isDisabled) symDateInput.value = ''; calcInc(); };
+                    exposureSelect.on('change', checkExposureState);
+                    symptomsSelect.on('change', checkSymptomsState);
+                    if (data) { e.querySelector('.country-select').tomselect.setValue(data.country); e.querySelector('.trip-area').value = data.area; start.value = data.startDate; end.value = data.endDate; calcDur(); if (data.exposureActivities) exposureSelect.setValue(data.exposureActivities); if (data.symptoms) symptomsSelect.setValue(data.symptoms); expDateInput.value = data.exposureDate; symDateInput.value = data.symptomDate; checkExposureState(); checkSymptomsState(); } else { checkExposureState(); checkSymptomsState(); }
+                },
+                alcohol: (e, data) => { 
+                    const drinkSelect = createTomSelect(e.querySelector('.drink-type-select')); 
+                    const volumeInput = e.querySelector('.volume-input'), abvInput = e.querySelector('.abv-input'); 
+                    const commonVolumes = { 'Beer (regular)': 500, 'Wine': 175, 'Spirits': 25, 'Whiskey': 50 }; 
+                    drinkSelect.on('change', val => { if (!drinkSelect.options[val]) return; const abv = drinkSelect.options[val].dataset.abv; volumeInput.value = commonVolumes[val] || ''; abvInput.value = abv || ''; window.updateAlcoholRow(e); }); 
+                    e.querySelectorAll('input, select').forEach(input => input.addEventListener('input', () => window.updateAlcoholRow(e))); 
+                    if (data) { drinkSelect.setValue(data.type, true); volumeInput.value = data.volume; abvInput.value = data.abv; e.querySelector('.quantity-input').value = data.quantity; }
+                    window.updateAlcoholRow(e); 
+                },
+                occupation: (e, data) => {
+                    createTomSelect(e.querySelector('.occupation-select'));
+                    const riskTs = createTomSelect(e.querySelector('.risks-select'));
+                    if (data) { e.querySelector('.occupation-select').tomselect.setValue(data.occupation); if(data.risks) riskTs.setValue(data.risks); e.querySelector('.occupation-duration').value = data.duration; }
+                },
+                 pet: (e, data) => {
+                    const petTypeSelect = createTomSelect(e.querySelector('.pet-type-select'), { options: [ {value: 'Dog', text: 'Dog'}, {value: 'Cat', text: 'Cat'}, {value: 'Bird', text: 'Bird'}, ] });
+                    if (data) { if(data.type) petTypeSelect.setValue(data.type); e.querySelector('.pet-years').value = data.years || ''; }
+                },
+                familyMember: (e, data) => {
+                    const setDynamicTomSelect = (selectElement, values) => { if (!selectElement || !selectElement.tomselect || values === undefined || values === null) return; const valuesArray = Array.isArray(values) ? values : (values ? [values] : []); valuesArray.forEach(val => { if (val && !selectElement.tomselect.options[val]) { selectElement.tomselect.addOption({ value: val, text: val }); } }); const isMulti = selectElement.hasAttribute('multiple'); selectElement.tomselect.setValue(isMulti ? valuesArray : (valuesArray[0] || '')); };
+                    createTomSelect(e.querySelector('.family-relationship-select'), { options: [{value: 'Father', text: 'Father'}, {value: 'Mother', text: 'Mother'}, {value: 'Brother', text: 'Brother'}, {value: 'Sister', text: 'Sister'}] });
+                    createTomSelect(e.querySelector('.family-cause-death-select'));
+                    createTomSelect(e.querySelector('.family-medical-condition-select'), { options: [{value: 'Diabetes', text: 'Diabetes'}, {value: 'Hypertension', text: 'Hypertension'}, {value: 'Heart Failure', text: 'Heart Failure'}] });
+                    const statusSelect = e.querySelector('.family-status-select');
+                    const aliveFields = e.querySelector('.family-alive-fields');
+                    const deceasedFields = e.querySelector('.family-deceased-fields');
+                    const toggleFields = () => { if (statusSelect.value === 'alive') { aliveFields.style.display = 'block'; deceasedFields.style.display = 'none'; } else { aliveFields.style.display = 'none'; deceasedFields.style.display = 'block'; } };
+                    statusSelect.addEventListener('change', toggleFields);
+                    if (data) { setDynamicTomSelect(e.querySelector('.family-relationship-select'), data.relationship); statusSelect.value = data.status; e.querySelector('.family-age-now').value = data.ageNow || ''; e.querySelector('.family-age-death').value = data.ageDeath || ''; setDynamicTomSelect(e.querySelector('.family-cause-death-select'), data.causeOfDeath); setDynamicTomSelect(e.querySelector('.family-medical-condition-select'), data.medicalConditions); }
+                    toggleFields();
+                },
+                gynoCondition: (e, data) => {
+                    createTomSelect(e.querySelector('.gyno-condition-select'), { options: [{value: 'PCOS', text: 'PCOS'}, {value: 'Fibroids', text: 'Fibroids'}, {value: 'Endometriosis', text: 'Endometriosis'}] });
+                    createTomSelect(e.querySelector('.gyno-condition-treatment'), { multiple: true, options: [{value: 'COCP', text: 'COCP'}, {value: 'Myomectomy', text: 'Myomectomy'}] });
+                    createTomSelect(e.querySelector('.gyno-condition-outcome'));
+                    if(data) { e.querySelector('.gyno-condition-select').tomselect.setValue(data.condition); e.querySelector('.gyno-condition-date').value = data.date; e.querySelector('.gyno-condition-treatment').tomselect.setValue(data.treatment); e.querySelector('.gyno-condition-outcome').tomselect.setValue(data.outcome); }
+                },
+                gynoProcedure: (e, data) => {
+                    createTomSelect(e.querySelector('.gyno-procedure-select'), { options: [{value: 'D&C', text: 'D&C'}, {value: 'Hysterectomy', text: 'Hysterectomy'}] });
+                    createTomSelect(e.querySelector('.gyno-procedure-outcome'));
+                    if(data) { e.querySelector('.gyno-procedure-select').tomselect.setValue(data.procedure); e.querySelector('.gyno-procedure-date').value = data.date; e.querySelector('.gyno-procedure-indication').value = data.indication; e.querySelector('.gyno-procedure-intra-op').value = data.intraOpComplications; e.querySelector('.gyno-procedure-post-op').value = data.postOpComplications; e.querySelector('.gyno-procedure-outcome').tomselect.setValue(data.outcome); }
+                },
+                pregnancy: (e, data) => {
+                    const gaInput = e.querySelector('.pregnancy-ga');
+                    const modSelect = e.querySelector('.pregnancy-mod');
+                    const updateModOptions = () => {
+                        const ga = parseInt(gaInput.value, 10);
+                        const hasDC = Array.from(modSelect.options).some(opt => opt.value === 'D/C');
+                        if (ga < 24) { if (!hasDC) { const option = document.createElement('option'); option.value = 'D/C'; option.textContent = 'D/C'; modSelect.appendChild(option); } } else { if (hasDC) { const optionToRemove = modSelect.querySelector('option[value="D/C"]'); if (optionToRemove) modSelect.removeChild(optionToRemove); } }
+                    };
+                    gaInput.addEventListener('input', updateModOptions);
+                    gaInput.addEventListener('input', updateGpa);
+                    updateModOptions();
+                    createTomSelect(e.querySelector('.pregnancy-intrapartum-complications'), { options: [{value: 'Prolonged labour', text: 'Prolonged labour'}] });
+                    createTomSelect(e.querySelector('.pregnancy-postpartum-complications'), { options: [{value: 'PPH', text: 'PPH'}] });
+                    createTomSelect(e.querySelector('.pregnancy-medical-conditions'), { options: [{value: 'DM', text: 'DM'}, {value: 'Pre-eclampsia', text: 'Pre-eclampsia'}, {value: 'Gestational HTN', text: 'Gestational HTN'}] });
+                    if (data) { e.querySelector('.pregnancy-year').value = data.year; gaInput.value = data.ga; updateModOptions(); modSelect.value = data.mod; e.querySelector('.pregnancy-sex').value = data.sex; e.querySelector('.pregnancy-weight').value = data.weight; e.querySelector('.pregnancy-outcome').value = data.outcome; e.querySelector('.pregnancy-multiplicity').value = data.multiplicity; e.querySelector('.pregnancy-intrapartum-complications').tomselect.setValue(data.intrapartum); e.querySelector('.pregnancy-postpartum-complications').tomselect.setValue(data.postpartum); e.querySelector('.pregnancy-medical-conditions').tomselect.setValue(data.medical); }
+                },
+                contraception: (e, data) => {
+                    const methodSelect = createTomSelect(e.querySelector('.contraception-method-select'), { options: [ {value: 'Oral contraceptive pills', text: 'Oral contraceptive pills'}, {value: 'Condom', text: 'Condom'}, {value: 'IUD (Intrauterine Device)', text: 'IUD (Intrauterine Device)'}, {value: 'Implant', text: 'Implant'}, {value: 'Injection', text: 'Injection'}, {value: 'Vaginal Ring', text: 'Vaginal Ring'}, {value: 'Patch', text: 'Patch'}, {value: 'Natural Methods', text: 'Natural Methods'}, {value: 'Emergency Contraception', text: 'Emergency Contraception'}, ] });
+                    const sideEffectsSelect = createTomSelect(e.querySelector('.contraception-side-effects'), { options: [ {value: 'Nausea', text: 'Nausea'}, {value: 'Vomiting', text: 'Vomiting'}, {value: 'Headache', text: 'Headache'}, {value: 'Breakthrough Bleeding', text: 'Breakthrough Bleeding'}, {value: 'Mood Changes', text: 'Mood Changes'}, {value: 'Weight Gain', text: 'Weight Gain'}, {value: 'Decreased Libido', text: 'Decreased Libido'}, ] });
+                    const complicationsSelect = createTomSelect(e.querySelector('.contraception-complications'), { options: [ {value: 'VTE (Venous Thromboembolism)', text: 'VTE (Venous Thromboembolism)'}, {value: 'Arterial Thrombosis', text: 'Arterial Thrombosis'}, {value: 'Hypertension', text: 'Hypertension'}, {value: 'PID (Pelvic Inflammatory Disease)', text: 'PID (Pelvic Inflammatory Disease)'}, {value: 'Device Expulsion', text: 'Device Expulsion'}, ] });
+                    const startDateInput = e.querySelector('.contraception-start-date');
+                    const endDateTypeSelect = e.querySelector('.contraception-end-date-type');
+                    const endDateInput = e.querySelector('.contraception-end-date');
+                    const durationLabel = e.querySelector('.duration-label');
+                    const updateDuration = () => { const start = startDateInput.value; const end = endDateTypeSelect.value === 'till_now' ? new Date().toISOString().split('T')[0] : endDateInput.value; if (start && end) { const days = getDaysDifference(start, end); durationLabel.textContent = `${(days / 365.25).toFixed(1)} years`; } else { durationLabel.textContent = '--'; } };
+                    const onEndDateChange = () => { const isTillNow = endDateTypeSelect.value === 'till_now'; endDateInput.style.display = isTillNow ? 'none' : 'block'; if (isTillNow) { endDateInput.value = ''; } updateDuration(); syncOcpStatus(); };
+                    startDateInput.addEventListener('change', updateDuration);
+                    endDateTypeSelect.addEventListener('change', onEndDateChange);
+                    endDateInput.addEventListener('change', updateDuration);
+                    methodSelect.on('change', syncOcpStatus);
+                    if (data) { methodSelect.setValue(data.method); startDateInput.value = data.startDate; endDateTypeSelect.value = data.endDateType; endDateInput.value = data.endDate; sideEffectsSelect.setValue(data.sideEffects); complicationsSelect.setValue(data.complications); }
+                    onEndDateChange();
+                }
+            };
+            
+const menopausalHistorySection = document.getElementById('menopausalHistorySection');
+const takenHrtSelect = document.getElementById('takenHrt');
+const hrtDetailsContainer = document.getElementById('hrtDetailsContainer');
+const hrtEndDateTypeSelect = document.getElementById('hrtEndDateType');
+const hrtEndDateInput = document.getElementById('hrtEndDate');
+
+if (takenHrtSelect) {
+    takenHrtSelect.addEventListener('change', () => {
+        hrtDetailsContainer.style.display = takenHrtSelect.value === 'yes' ? 'block' : 'none';
+    });
+}
+
+if (hrtEndDateTypeSelect) {
+    hrtEndDateTypeSelect.addEventListener('change', () => {
+        hrtEndDateInput.style.display = hrtEndDateTypeSelect.value === 'date' ? 'block' : 'none';
+    });
+}
+
+createTomSelect(document.getElementById('hrtIndication'), {
+    options: [
+        {value: 'Hot flushes', text: 'Hot flushes'},
+        {value: 'Night sweats', text: 'Night sweats'},
+        {value: 'Mood swings', text: 'Mood swings'},
+        {value: 'Vaginal dryness', text: 'Vaginal dryness'},
+        {value: 'Loss of libido', text: 'Loss of libido'}
+    ]
+});
+createTomSelect(document.getElementById('hrtSideEffects'), {
+    options: [
+        {value: 'Nausea', text: 'Nausea'},
+        {value: 'Vomiting', text: 'Vomiting'},
+        {value: 'VTE', text: 'VTE (Venous Thromboembolism)'},
+        {value: 'Headache', text: 'Headache'},
+        {value: 'Breast tenderness', text: 'Breast tenderness'}
+    ]
+});
+            const setupAddButton = (btnId, listId, templateName) => {
+                document.getElementById(btnId).addEventListener('click', () => {
+                    window.addDynamicEntry(listId, templateName);
+                });
+            };
+
+            setupAddButton('addDrugBtn', 'drugList', 'drug');
+            setupAddButton('addDiseaseBtn', 'diseaseList', 'disease');
+            setupAddButton('addSurgeryBtn', 'surgeryList', 'surgery');
+            setupAddButton('addTripBtn', 'tripList', 'trip');
+            setupAddButton('addDrinkBtn', 'alcoholList', 'alcohol');
+            setupAddButton('addOccupationBtn', 'occupationList', 'occupation');
+            setupAddButton('addPetBtn', 'petList', 'pet');
+            setupAddButton('addFamilyMemberBtn', 'familyMemberList', 'familyMember');
+            setupAddButton('addGynoConditionBtn', 'gynoConditionList', 'gynoCondition');
+            setupAddButton('addGynoProcedureBtn', 'gynoProcedureList', 'gynoProcedure');
+
+
+            document.getElementById('dob').addEventListener('change', (e) => { document.getElementById('calculatedAge').textContent = e.target.value ? `${new Date(new Date() - new Date(e.target.value)).getFullYear() - 1970} years` : '-- years'; });
+            
+            const genderSelect = document.getElementById('patientGender'); genderSelect.addEventListener('change', () => { 
+                const isFemale = genderSelect.value === 'Female'; 
+                document.getElementById('gocmsHistorySection').style.display = isFemale ? 'block' : 'none'; 
+                document.getElementById('maleSexualDysfunction').style.display = !isFemale ? 'block' : 'none'; 
+                document.getElementById('femaleSexualDysfunction').style.display = isFemale ? 'block' : 'none'; 
+            }); 
+            genderSelect.dispatchEvent(new Event('change'));
+
+            document.getElementById('sexuallyActive').addEventListener('change', (e) => { document.getElementById('sexualHistoryDetails').style.display = e.target.value === 'yes' ? 'block' : 'none'; });
+            
+            // STD History Logic
+            document.getElementById('stdHistory').addEventListener('change', e => {
+                document.getElementById('stdDetailsGroup').style.display = e.target.value === 'yes' ? 'block' : 'none';
+            });
+            document.getElementById('stdTreated').addEventListener('change', e => {
+                document.getElementById('stdTreatmentKindGroup').style.display = e.target.value === 'yes' ? 'block' : 'none';
+            });
+             document.getElementById('useProtection').addEventListener('change', e => {
+                document.getElementById('protectionTypeGroup').style.display = e.target.value === 'yes' ? 'block' : 'none';
+            });
+            createTomSelect(document.querySelector('#stdWhat'), {
+                options: [
+                    {value: 'Chlamydia', text: 'Chlamydia'}, {value: 'Gonorrhea', text: 'Gonorrhea'},
+                    {value: 'HIV', text: 'HIV'}, {value: 'Hep B', text: 'Hep B'}, {value: 'Hep C', text: 'Hep C'},
+                    {value: 'HSV Type I', text: 'HSV Type I'}, {value: 'HSV Type 2', text: 'HSV Type 2'},
+                    {value: 'Wart', text: 'Wart'}
+                ]
+            });
+            createTomSelect(document.querySelector('#stdTreatmentKind'), {
+                options: [
+                    {value: 'Antibiotics', text: 'Antibiotics'}, {value: 'Antivirals', text: 'Antivirals'},
+                    {value: 'Anti-Parasitic', text: 'Anti-Parasitic'}, {value: 'Cryotherapy', text: 'Cryotherapy'},
+                    {value: 'Other procedures', text: 'Other procedures'}
+                ]
+            });
+            
+            const smokerCalculator = document.getElementById('smokerCalculator'); const cigsPerDay = document.getElementById('cigsPerDay'), yearsSmoked = document.getElementById('yearsSmoked'); const calculatePackYears = () => { const numCigs = parseFloat(cigsPerDay.value) || 0, numYears = parseFloat(yearsSmoked.value) || 0; document.getElementById('packYearsResult').textContent = (numCigs > 0 && numYears > 0) ? ((numCigs / 20) * numYears).toFixed(2) : '0'; }; document.getElementById('smokingStatus').addEventListener('change', e => { const showCalc = e.target.value === 'current-smoker' || e.target.value === 'ex-smoker'; smokerCalculator.style.display = showCalc ? 'block' : 'none'; calculatePackYears(); }); cigsPerDay.addEventListener('input', calculatePackYears); yearsSmoked.addEventListener('input', calculatePackYears);
+            
+            // Pet History Logic
+            document.getElementById('hadPet').addEventListener('change', (e) => {
+                document.getElementById('petDetailsContainer').style.display = e.target.value === 'yes' ? 'block' : 'none';
+            });
+
+            // Family History Logic
+            document.getElementById('familyMedicalHistory').addEventListener('change', e => {
+                document.getElementById('familyDetailsContainer').style.display = e.target.value === 'yes' ? 'block' : 'none';
+            });
+            document.getElementById('familyConsanguinity').addEventListener('change', e => {
+                document.getElementById('consanguinityDegreeContainer').style.display = e.target.value === 'yes' ? 'block' : 'none';
+            });
+            createTomSelect(document.querySelector('#consanguinityDegree'), { options: [{value: 'Cousins', text: 'Cousins'}, {value: 'Distant Relatives', text: 'Distant Relatives'}] });
+
+
+            const updateTotalAlcoholUnits = () => { let total = 0; document.querySelectorAll('#alcoholList .dynamic-entry').forEach(row => { total += parseFloat(row.querySelector('.units-output').textContent) || 0; }); document.getElementById('alcoholTotalUnits').textContent = total.toFixed(1); };
+            window.updateAlcoholRow = (rowElement) => { const volume = parseFloat(rowElement.querySelector('.volume-input').value) || 0; const abv = parseFloat(rowElement.querySelector('.abv-input').value) || 0; const qty = parseFloat(rowElement.querySelector('.quantity-input').value) || 0; rowElement.querySelector('.units-output').textContent = (((volume * abv) / 1000) * qty).toFixed(1); updateTotalAlcoholUnits(); };
+            window.countries = [{name: "Afghanistan"},{name: "Iraq"},{name: "Syria"},{name: "Jordan"},{name: "Turkey"},{name: "United States"},{name: "United Kingdom"}];
+            
+  // --- GOCMS & Contraception Logic ---
+            const gocmsElements = {
+                statusMessage: document.getElementById('gocmsStatusMessage'),
+                hadMenstrualCycle: document.getElementById('hadMenstrualCycle'),
+                questionsContainer: document.getElementById('gocmsQuestionsContainer'),
+                isPregnant: document.getElementById('isPregnant'),
+                isBreastfeeding: document.getElementById('isBreastfeeding'),
+                isUsingOCP: document.getElementById('isUsingOCP'),
+                lmp: document.getElementById('gynoLMP'),
+                regularity: document.getElementById('gynoCycleRegularity'),
+                cycleLength: document.getElementById('gynoCycleLength'),
+                everUsedContraception: document.getElementById('everUsedContraception'),
+                contraceptionDetailsContainer: document.getElementById('contraceptionDetailsContainer'),
+                addContraceptionBtn: document.getElementById('addContraceptionBtn'),
+                contraceptionList: document.getElementById('contraceptionList')
+            };
+
+            const syncOcpStatus = () => {
+                const ocpEntries = Array.from(gocmsElements.contraceptionList.querySelectorAll('.dynamic-entry'));
+                const isCurrentlyOnOcp = ocpEntries.some(entry => {
+                    const methodSelect = entry.querySelector('.contraception-method-select');
+                    const method = methodSelect && methodSelect.tomselect ? methodSelect.tomselect.getValue() : '';
+                    const endDateType = entry.querySelector('.contraception-end-date-type')?.value;
+                    return method === 'Oral contraceptive pills' && endDateType === 'till_now';
+                });
+
+                if (gocmsElements.isUsingOCP.value !== (isCurrentlyOnOcp ? 'yes' : 'no')) {
+                    gocmsElements.isUsingOCP.value = isCurrentlyOnOcp ? 'yes' : 'no';
+                }
+                updateGynoUIAndStatus();
+            };
+
+            const setupContraceptionSection = () => {
+                const showDetails = gocmsElements.everUsedContraception.value === 'yes';
+                gocmsElements.contraceptionDetailsContainer.style.display = showDetails ? 'block' : 'none';
+                if (!showDetails) {
+                    gocmsElements.contraceptionList.innerHTML = '';
+                }
+                syncOcpStatus();
+            };
+
+            gocmsElements.everUsedContraception.addEventListener('change', setupContraceptionSection);
+            if (gocmsElements.addContraceptionBtn) {
+                gocmsElements.addContraceptionBtn.addEventListener('click', () => window.addDynamicEntry('contraceptionList', 'contraception'));
+            }
+            
+            gocmsElements.isUsingOCP.addEventListener('change', () => {
+                const ocpEntries = Array.from(gocmsElements.contraceptionList.querySelectorAll('.dynamic-entry'));
+                const activeOcpEntry = ocpEntries.find(entry => {
+                     const methodSelect = entry.querySelector('.contraception-method-select');
+                     const method = methodSelect && methodSelect.tomselect ? methodSelect.tomselect.getValue() : '';
+                     const endDateType = entry.querySelector('.contraception-end-date-type')?.value;
+                     return method === 'Oral contraceptive pills' && endDateType === 'till_now';
+                });
+
+                if (gocmsElements.isUsingOCP.value === 'yes' && !activeOcpEntry) {
+                    gocmsElements.everUsedContraception.value = 'yes';
+                    window.addDynamicEntry('contraceptionList', 'contraception', {
+                        method: 'Oral contraceptive pills',
+                        endDateType: 'till_now'
+                    });
+                    gocmsElements.contraceptionDetailsContainer.style.display = 'block';
+                } else if (gocmsElements.isUsingOCP.value === 'no' && activeOcpEntry) {
+                    activeOcpEntry.remove();
+                }
+                syncOcpStatus();
+            });
+
+            gocmsElements.contraceptionList.addEventListener('click', (e) => {
+                if (e.target.closest('.remove-btn')) {
+                    setTimeout(syncOcpStatus, 50);
+                }
+            });
+           // --- Obstetrical History Logic ---
+const everPregnantSelect = document.getElementById('everPregnant');
+const obstetricalDetailsContainer = document.getElementById('obstetricalDetailsContainer');
+const pregnancyList = document.getElementById('pregnancyList');
+
+function addPregnancy(data) {
+    window.addDynamicEntry('pregnancyList', 'pregnancy', data);
+    updateGpa(); // Update GPA whenever a new pregnancy is added
+
+     // Auto-open the details for the newly added pregnancy
+    const newEntry = pregnancyList.lastElementChild;
+    if (newEntry) {
+        newEntry.open = true;
+        const detailsContent = newEntry.querySelector('.pregnancy-details');
+        if (detailsContent) {
+            // Use a timeout to allow the browser to render the element first
+            setTimeout(() => {
+                 detailsContent.style.maxHeight = detailsContent.scrollHeight + "px";
+            }, 0);
+        }
+    }
+}
+
+function toggleObstetricalDetails() {
+    const show = everPregnantSelect.value === 'yes' || gocmsElements.isPregnant.value === 'yes';
+    obstetricalDetailsContainer.style.display = show ? 'block' : 'none';
+}
+
+everPregnantSelect.addEventListener('change', toggleObstetricalDetails);
+gocmsElements.isPregnant.addEventListener('change', toggleObstetricalDetails);
+document.getElementById('addPregnancyBtn').addEventListener('click', () => addPregnancy(null));
+
+// Add a single event listener to the list for real-time GPA updates
+pregnancyList.addEventListener('input', (event) => {
+    if (event.target.classList.contains('pregnancy-ga')) {
+        updateGpa();
+    }
+});
+
+// Make details sections expandable
+pregnancyList.addEventListener('toggle', (event) => {
+    if (event.target.tagName === 'DETAILS') {
+        const detailsContent = event.target.querySelector('.pregnancy-details');
+        if (event.target.open) {
+            detailsContent.style.maxHeight = detailsContent.scrollHeight + "px";
+        } else {
+            detailsContent.style.maxHeight = null;
+        }
+    }
+}, true);
+
+
+            function updateGynoUIAndStatus() {
+                const hadCycle = gocmsElements.hadMenstrualCycle.value;
+                const age = parseInt(document.getElementById('calculatedAge').textContent) || 0;
+                const isPregnant = gocmsElements.isPregnant.value === 'yes';
+                const isBreastfeeding = gocmsElements.isBreastfeeding.value === 'yes';
+                const onOcp = gocmsElements.isUsingOCP.value === 'yes';
+                const isIrregular = gocmsElements.regularity.value === 'irregular';
+                const lmpValue = gocmsElements.lmp.value;
+                const cycleLengthValue = parseInt(gocmsElements.cycleLength.value, 10);
+
+                // Reset all fields to enabled first, hide containers
+                Object.values(gocmsElements).forEach(el => { if (el.tagName === 'SELECT' || el.tagName === 'INPUT') el.disabled = false; });
+                gocmsElements.questionsContainer.style.display = 'none';
+                gocmsElements.statusMessage.style.display = 'none';
+                
+                // --- UI Logic ---
+                if (hadCycle === 'no') {
+                    // Primary Amenorrhea, hide everything else
+                } else if (hadCycle === 'yes') {
+                    gocmsElements.questionsContainer.style.display = 'block';
+                    gocmsElements.cycleLength.disabled = isIrregular;
+                    if (age > 58 || isPregnant || isBreastfeeding || onOcp) {
+                        gocmsElements.regularity.disabled = true;
+                        gocmsElements.cycleLength.disabled = true;
+                    }
+                }
+
+                // --- Status Calculation Logic ---
+                let status = '';
+                if (hadCycle === 'no') {
+                    status = 'Primary Amenorrhea';
+                } else if (hadCycle === 'yes') {
+                    if (age > 58) {
+                        status = 'Menopause';
+                    } else if (isPregnant) {
+                        status = 'Patient is Pregnant';
+                    } else if (onOcp) {
+                        status = 'Using oral contraceptive pills';
+                    } else if (isBreastfeeding) {
+                        const daysSinceLmp = getDaysDifference(lmpValue, new Date());
+                        if (daysSinceLmp > 90) status = 'Lactational Amenorrhea';
+                        else if (daysSinceLmp > 30) status = 'Possibly Lactational Amenorrhea';
+                        else status = 'Breastfeeding';
+                    } else { // Not pregnant, not on OCP, not breastfeeding, age <= 58
+                        const daysSinceLmp = getDaysDifference(lmpValue, new Date());
+                        const monthsSinceLMP = daysSinceLmp / 30.44;
+
+                        if (age > 45 && monthsSinceLMP >= 12) {
+                            status = 'Menopause';
+                        } else if (age >= 45 && (isIrregular || cycleLengthValue < 21 || cycleLengthValue > 35)) {
+                            status = 'Perimenopausal Transition';
+                        } else if ((isIrregular && monthsSinceLMP > 6) || (!isIrregular && monthsSinceLMP > 3)) {
+                            status = 'Secondary Amenorrhea';
+                        } else if (isIrregular && monthsSinceLMP <= 6) {
+                            status = 'Irregular Cycle';
+                        } else if (!isIrregular) { // Regular cycle logic
+                            if (daysSinceLmp > cycleLengthValue && monthsSinceLMP < 3) {
+                                if (cycleLengthValue < 21) status = 'Polymenorrhea with missed period, Possible pregnancy';
+                                else if (cycleLengthValue > 35) status = 'Oligomenorrhea with missed period, Possible pregnancy';
+                                else status = 'Missed Period, Possible pregnancy?';
+                            } else if (cycleLengthValue < 21) {
+                                status = 'Polymenorrhea';
+                            } else if (cycleLengthValue > 35) {
+                                status = 'Oligomenorrhea';
+                            } else {
+                                status = 'Regular Menstrual Cycle';
+                            }
+                        }
+                    }
+                }
+
+                if (status) {
+                    gocmsElements.statusMessage.textContent = `Status: ${status}`;
+                    gocmsElements.statusMessage.style.display = 'block';
+                }
+                
+                // Disable menstrual symptoms if primary amenorrhea
+                const isPrimaryAmenorrhea = status === 'Primary Amenorrhea';
+                const menstrualSymptoms = ['dysmenorrhea', 'menorrhagia', 'inter-menstrual bleeding', 'pre-menstrual symptoms'];
+                menstrualSymptoms.forEach(symptomValue => {
+                    const checkbox = document.querySelector(`input[name="gynoSymptom"][value="${symptomValue}"]`);
+                    if (checkbox) {
+                        checkbox.disabled = isPrimaryAmenorrhea;
+                        if (isPrimaryAmenorrhea) {
+                            checkbox.checked = false; // Uncheck if disabled
+                        }
+                    }
+                });
+                const menopausalSection = document.getElementById('menopausalHistorySection');
+if (menopausalSection) {
+    if (gocmsElements.statusMessage.textContent.includes('Menopause')) {
+        menopausalSection.style.display = 'block';
+    } else {
+        menopausalSection.style.display = 'none';
+    }
+}
+            }
+            
+            // Attach event listeners to all relevant inputs
+            [
+                gocmsElements.hadMenstrualCycle, gocmsElements.isPregnant, 
+                gocmsElements.isBreastfeeding, gocmsElements.isUsingOCP, 
+                gocmsElements.lmp, gocmsElements.regularity, gocmsElements.cycleLength,
+                document.getElementById('dob')
+            ].forEach(el => el.addEventListener('change', updateGynoUIAndStatus));
+
+            // Listener for vaginal discharge checkbox
+            const dischargeCheckbox = document.querySelector('input[name="gynoSymptom"][value="vaginal discharge"]');
+            const dischargeDetailsDiv = document.getElementById('vaginalDischargeDetails');
+            if(dischargeCheckbox) {
+                dischargeCheckbox.addEventListener('change', () => {
+                    dischargeDetailsDiv.style.display = dischargeCheckbox.checked ? 'block' : 'none';
+                    if(!dischargeCheckbox.checked) {
+                        document.getElementById('dischargeOdor').value = '';
+                        document.getElementById('dischargeColor').value = '';
+                        document.getElementById('dischargeConsistency').value = '';
+                    }
+                });
+            }
+
+
+            // --- Start of NEW Data Persistence & Navigation Logic ---
+            const urlParams = new URLSearchParams(window.location.search);
+            fromDashboard = urlParams.get('from');
+            patientId = urlParams.get('patientId') || `new_${Date.now()}`;
+
+            if (fromDashboard !== 'cardiology-dashboard.html') {
+                document.querySelector('.max-w-7xl').innerHTML = `<div class="section-card text-center"><h2 class="text-2xl font-bold text-red-600">Error: Navigation Context Lost</h2><p class="mt-4 text-gray-700">Please return to your dashboard and select a patient again.</p></div>`;
+                return;
+            }
+
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                onAuthStateChanged(auth, async (user) => {
+                    clinicalRecordReady = false;
+                    document.getElementById('nextButton').disabled = true;
+                    if (!user) {
+                        sessionStorage.removeItem(patientDataSessionKey);
+                        sessionStorage.removeItem(patientOwnerSessionKey);
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                    doctorUserId = user.uid;
+                    try {
+                        const doctorSnap = await getDocFromServer(doc(db, `artifacts/${appId}/public/data/doctors`, user.uid));
+                        const doctor = doctorSnap.exists() ? doctorSnap.data() : null;
+                        if (!doctor || doctor.deactivated || doctor.role !== 'doctor' || doctor.speciality !== 'Cardiology') {
+                            window.location.replace('index.html');
+                            return;
+                        }
+                        clinicalRecordReady = await loadInitialData();
+                        document.getElementById('nextButton').disabled = !clinicalRecordReady;
+                    } catch (error) {
+                        console.error('Unable to verify or load the patient record.', error);
+                        alert('Unable to load the patient securely. Return to the dashboard and retry.');
+                    }
+                });
+            } catch(e) { console.error("Firebase Init Error", e); }
+
+            const backToDashboardButton = document.getElementById('backToDashboardButton');
+            const nextButton = document.getElementById('nextButton');
+            nextButton.disabled = true;
+            
+            backToDashboardButton.addEventListener('click', () => {
+                const confirmExit = confirm("Are you sure you want to exit? All unsaved progress for this patient will be lost.");
+                if (confirmExit) {
+                    sessionStorage.removeItem(patientDataSessionKey);
+                    sessionStorage.removeItem(patientOwnerSessionKey);
+                    if(fromDashboard) window.location.href = fromDashboard;
+                }
+            });
+            
+            nextButton.addEventListener('click', () => {
+                saveAndProceed();
+            });
+        });
+
+        // --- NEW Data Handling Functions ---
+      function getHistoryDataFromForm() {
+    try {
+        const getCheckedValues = (selector) => Array.from(document.querySelectorAll(selector)).map(cb => cb.value);
+        const getTomSelectValue = (selector) => {
+            const el = document.querySelector(selector);
+            if (!el) return null;
+            if (el.tomselect) return el.tomselect.getValue();
+            return el.value;
+        };
+        // This helper function is now corrected to accept an HTML element directly.
+        const getTomSelectValues = (el) => {
+            return el && el.tomselect ? el.tomselect.getValue() : [];
+        };
+
+        return {
+            demographics: { 
+                name: document.getElementById('patientName').value, 
+                dob: document.getElementById('dob').value, 
+                gender: document.getElementById('patientGender').value, 
+                maritalStatus: document.getElementById('maritalStatus').value, 
+                occupation: document.getElementById('occupation').value, 
+                bloodGroup: document.getElementById('bloodGroup').value, 
+                address: document.getElementById('address').value,
+                phoneNumber: document.getElementById('phoneNumber').value 
+            },
+            chiefComplaint: { complaint: document.getElementById('chiefComplaint').value, duration: document.getElementById('complaintDuration').value, },
+            hpi: document.getElementById('hpi').value,
+            systemicReview: Array.from(document.querySelectorAll('#systemicReviewSection input[type="checkbox"]:checked')).map(cb => cb.dataset.symptom),
+            pastMedical: Array.from(document.querySelectorAll('#diseaseList .dynamic-entry')).map(e => ({ disease: getTomSelectValue(`#${e.id} .disease-select`), diagnosisDate: e.querySelector('.diagnosis-date').value, control: e.querySelector('.disease-control').value, methodOfControl: e.querySelector('.method-of-control').value })),
+            pastSurgical: Array.from(document.querySelectorAll('#surgeryList .dynamic-entry')).map(e => ({ surgery: getTomSelectValue(`#${e.id} .surgery-select`), date: e.querySelector('.surgery-date').value, complications: e.querySelector('.surgery-complications').value, transfusion: e.querySelector('.transfusion-needed').value, postOpComplications: getTomSelectValues(e.querySelector('.post-op-complications')), bloodComponents: Array.from(e.querySelectorAll(`#${e.id} .pints-container .blood-pint`)).map(pintInput => ({ name: pintInput.dataset.component, pints: pintInput.value })) })),
+            drugHistory: Array.from(document.querySelectorAll('#drugList .dynamic-entry')).map(e => ({ name: getTomSelectValue(`#${e.id} .drug-select`), category: e.querySelector('.drug-category-select').value, fields: { 'drug-dose': e.querySelector('.drug-dose')?.value, 'freq-select': getTomSelectValue(`#${e.id} .freq-select`), 'route-select': getTomSelectValue(`#${e.id} .route-select`), 'comp-select': getTomSelectValue(`#${e.id} .comp-select`), 'drug-indication': e.querySelector('.drug-indication')?.value, 'drug-side-effects': e.querySelector('.drug-side-effects')?.value, 'drug-current-use': e.querySelector('.drug-current-use')?.value, 'drug-abuse-freq': e.querySelector('.drug-abuse-freq')?.value, 'route-abuse-select': getTomSelectValues(e.querySelector('.route-abuse-select')), 'drug-needle-sharing': e.querySelector('.drug-needle-sharing')?.value, 'drug-rehab': e.querySelector('.drug-rehab')?.value, 'drug-dependency-symptoms': e.querySelector('.drug-dependency-symptoms')?.value, 'drug-allergy-severity': e.querySelector('.drug-allergy-severity')?.value, } })),
+            socioeconomic: { 
+                smoking: { status: document.getElementById('smokingStatus').value, cigsPerDay: document.getElementById('cigsPerDay').value, yearsSmoked: document.getElementById('yearsSmoked').value, packYears: document.getElementById('packYearsResult').textContent, }, 
+                alcohol: Array.from(document.querySelectorAll('#alcoholList .dynamic-entry')).map(e => ({ type: getTomSelectValue(`#${e.id} .drink-type-select`), volume: e.querySelector('.volume-input').value, abv: e.querySelector('.abv-input').value, quantity: e.querySelector('.quantity-input').value, })),
+                petHistory: {
+                    hadPet: document.getElementById('hadPet').value,
+                    pets: Array.from(document.querySelectorAll('#petList .dynamic-entry')).map(e => ({
+                        type: getTomSelectValues(e.querySelector('.pet-type-select')),
+                        years: e.querySelector('.pet-years').value
+                    }))
+                }
+            },
+            occupational: Array.from(document.querySelectorAll('#occupationList .dynamic-entry')).map(e => ({ occupation: getTomSelectValue(`#${e.id} .occupation-select`), risks: getTomSelectValues(e.querySelector('.risks-select')), duration: e.querySelector('.occupation-duration').value, })),
+            gocms: {
+                hadMenstrualCycle: document.getElementById('hadMenstrualCycle').value,
+                lmp: document.getElementById('gynoLMP').value,
+                cycleRegularity: document.getElementById('gynoCycleRegularity').value,
+                cycleLength: document.getElementById('gynoCycleLength').value,
+                isPregnant: document.getElementById('isPregnant').value,
+                isBreastfeeding: document.getElementById('isBreastfeeding').value,
+                isUsingOCP: document.getElementById('isUsingOCP').value,
+                status: document.getElementById('gocmsStatusMessage').textContent,
+                symptoms: Array.from(document.querySelectorAll('#gynoSymptomsGrid input:checked')).map(cb => cb.value),
+                dischargeDetails: {
+                    odor: document.getElementById('dischargeOdor').value,
+                    color: document.getElementById('dischargeColor').value,
+                    consistency: document.getElementById('dischargeConsistency').value
+                },
+                previousConditions: Array.from(document.querySelectorAll('#gynoConditionList .dynamic-entry')).map(e => ({
+                    condition: getTomSelectValue(`#${e.id} .gyno-condition-select`),
+                    date: e.querySelector('.gyno-condition-date').value,
+                    treatment: getTomSelectValues(e.querySelector('.gyno-condition-treatment')),
+                    outcome: getTomSelectValue(`#${e.id} .gyno-condition-outcome`)
+                })),
+                previousProcedures: Array.from(document.querySelectorAll('#gynoProcedureList .dynamic-entry')).map(e => ({
+                    procedure: getTomSelectValue(`#${e.id} .gyno-procedure-select`),
+                    date: e.querySelector('.gyno-procedure-date').value,
+                    indication: e.querySelector('.gyno-procedure-indication').value,
+                    intraOpComplications: e.querySelector('.gyno-procedure-intra-op').value,
+                    postOpComplications: e.querySelector('.gyno-procedure-post-op').value,
+                    outcome: getTomSelectValue(`#${e.id} .gyno-procedure-outcome`)
+                })),
+                obstetrical: {
+                    everPregnant: document.getElementById('everPregnant').value,
+                    pregnancies: Array.from(document.querySelectorAll('.pregnancy-entry')).map(p => ({
+                        number: p.dataset.pregNum,
+                        year: p.querySelector('.pregnancy-year').value,
+                        ga: p.querySelector('.pregnancy-ga').value,
+                        mod: p.querySelector('.pregnancy-mod').value,
+                        sex: p.querySelector('.pregnancy-sex').value,
+                        weight: p.querySelector('.pregnancy-weight').value,
+                        outcome: p.querySelector('.pregnancy-outcome').value,
+                        multiplicity: p.querySelector('.pregnancy-multiplicity').value,
+                        intrapartum: getTomSelectValues(p.querySelector('.pregnancy-intrapartum-complications')),
+                        postpartum: getTomSelectValues(p.querySelector('.pregnancy-postpartum-complications')),
+                        medical: getTomSelectValues(p.querySelector('.pregnancy-medical-conditions')),
+                    }))
+                }
+                ,
+                contraception: {
+                    everUsed: document.getElementById('everUsedContraception').value,
+                    methods: Array.from(document.querySelectorAll('#contraceptionList .dynamic-entry')).map(e => ({
+                        method: getTomSelectValue(`#${e.id} .contraception-method-select`),
+                        startDate: e.querySelector('.contraception-start-date').value,
+                        endDateType: e.querySelector('.contraception-end-date-type').value,
+                        endDate: e.querySelector('.contraception-end-date').value,
+                        duration: e.querySelector('.duration-label').textContent,
+                        sideEffects: getTomSelectValues(e.querySelector('.contraception-side-effects')),
+                        complications: getTomSelectValues(e.querySelector('.contraception-complications'))
+                    }))
+                },
+                menopausalHistory: {
+    symptoms: getCheckedValues('#menopausalSymptomsGrid input:checked'),
+    takenHrt: document.getElementById('takenHrt').value,
+    hrtStartDate: document.getElementById('hrtStartDate').value,
+    hrtEndDateType: document.getElementById('hrtEndDateType').value,
+    hrtEndDate: document.getElementById('hrtEndDate').value,
+    hrtIndication: getTomSelectValues(document.querySelector('#hrtIndication')),
+    hrtSideEffects: getTomSelectValues(document.querySelector('#hrtSideEffects'))
+},
+            },
+            family: {
+                hasCondition: document.getElementById('familyMedicalHistory').value,
+                consanguinity: document.getElementById('familyConsanguinity').value,
+                degree: getTomSelectValues(document.querySelector('#consanguinityDegree')),
+                members: Array.from(document.querySelectorAll('#familyMemberList .dynamic-entry')).map(e => ({
+                    relationship: getTomSelectValue(`#${e.id} .family-relationship-select`),
+                    status: e.querySelector('.family-status-select').value,
+                    ageNow: e.querySelector('.family-age-now').value,
+                    ageDeath: e.querySelector('.family-age-death').value,
+                    causeOfDeath: getTomSelectValue(`#${e.id} .family-cause-death-select`),
+                    medicalConditions: getTomSelectValues(e.querySelector('.family-medical-condition-select'))
+                }))
+            },
+            travel: Array.from(document.querySelectorAll('#tripList .dynamic-entry')).map(e => ({ country: getTomSelectValue(`#${e.id} .country-select`), area: e.querySelector('.trip-area').value, startDate: e.querySelector('.trip-start-date').value, endDate: e.querySelector('.trip-end-date').value, exposureActivities: getTomSelectValues(e.querySelector('.exposure-activities-select')), exposureDate: e.querySelector('.exposure-date').value, symptoms: getTomSelectValues(e.querySelector('.symptoms-select')), symptomDate: e.querySelector('.symptom-date').value, })),
+            sexual: { 
+                active: document.getElementById('sexuallyActive').value, 
+                partnersMale: document.getElementById('sexualPartnersMale').value,
+                partnersFemale: document.getElementById('sexualPartnersFemale').value,
+                practice: getCheckedValues('#sexualPractice input:checked'), 
+                protection: document.getElementById('useProtection').value, 
+                protectionType: document.getElementById('protectionType').value, 
+                stdHistory: document.getElementById('stdHistory').value, 
+                stdWhat: getTomSelectValues(document.querySelector('#stdWhat')),
+                stdTreated: document.getElementById('stdTreated').value, 
+                stdTreatmentKind: getTomSelectValues(document.querySelector('#stdTreatmentKind')),
+                stdPartnerTreated: document.getElementById('stdPartnerTreated').value, 
+                edHistory: document.getElementById('edHistory').value, 
+                femaleDysfunction: getCheckedValues('#femaleDysfunctionTypes input:checked'), 
+                abuseHistory: document.getElementById('abuseHistory').value, 
+            },
+            ent: Array.from(document.querySelectorAll('#entHistorySection input:checked')).map(cb => cb.dataset.symptom),
+            visual: Array.from(document.querySelectorAll('#visualHistorySection input:checked')).map(cb => cb.dataset.symptom),
+        };
+    } catch (error) {
+        console.error("Error gathering form data:", error);
+        alert("An error occurred while trying to save the data. Please check the console for details.");
+        return null;
+    }
+}
+
+        function setHistoryDataToForm(data) {
+            if (!data) return;
+
+            const setVal = (id, value) => { const el = document.getElementById(id); if (el && value !== undefined) el.value = value; };
+            const setChecked = (selector, values) => {
+                if (!values || !Array.isArray(values)) return;
+                document.querySelectorAll(selector).forEach(cb => {
+                    cb.checked = values.includes(cb.dataset.symptom) || values.includes(cb.value);
+                });
+            };
+            const setTomSelect = (selector, values) => {
+                const el = document.querySelector(selector);
+                if (el && el.tomselect && values !== undefined && values !== null) {
+                    const isMulti = el.hasAttribute('multiple');
+                    const valuesArray = Array.isArray(values) ? values : [values];
+                    
+                    valuesArray.forEach(val => {
+                        if (val && !el.tomselect.options[val]) {
+                            el.tomselect.addOption({ value: val, text: val });
+                        }
+                    });
+
+                    el.tomselect.setValue(isMulti ? valuesArray : (valuesArray[0] || ''));
+                }
+            };
+
+            // Clear dynamic lists before repopulating
+            ['diseaseList', 'surgeryList', 'drugList', 'alcoholList', 'occupationList', 'tripList', 'petList', 'familyMemberList', 'gynoConditionList', 'gynoProcedureList'].forEach(id => document.getElementById(id).innerHTML = '');
+
+            const demo = data.demographics || {};
+            setVal('patientName', demo.name); 
+            setVal('dob', demo.dob);
+            document.getElementById('dob')?.dispatchEvent(new Event('change')); // Trigger age calculation
+            setVal('patientGender', demo.gender);
+            document.getElementById('patientGender')?.dispatchEvent(new Event('change'));
+            setVal('maritalStatus', demo.maritalStatus); 
+            setVal('occupation', demo.occupation); 
+            setVal('bloodGroup', demo.bloodGroup); 
+            setVal('address', demo.address);
+            setVal('phoneNumber', demo.phoneNumber);
+
+            setVal('chiefComplaint', data.chiefComplaint?.complaint); setVal('complaintDuration', data.chiefComplaint?.duration); setVal('hpi', data.hpi);
+            
+            setChecked('#systemicReviewSection input', data.systemicReview); setChecked('#entHistorySection input', data.ent); setChecked('#visualHistorySection input', data.visual);
+
+            if (data.pastMedical) data.pastMedical.forEach(item => window.addDynamicEntry('diseaseList', 'disease', item));
+            if (data.pastSurgical) data.pastSurgical.forEach(item => window.addDynamicEntry('surgeryList', 'surgery', item));
+            if (data.drugHistory) data.drugHistory.forEach(item => window.addDynamicEntry('drugList', 'drug', item));
+            if (data.socioeconomic?.alcohol) data.socioeconomic.alcohol.forEach(item => window.addDynamicEntry('alcoholList', 'alcohol', item));
+            if (data.occupational) data.occupational.forEach(item => window.addDynamicEntry('occupationList', 'occupation', item));
+            if (data.travel) data.travel.forEach(item => window.addDynamicEntry('tripList', 'trip', item));
+            
+            const socioeconomic = data.socioeconomic || {};
+            const smoking = socioeconomic.smoking || {};
+            setVal('smokingStatus', smoking.status);
+            document.getElementById('smokingStatus')?.dispatchEvent(new Event('change'));
+            setVal('cigsPerDay', smoking.cigsPerDay);
+            setVal('yearsSmoked', smoking.yearsSmoked);
+            if(document.getElementById('cigsPerDay').value) document.getElementById('cigsPerDay').dispatchEvent(new Event('input'));
+            
+            const petHistory = socioeconomic.petHistory || {};
+            setVal('hadPet', petHistory.hadPet);
+            document.getElementById('hadPet')?.dispatchEvent(new Event('change'));
+            if (petHistory.pets) petHistory.pets.forEach(item => window.addDynamicEntry('petList', 'pet', item));
+
+            const gocms = data.gocms || {};
+            setVal('hadMenstrualCycle', gocms.hadMenstrualCycle);
+            setVal('gynoLMP', gocms.lmp);
+            setVal('gynoCycleRegularity', gocms.cycleRegularity);
+            setVal('gynoCycleLength', gocms.cycleLength);
+            setVal('isPregnant', gocms.isPregnant);
+            setVal('isBreastfeeding', gocms.isBreastfeeding);
+            setVal('isUsingOCP', gocms.isUsingOCP);
+            
+            if (gocms.symptoms) {
+                gocms.symptoms.forEach(symptom => {
+                    const checkbox = document.querySelector(`input[name="gynoSymptom"][value="${symptom}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+
+            const dischargeCheckbox = document.querySelector('input[name="gynoSymptom"][value="vaginal discharge"]');
+            if (dischargeCheckbox) {
+                dischargeCheckbox.dispatchEvent(new Event('change')); // Trigger visibility check
+                if (dischargeCheckbox.checked && gocms.dischargeDetails) {
+                    setVal('dischargeOdor', gocms.dischargeDetails.odor);
+                    setVal('dischargeColor', gocms.dischargeDetails.color);
+                    setVal('dischargeConsistency', gocms.dischargeDetails.consistency);
+                }
+            }
+            
+            if (gocms.previousConditions) gocms.previousConditions.forEach(item => window.addDynamicEntry('gynoConditionList', 'gynoCondition', item));
+            if (gocms.previousProcedures) gocms.previousProcedures.forEach(item => window.addDynamicEntry('gynoProcedureList', 'gynoProcedure', item));
+const contraception = gocms.contraception || {};
+            if (contraception.everUsed) {
+                setVal('everUsedContraception', contraception.everUsed);
+                document.getElementById('everUsedContraception')?.dispatchEvent(new Event('change'));
+                if (contraception.methods) {
+                    contraception.methods.forEach(item => window.addDynamicEntry('contraceptionList', 'contraception', item));
+                }
+            }
+            const menopausal = gocms.menopausalHistory || {};
+if (menopausal.symptoms) {
+    setChecked('#menopausalSymptomsGrid input', menopausal.symptoms);
+}
+setVal('takenHrt', menopausal.takenHrt);
+document.getElementById('takenHrt')?.dispatchEvent(new Event('change')); // Trigger visibility
+
+if (menopausal.takenHrt === 'yes') {
+    setVal('hrtStartDate', menopausal.hrtStartDate);
+    setVal('hrtEndDateType', menopausal.hrtEndDateType);
+    document.getElementById('hrtEndDateType')?.dispatchEvent(new Event('change'));
+    setVal('hrtEndDate', menopausal.hrtEndDate);
+    setTomSelect('#hrtIndication', menopausal.hrtIndication);
+    setTomSelect('#hrtSideEffects', menopausal.hrtSideEffects);
+}
+
+            // Trigger the UI update after all values are set
+            if(document.getElementById('hadMenstrualCycle')) {
+                document.getElementById('hadMenstrualCycle').dispatchEvent(new Event('change'));
+            }
+                if (gocms.obstetrical) {
+        setVal('everPregnant', gocms.obstetrical.everPregnant);
+        document.getElementById('everPregnant')?.dispatchEvent(new Event('change'));
+        if (gocms.obstetrical.pregnancies) {
+            gocms.obstetrical.pregnancies.forEach(preg => {
+                window.addDynamicEntry('pregnancyList', 'pregnancy', preg);
+            });
+            updateGpa();
+        }
+    }
+
+
+            const family = data.family || {};
+            setVal('familyMedicalHistory', family.hasCondition);
+            document.getElementById('familyMedicalHistory')?.dispatchEvent(new Event('change'));
+            setVal('familyConsanguinity', family.consanguinity);
+            document.getElementById('familyConsanguinity')?.dispatchEvent(new Event('change'));
+            setTomSelect('#consanguinityDegree', family.degree);
+            if (family.members) family.members.forEach(item => window.addDynamicEntry('familyMemberList', 'familyMember', item));
+            
+            const sexual = data.sexual || {};
+            setVal('sexuallyActive', sexual.active);
+            document.getElementById('sexuallyActive')?.dispatchEvent(new Event('change'));
+            setVal('sexualPartnersMale', sexual.partnersMale);
+            setVal('sexualPartnersFemale', sexual.partnersFemale);
+            setChecked('#sexualPractice input', sexual.practice);
+            setVal('useProtection', sexual.protection);
+            document.getElementById('useProtection')?.dispatchEvent(new Event('change'));
+            setVal('protectionType', sexual.protectionType);
+            setVal('stdHistory', sexual.stdHistory);
+            document.getElementById('stdHistory')?.dispatchEvent(new Event('change'));
+            setTomSelect('#stdWhat', sexual.stdWhat);
+            setVal('stdTreated', sexual.stdTreated);
+            document.getElementById('stdTreated')?.dispatchEvent(new Event('change'));
+            setTomSelect('#stdTreatmentKind', sexual.stdTreatmentKind);
+            setVal('stdPartnerTreated', sexual.stdPartnerTreated);
+            setVal('edHistory', sexual.edHistory);
+            setChecked('#femaleDysfunctionTypes input', sexual.femaleDysfunction);
+            setVal('abuseHistory', sexual.abuseHistory);
+        }
+
+        // Mapping for doctor specialities to their specific physical exam dashboards
+        // This mapping MUST be kept in sync with the doctorSpecialityDashboards in index.html
+        const doctorSpecialityPhysicalExamMaps = {
+            'Cardiology': 'cardiology-physicalexam.html',
+            'General Practice': 'general-practice-physicalexam.html',
+            'Cardiothoracic Surgery': 'cardiothoracic-physicalexam.html', // Example
+            // Add all other specialties here as you create their physical exam pages
+            'Pediatrics': 'pediatrics-physicalexam.html', // Example placeholder
+            'Dermatology': 'dermatology-physicalexam.html', // Example placeholder
+            'Orthopedics': 'orthopedics-physicalexam.html', // Example placeholder
+            'Neurology': 'neurology-physicalexam.html', // Example placeholder
+            'Oncology': 'oncology-physicalexam.html', // Example placeholder
+            'Gastroenterology': 'gastroenterology-physicalexam.html', // Example placeholder
+            'Ophthalmology': 'ophthalmology-physicalexam.html', // Example placeholder
+            'ENT': 'ent-physicalexam.html', // Example placeholder
+            'Gynecology': 'gynecology-physicalexam.html', // Example placeholder
+            'Urology': 'urology-physicalexam.html', // Example placeholder
+            'Psychiatry': 'psychiatry-physicalexam.html', // Example placeholder
+            'General Surgery': 'general-surgery-physicalexam.html', // Example placeholder
+            'Plastic Surgery': 'plastic-surgery-physicalexam.html', // Example placeholder
+            'Neurosurgery': 'neurosurgery-physicalexam.html', // Example placeholder
+            'Thoracic Surgery': 'thoracic-surgery-physicalexam.html', // Example placeholder
+            'Vascular Surgery': 'vascular-surgery-physicalexam.html', // Example placeholder
+            'Critical Care': 'critical-care-physicalexam.html', // Example placeholder
+            'Emergency Medicine': 'emergency-medicine-physicalexam.html', // Example placeholder
+            'Intensive Care Medicine': 'intensive-care-medicine-physicalexam.html' // Example placeholder
+        };
+
+        function getPhysicalExamPageForSpecialty(dashboardFileName) {
+            // Extract the base specialty name from the dashboard filename
+            // e.g., 'cardiology-dashboard.html' -> 'Cardiology'
+            // Assumes dashboard filenames are like 'specialty-dashboard.html'
+            let specialtyName = dashboardFileName.replace('-dashboard.html', '');
+            
+            // Capitalize the first letter of each word if necessary (e.g., 'general-practice' -> 'General Practice')
+            specialtyName = specialtyName.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+            // Use the mapping to find the correct physical exam page
+            const physicalExamPage = doctorSpecialityPhysicalExamMaps[specialtyName];
+            
+            if (!physicalExamPage) {
+                console.warn(`No specific physical exam page found for specialty: ${specialtyName}. Falling back to cardiology-physicalexam.html.`);
+                // Fallback if no specific page is defined for a specialty, or a general one.
+                // You might want a 'general-physicalexam.html' or redirect back to dashboard
+                return 'cardiology-physicalexam.html'; // Default to cardiology for now as per previous discussion
+            }
+            return physicalExamPage;
+        }
+
+        function saveAndProceed() {
+            if (!clinicalRecordReady || auth?.currentUser?.uid !== doctorUserId || sessionStorage.getItem(patientOwnerSessionKey) !== doctorUserId) {
+                alert('The patient record is not ready. Return to the dashboard and retry.');
+                return;
+            }
+            const historyData = getHistoryDataFromForm();
+            if (historyData === null) return; // Stop if there was an error gathering data
+
+            let fullPatientRecord = JSON.parse(sessionStorage.getItem(patientDataSessionKey)) || {};
+            if (fullPatientRecord.patientId !== patientId) { alert('Patient context changed. Return to the dashboard.'); return; }
+            if (typeof fullPatientRecord.history === 'string' && fullPatientRecord.history && !fullPatientRecord.legacyHistoryText) fullPatientRecord.legacyHistoryText = fullPatientRecord.history;
+            fullPatientRecord.history = historyData;
+            fullPatientRecord.patientId = patientId;
+            sessionStorage.setItem(patientDataSessionKey, JSON.stringify(fullPatientRecord));
+            
+            // Dynamically determine the next physical examination page
+            const nextPhysicalExamPage = getPhysicalExamPageForSpecialty(fromDashboard);
+            
+            window.location.href = `${nextPhysicalExamPage}?from=${fromDashboard}&patientId=${patientId}`;
+        }
+
+        // Recover demographics from the temporary flat form without changing stored data.
+        function historyForForm(record) {
+            const oldHistory = record.history && typeof record.history === 'object' && !Array.isArray(record.history) ? record.history : {};
+            const demo = oldHistory.demographics || {};
+            return {
+                ...oldHistory,
+                demographics: {
+                    ...demo,
+                    name: demo.name ?? record.name ?? '',
+                    dob: demo.dob ?? record.dateOfBirth ?? '',
+                    gender: demo.gender ?? record.gender ?? '',
+                    address: demo.address ?? record.address ?? '',
+                    phoneNumber: demo.phoneNumber ?? record.contactNumber ?? ''
+                },
+                hpi: oldHistory.hpi ?? (typeof record.history === 'string' ? record.history : '')
+            };
+        }
+        function showLegacyNotes(record) {
+            const fields = [['Medical history', record.medicalHistory], ['Medication', record.currentMedication], ['Allergies', record.allergies], ['Physical examination', record.physicalExam], ['Investigation', typeof record.investigation === 'string' ? record.investigation : record.legacyInvestigationText], ['Treatment', typeof record.treatment === 'string' ? record.treatment : record.legacyTreatmentText], ['Previous history text', record.legacyHistoryText]].filter(([,v]) => typeof v === 'string' && v.trim());
+            document.getElementById('legacyRecordNotes')?.remove();
+            if (!fields.length) return;
+            const box = document.createElement('div');
+            box.id = 'legacyRecordNotes';
+            box.className = 'section-card';
+            const heading = document.createElement('h2');
+            heading.className = 'text-lg font-semibold';
+            heading.textContent = 'Previously recorded notes (preserved)';
+            box.append(heading);
+            for (const [label,value] of fields) {
+                const p = document.createElement('p'); p.className = 'whitespace-pre-wrap my-2'; p.textContent = label + ': ' + value; box.append(p);
+            }
+            document.getElementById('hpi').closest('.section-card')?.after(box);
+        }
+
+        async function loadInitialData() {
+            const sessionData = sessionStorage.getItem(patientDataSessionKey);
+            const sessionRecord = sessionData ? JSON.parse(sessionData) : null;
+
+            if (sessionRecord && sessionRecord.patientId === patientId && sessionStorage.getItem(patientOwnerSessionKey) === doctorUserId) {
+                console.log("Restoring in-progress record from session storage.");
+                setHistoryDataToForm(historyForForm(sessionRecord));
+                showLegacyNotes(sessionRecord);
+                return true;
+            }
+            
+            sessionStorage.removeItem(patientDataSessionKey);
+
+            if (patientId && !patientId.startsWith('new_') && doctorUserId) {
+                const patientDocRef = doc(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`, patientId);
+                try {
+                    const docSnap = await getDocFromServer(patientDocRef);
+                    if (docSnap.exists()) {
+                        const firestoreData = docSnap.data();
+                        firestoreData.patientId = patientId;
+                        sessionStorage.setItem(patientDataSessionKey, JSON.stringify(firestoreData));
+                        sessionStorage.setItem(patientOwnerSessionKey, doctorUserId);
+                        setHistoryDataToForm(historyForForm(firestoreData));
+                        showLegacyNotes(firestoreData);
+                        return true;
+                    } else {
+                        alert('Patient record not found. Return to the dashboard.');
+                        return false;
+                    }
+                } catch (error) { console.error("Error loading patient from Firestore:", error); return false; }
+            } else {
+                const newRecord = { patientId: patientId };
+                sessionStorage.setItem(patientDataSessionKey, JSON.stringify(newRecord));
+                sessionStorage.setItem(patientOwnerSessionKey, doctorUserId);
+                return true;
+            }
+        }
+
+    </script>
+</body>
+</html>
