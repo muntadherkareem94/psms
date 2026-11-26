@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#143b56">
+  <meta name="view-transition" content="same-origin">
+  <title>PSMS | Doctor workspace</title>
+  <link rel="icon" type="image/svg+xml" href="psms-logo.svg">
+  <link rel="stylesheet" href="assets/doctor-workspace.css">
+</head>
+<body>
+  <div id="gate" class="gate" role="status" aria-live="polite">
+    <div class="gate-card"><img src="psms-logo.svg" width="72" height="72" alt="PSMS"><div class="spinner"></div><h1 id="gateTitle">Opening your workspace</h1><p id="gateText">Verifying your account securely…</p><button id="gateRetry" class="btn primary" hidden>Retry connection</button><a id="gateLogin" href="index.html" hidden>Return to login</a></div>
+  </div>
+  <div id="app" class="app" hidden inert>
+    <aside class="sidebar">
+      <a class="brand" href="doctor-workspace.html" aria-label="PSMS home"><img src="psms-logo.svg" alt="" width="43" height="43"><div><strong>PSMS</strong><small>Clinical management</small></div></a>
+      <div class="nav-label">WORKSPACE</div>
+      <nav id="navigation" aria-label="Main navigation">
+        <button class="nav-link current" data-view="patients" aria-current="page"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M16 21h6m-4-3v6"/><circle cx="9" cy="7" r="4"/></svg></span>Patient records</button>
+        <button class="nav-link" data-view="consultations"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l2-4a8.5 8.5 0 1 1 15-4.5Z"/><path d="M9 11.5h7m-7 3h4"/></svg></span>Consultations</button>
+        <a class="nav-link" href="data-analytics.html"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18M8 17v-5m5 5V7m5 10V4"/></svg></span>Clinical analytics</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <a id="legacyLink" class="legacy-link" href="doctor-dashboard.html">Open previous dashboard <span aria-hidden="true">↗</span></a>
+        <div class="sidebar-user"><div class="avatar" id="avatar">D</div><div class="user-copy"><strong id="sidebarName">Doctor</strong><small id="sidebarSpecialty">Specialty</small></div></div>
+        <button class="nav-link sign-out" id="logoutButton"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5m5 5H3m0-9h9a2 2 0 0 1 2 2m6-2v18H8"/></svg></span>Sign out</button>
+      </div>
+    </aside>
+    <main class="main" id="mainPanel">
+      <header class="header">
+        <div><p class="eyebrow" id="headerSpecialty">DOCTOR WORKSPACE</p><h1 id="greeting">Welcome back</h1><p class="muted">Manage your patient records and consultations in one place.</p></div>
+        <button id="newPatientButton" class="btn primary"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> New patient</button>
+      </header>
+      <section class="stats" aria-label="Workspace summary">
+        <article class="stat"><div class="stat-icon teal"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div><p>My patients</p><strong id="totalPatients">—</strong><small>Registered records</small></div></article>
+        <article class="stat"><div class="stat-icon blue"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg></div><div><p>Last visit today</p><strong id="visitsToday">—</strong><small>From recorded visit dates</small></div></article>
+        <article class="stat"><div class="stat-icon amber"><svg viewBox="0 0 24 24"><path d="M20 11.5a8.5 8.5 0 0 1-8.5 8.5H4l2-4a8.5 8.5 0 1 1 14-4.5Z"/><path d="M10 10h5m-5 4h3"/></svg></div><div><p>Pending consultations</p><strong id="pendingConsults">—</strong><small>Received requests</small></div></article>
+      </section>
+      <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+      <section id="patientsView" class="panel">
+        <div class="panel-head"><div><h2>Patient records</h2><p class="muted">Your private patient directory</p></div><div class="searchbox"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="searchPatients" type="search" aria-label="Search patient records" placeholder="Search name or phone" autocomplete="off"></div></div>
+        <div id="patientStatus" class="empty" role="status">Loading patient records…</div>
+        <div id="patientTableWrap" class="table-wrap" hidden><table><thead><tr><th>Patient</th><th>Age / sex</th><th>Phone</th><th>Last visit</th><th class="right">Actions</th></tr></thead><tbody id="patientRows"></tbody></table></div>
+        <div id="pagination" class="pagination" hidden><span id="pageText"></span><div><button type="button" class="btn secondary small" id="prevPage">Previous</button><button type="button" class="btn secondary small" id="nextPage">Next</button></div></div>
+      </section>
+      <section id="consultationsView" class="panel" hidden>
+        <div class="panel-head"><div><h2>Received consultations</h2><p class="muted">Review requests from other doctors.</p></div><button id="newConsultButton" class="btn primary"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Send consultation</button></div>
+        <div id="consultStatus" class="empty" role="status">Loading consultations…</div>
+        <div id="consultList" class="consult-list"></div>
+      </section>
+      <footer>PSMS · Doctor workspace <span>Patient data is private. Sign out when using a shared device.</span></footer>
+    </main>
+  </div>
+  <dialog id="patientDialog" aria-labelledby="patientTitle">
+    <form id="patientForm" autocomplete="off">
+      <div class="dialog-head"><div><p class="eyebrow">PATIENT RECORD</p><h2 id="patientTitle">New patient</h2></div><button type="button" class="icon-button" data-close="patientDialog" aria-label="Close"><span aria-hidden="true">×</span></button></div>
+      <div class="dialog-body">
+        <h3>Personal information</h3>
+        <div class="form-grid">
+          <label class="wide">Full name <span class="required">*</span><input id="fieldName" name="name" required maxlength="200" autocomplete="off"></label>
+          <label>Date of birth <span class="required">*</span><input id="fieldDob" type="date" name="dateOfBirth" required></label>
+          <label>Sex <span class="required">*</span><select id="fieldGender" name="gender" required><option value="">Select</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select></label>
+          <label>Phone<input id="fieldPhone" type="tel" name="contactNumber" maxlength="80" autocomplete="off"></label>
+          <label>Last visit<input id="fieldVisit" type="date" name="lastVisitDate"></label>
+          <label class="wide">Address<textarea id="fieldAddress" name="address" rows="2"></textarea></label>
+        </div>
+        <h3>Clinical information</h3>
+        <div class="form-grid">
+          <label class="wide">Medical history<textarea id="fieldMedicalHistory" name="medicalHistory" rows="3"></textarea></label>
+          <label class="wide">Clinical history / presenting complaint<textarea id="fieldHistory" name="history" rows="3"></textarea></label>
+          <label>Current medication<textarea id="fieldMedication" name="currentMedication" rows="3"></textarea></label>
+          <label>Allergies<textarea id="fieldAllergies" name="allergies" rows="3"></textarea></label>
+          <label class="wide">Physical examination<textarea id="fieldExam" name="physicalExam" rows="3"></textarea></label>
+          <label class="wide">Investigations<textarea id="fieldInvestigation" name="investigation" rows="3"></textarea></label>
+          <label class="wide">Treatment / follow-up plan<textarea id="fieldTreatment" name="treatment" rows="3"></textarea></label>
+        </div>
+        <p id="recordHint" class="muted hint" hidden></p>
+        <div id="patientFormError" class="notice error" role="alert" hidden></div>
+      </div>
+      <div class="dialog-foot"><button type="button" class="btn secondary" data-close="patientDialog">Close</button><button type="button" id="editViewedPatient" class="btn primary" hidden>Edit record</button><button type="submit" id="savePatient" class="btn primary">Save patient</button></div>
+    </form>
+  </dialog>
+  <dialog id="deleteDialog" aria-labelledby="deleteTitle">
+    <div class="dialog-head"><h2 id="deleteTitle">Delete patient record?</h2><button type="button" class="icon-button" data-close="deleteDialog" aria-label="Close">×</button></div>
+    <div class="dialog-body"><p id="deleteText"></p><p class="muted">This permanently removes this record from your patient collection. This cannot be undone here.</p><div id="deleteError" class="notice error" role="alert" hidden></div></div>
+    <div class="dialog-foot"><button type="button" class="btn secondary" data-close="deleteDialog">Cancel</button><button type="button" class="btn danger" id="confirmDelete">Delete record</button></div>
+  </dialog>
+  <dialog id="consultDialog" aria-labelledby="consultTitle">
+    <form id="consultForm" autocomplete="off">
+      <div class="dialog-head"><div><p class="eyebrow">REFERRAL</p><h2 id="consultTitle">Send consultation</h2></div><button type="button" class="icon-button" data-close="consultDialog" aria-label="Close">×</button></div>
+      <div class="dialog-body">
+        <p class="muted">Choose the specific recipient. Share only information necessary for the consultation.</p>
+        <div class="form-grid">
+          <label>Recipient specialty<select id="recipientSpecialty" required><option value="">Choose specialty</option></select></label>
+          <label>Recipient doctor<select id="recipientDoctor" required disabled><option value="">Choose specialty first</option></select></label>
+          <label class="wide">Patient name<input id="consultPatientName" maxlength="200" required></label>
+          <label class="wide">Subject<input id="consultSubject" maxlength="250" required></label>
+          <label class="wide">Message<textarea id="consultMessage" rows="5" maxlength="10000" required></textarea></label>
+          <label class="wide checkbox"><input type="checkbox" id="confirmShare" required> I have checked the recipient and confirmed that sharing this information is appropriate.</label>
+        </div>
+        <div id="consultFormError" class="notice error" role="alert" hidden></div>
+      </div>
+      <div class="dialog-foot"><button type="button" class="btn secondary" data-close="consultDialog">Cancel</button><button type="submit" id="sendConsult" class="btn primary" disabled>Send consultation</button></div>
+    </form>
+  </dialog>
+  <noscript><p>JavaScript is required to use PSMS.</p></noscript>
+  <script type="module" src="assets/doctor-workspace.js"></script>
+  <script>setTimeout(function(){if(!window.psmsWorkspaceStarted){document.getElementById('gateTitle').textContent='Unable to open workspace';document.getElementById('gateText').textContent='Refresh the page to retry the connection.';document.getElementById('gateLogin').hidden=false;document.querySelector('.gate-card .spinner').hidden=true;}},20000);</script>
+</body>
+</html>

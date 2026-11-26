@@ -98,9 +98,9 @@
     <script>
     (() => {
         'use strict';
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        let appId;
         const roleMappings = {
-            // Doctors will now be redirected based on their specialty from doctorSpecialityDashboards map
+            // All doctor specialties share a single doctor workspace.
             'doctor': { collection: 'doctors' }, 
             'pharmacy': { collection: 'pharmacies', dashboard: 'pharmacy-dashboard.html' },
             'radiology_clinic': { collection: 'radiology_clinics', dashboard: 'radiology-clinic-dashboard.html' },
@@ -116,31 +116,7 @@
             'admin': { collection: null, dashboard: 'admin-dashboard.html' } // Admin handled separately, no public data collection
         };
 
-        // Mapping for doctor specialities to their specific dashboards
-        const doctorSpecialityDashboards = {
-            'General Practice': 'general-practice-dashboard.html',
-            'Cardiology': 'cardiology-dashboard.html',
-            'Pediatrics': 'pediatrics-dashboard.html',
-            'Dermatology': 'dermatology-dashboard.html',
-            'Orthopedics': 'orthopedics-dashboard.html',
-            'Neurology': 'neurology-dashboard.html',
-            'Oncology': 'oncology-dashboard.html',
-            'Gastroenterology': 'gastroenterology-dashboard.html',
-            'Ophthalmology': 'ophthalmology-dashboard.html',
-            'ENT': 'ent-dashboard.html', 
-            'Gynecology': 'gynecology-dashboard.html',
-            'Urology': 'urology-dashboard.html',
-            'Psychiatry': 'psychiatry-dashboard.html',
-            'General Surgery': 'general-surgery-dashboard.html',
-            'Plastic Surgery': 'plastic-surgery-dashboard.html',
-            'Neurosurgery': 'neurosurgery-dashboard.html',
-            'Thoracic Surgery': 'thoracic-surgery-dashboard.html',
-            'Vascular Surgery': 'vascular-surgery-dashboard.html',
-            'Cardiothoracic Surgery': 'cardiothoracic-surgery-dashboard.html', 
-            'Critical Care': 'critical-care-dashboard.html', 
-            'Emergency Medicine': 'emergency-medicine-dashboard.html', 
-            'Intensive Care Medicine': 'intensive-care-medicine-dashboard.html' 
-        };
+
 
         const $ = id => document.getElementById(id);
         const overlay = $('authStartupOverlay');
@@ -248,11 +224,7 @@
                 throw accountError('account-deactivated', 'Account deactivated');
             }
             if (result.data.role !== result.role) return null;
-            if (result.role === 'doctor') {
-                return Object.hasOwn(doctorSpecialityDashboards, result.data.speciality)
-                    ? doctorSpecialityDashboards[result.data.speciality]
-                    : 'doctor-dashboard.html';
-            }
+            if (result.role === 'doctor') return 'doctor-workspace.html';
             return result.mapping.dashboard;
         }
 
@@ -339,27 +311,21 @@
         async function start() {
             const previousError = storedLoginError();
             try {
-                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-                    apiKey: "AIzaSyDMIZubC87_z2tCnURoqQIJjCWPPdWFdnk",
-                    authDomain: "pcms-e1162.firebaseapp.com",
-                    projectId: "pcms-e1162",
-                    storageBucket: "pcms-e1162.firebasestorage.app",
-                    messagingSenderId: "383068543378",
-                    appId: "1:383068543378:web:00c7d2bf95f9ded63a494b",
-                    measurementId: "G-4C1P3GB6PP"
-                }; 
+                 
                 
                 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
                 // Dynamic imports ensure that a failed CDN connection does not leave
                 // the startup overlay covering the form indefinitely.
-                const [appApi, loadedAuth, loadedFirestore] = await timeout(Promise.all([
+                const [appApi, loadedAuth, loadedFirestore, sharedConfig] = await timeout(Promise.all([
                     import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'),
                     import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'),
-                    import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js')
+                    import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'),
+                    import('./assets/firebase-config.js')
                 ]));
                 authApi = loadedAuth;
                 firestoreApi = loadedFirestore;
-                const app = appApi.initializeApp(firebaseConfig);
+                appId = sharedConfig.appId;
+                const app = appApi.initializeApp(sharedConfig.getFirebaseConfig());
                 auth = authApi.getAuth(app);
                 db = firestoreApi.getFirestore(app);
 

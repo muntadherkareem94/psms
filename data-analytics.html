@@ -147,7 +147,7 @@
                 <canvas id="ageChart"></canvas>
             </div>
             <div class="chart-card">
-                <h3>Patient Visits Over Time</h3>
+                <h3>Last Recorded Patient Visits by Month</h3>
                 <canvas id="visitsChart"></canvas>
             </div>
             <!-- Add more chart cards as needed -->
@@ -158,7 +158,7 @@
         // Firebase imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, getDocFromServer } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global variables provided by the Canvas environment
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -263,8 +263,12 @@
         function groupVisitsByMonth(patients) {
             const visitCounts = {};
             patients.forEach(patient => {
-                if (patient.lastVisitDate) {
-                    const visitDate = new Date(patient.lastVisitDate);
+                const lastRecordedVisit = [patient.lastVisitDate, patient.lastVisit]
+                    .filter(value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value))
+                    .filter(value => { const parsed = new Date(value + 'T00:00:00Z'); return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value; })
+                    .sort().pop();
+                if (lastRecordedVisit) {
+                    const visitDate = new Date(lastRecordedVisit + 'T00:00:00');
                     // Format as YYYY-MM for consistent grouping (e.g., "2023-01")
                     const monthYear = `${visitDate.getFullYear()}-${(visitDate.getMonth() + 1).toString().padStart(2, '0')}`;
                     visitCounts[monthYear] = (visitCounts[monthYear] || 0) + 1;
@@ -422,7 +426,7 @@
                         },
                         title: {
                             display: true,
-                            text: 'Patient Visits Over Time'
+                            text: 'Last Recorded Patient Visits by Month'
                         }
                     },
                     scales: {
@@ -470,13 +474,13 @@
                         // Verify doctor's active status before fetching data
                         // CHANGED THIS LINE: Now fetching from the PUBLIC data path for doctors
                         const doctorDocRef = doc(db, `artifacts/${appId}/public/data/doctors`, user.uid);
-                        const doctorDocSnap = await getDoc(doctorDocRef);
+                        const doctorDocSnap = await getDocFromServer(doctorDocRef);
 
                         if (doctorDocSnap.exists()) {
                             const doctorData = doctorDocSnap.data();
-                            if (doctorData.deactivated) {
+                            if (doctorData.deactivated || doctorData.role !== 'doctor') {
                                 await signOut(auth);
-                                showMessage("Your account is deactivated. Please contact support.", true);
+                                showMessage("An active doctor account is required. Please contact support.", true);
                                 setTimeout(() => {
                                     window.location.href = 'index.html';
                                 }, 3000);
@@ -526,7 +530,7 @@
 
         // Event Listeners
         backToDashboardButton.addEventListener('click', () => {
-            window.location.href = 'doctor-dashboard.html';
+            window.location.href = 'doctor-workspace.html';
         });
 
         // Initialize Firebase when the window loads
