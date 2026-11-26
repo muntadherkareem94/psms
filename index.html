@@ -2,161 +2,101 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts - Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#20b2aa">
+    <meta name="view-transition" content="same-origin">
+    <title>PSMS - Login</title>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            /* Light blue-green gradient background */
-            background: linear-gradient(to right bottom, #87CEEB, #20B2AA);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px; /* Add some padding for smaller screens */
-            box-sizing: border-box; /* Include padding in element's total width and height */
-        }
-        .login-container {
-            background-color: white;
-            padding: 2.5rem; /* Equivalent to p-10 */
-            border-radius: 1.5rem; /* Equivalent to rounded-3xl */
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px; /* Max width for the login form */
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem; /* Equivalent to gap-6 */
-        }
-        .input-group {
-            position: relative;
-        }
-        .input-group input {
-            width: 100%;
-            padding: 0.75rem 0.75rem 0.75rem 2.5rem; /* Equivalent to pl-10 */
-            border: 1px solid #e2e8f0; /* Equivalent to border-gray-300 */
-            border-radius: 0.5rem; /* Equivalent to rounded-lg */
-            font-size: 1rem;
-            transition: border-color 0.2s;
-        }
-        .input-group input:focus {
-            outline: none;
-            border-color: #20B2AA; /* Focus color */
-        }
-        .input-group svg {
-            position: absolute;
-            left: 0.75rem; /* Equivalent to left-3 */
-            top: 50%;
-            transform: translateY(-50%);
-            color: #94a3b8; /* Equivalent to text-gray-400 */
-        }
-        .login-button {
-            background: linear-gradient(to right, #87CEEB, #20B2AA);
-            color: white;
-            padding: 0.75rem; /* Equivalent to py-3 */
-            border-radius: 0.5rem; /* Equivalent to rounded-lg */
-            font-weight: 600; /* Equivalent to font-semibold */
-            text-align: center;
-            cursor: pointer;
-            transition: opacity 0.2s;
-            border: none; /* Remove default button border */
-        }
-        .login-button:hover {
-            opacity: 0.9;
-        }
-        .message-box {
-            display: none;
-            background-color: #f0fdf4; /* Light green */
-            border: 1px solid #a7f3d0; /* Green border */
-            color: #065f46; /* Dark green text */
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-top: 1rem;
-            text-align: center;
-        }
-        .message-box.error {
-            display: block; /* Always show error messages for visibility */
-            background-color: #fef2f2; /* Light red */
-            border-color: #fecaca; /* Red border */
-            color: #991b1b; /* Dark red text */
-        }
-        /* Responsive adjustments */
-        @media (max-width: 640px) {
-            .login-container {
-                padding: 1.5rem;
-                gap: 1rem;
-            }
-            .login-container h2 {
-                font-size: 1.5rem;
-            }
-        }
+        :root { color-scheme: light; font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #1e293b; }
+        * { box-sizing: border-box; }
+        [hidden] { display: none !important; }
+        body { margin: 0; min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px; background: linear-gradient(145deg, #87ceeb, #20b2aa); }
+        button, input { font: inherit; }
+        .card { width: min(100%, 420px); padding: 36px; background: #fff; border-radius: 24px; box-shadow: 0 16px 48px rgba(15, 73, 82, .17); }
+        .brand { text-align: center; margin-bottom: 30px; }
+        .brand-mark { width: 64px; height: 64px; display: grid; place-items: center; margin: 0 auto 14px; border-radius: 19px; color: #fff; background: linear-gradient(135deg,#4baecb,#159e96); box-shadow: 0 7px 18px rgba(21,158,150,.2); }
+        .brand-mark svg { width: 35px; height: 35px; }
+        .brand-name { color: #147c80; font-size: 25px; letter-spacing: .04em; font-weight: 800; margin: 0; }
+        .brand-subtitle { color: #64748b; font-size: 12px; margin: 6px 0 0; }
+        h1 { font-size: 23px; margin: 27px 0 4px; letter-spacing: -.025em; }
+        .subtitle { color: #64748b; margin: 0; font-size: 14px; line-height: 1.5; }
+        form { display: grid; gap: 16px; }
+        label { display: block; font-size: 13px; font-weight: 650; margin-bottom: 7px; }
+        .input-group { position: relative; }
+        .input-group svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 19px; height: 19px; color: #94a3b8; pointer-events: none; }
+        input { width: 100%; padding: 13px 13px 13px 43px; min-height: 50px; color: #1e293b; background: #fff; border: 1px solid #cbd5e1; border-radius: 10px; outline: none; transition: border-color .2s, box-shadow .2s; font-size: 16px; }
+        input:focus { border-color: #1aa69c; box-shadow: 0 0 0 3px rgba(32,178,170,.15); }
+        input::placeholder { color: #94a3b8; }
+        input:disabled { background: #f8fafc; }
+        .text-button { border: 0; background: transparent; color: #147c80; cursor: pointer; font-size: 13px; font-weight: 600; justify-self: end; padding: 4px 0; }
+        .text-button:hover:not(:disabled) { text-decoration: underline; }
+        .text-button:disabled { opacity: .5; cursor: not-allowed; }
+        .login-button { display: flex; justify-content: center; align-items: center; gap: 10px; width: 100%; min-height: 50px; background: linear-gradient(110deg,#329dbb,#159e96); color: #fff; padding: 13px; border-radius: 11px; font-weight: 700; cursor: pointer; border: none; transition: filter .2s, transform .2s, opacity .2s; }
+        .login-button:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
+        .login-button:focus-visible, .text-button:focus-visible { outline: 3px solid #0d9488; outline-offset: 3px; }
+        .login-button:disabled { opacity: .72; cursor: wait; transform: none; }
+        .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .75s linear infinite; flex: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .message-box { padding: 12px 14px; border: 1px solid #a7f3d0; background: #ecfdf5; color: #065f46; border-radius: 10px; font-size: 13px; line-height: 1.5; }
+        .message-box.error { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+        .retry-button { justify-self: center; }
+        #authStartupOverlay { position: fixed; inset: 0; z-index: 10; background: linear-gradient(145deg,#87ceeb,#20b2aa); display: grid; place-items: center; padding: 24px; }
+        .startup-card { width: min(100%, 360px); padding: 30px; background: #fff; border-radius: 20px; text-align: center; box-shadow: 0 12px 44px rgba(15,73,82,.14); }
+        .startup-card .brand-mark { margin-bottom: 12px; }
+        .startup-card .spinner { width: 30px; height: 30px; margin: 22px auto 16px; border: 3px solid #d9f2f1; border-top-color: #159e96; }
+        .startup-title { margin: 0 0 8px; font-weight: 700; }
+        .startup-description { color: #64748b; font-size: 13px; line-height: 1.55; margin: 0; }
+        @media (max-width: 480px) { body { padding: 16px; } .card { padding: 28px 24px; border-radius: 20px; } }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } .spinner { animation-duration: 1.8s; } }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <h2 class="text-3xl font-bold text-center text-gray-800">Login</h2>
-
-        <div class="input-group">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-            </svg>
-            <input type="text" id="username" placeholder="Type your username">
+    <div id="authStartupOverlay" role="status" aria-live="polite" aria-label="Loading PSMS">
+        <div class="startup-card">
+            <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h5l3-7 4 14 3-7h5"/></svg></div>
+            <p class="brand-name">PSMS</p>
+            <div class="spinner" aria-hidden="true"></div>
+            <p id="startupStatus" class="startup-title">Checking your session...</p>
+            <p class="startup-description">Connecting securely. This may take a little longer on a slow connection.</p>
         </div>
-
-        <div class="input-group">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
-            </svg>
-            <input type="password" id="password" placeholder="Type your password">
-        </div>
-
-        <a href="#" class="text-sm text-right text-blue-600 hover:underline">Forgot password?</a>
-
-        <button id="loginButton" class="login-button">LOGIN</button>
-
-        <div id="messageBox" class="message-box"></div>
     </div>
-
-    <script type="module">
-        // Firebase imports
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Global variables provided by the Canvas environment
+    <main class="card" id="loginCard" inert>
+        <header class="brand">
+            <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h5l3-7 4 14 3-7h5"/></svg></div>
+            <p class="brand-name">PSMS</p>
+            <p class="brand-subtitle">Private Sector Management System</p>
+            <h1>Welcome back</h1>
+            <p class="subtitle">Sign in to access your dashboard.</p>
+        </header>
+        <form id="loginForm">
+            <div>
+                <label for="username">Email</label>
+                <div class="input-group">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+                    <input type="email" id="username" name="email" placeholder="Enter your email" autocomplete="username" autocapitalize="none" spellcheck="false" required disabled>
+                </div>
+            </div>
+            <div>
+                <label for="password">Password</label>
+                <div class="input-group">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password" required disabled>
+                </div>
+            </div>
+            <button type="button" id="forgotPasswordButton" class="text-button" disabled>Forgot password?</button>
+            <button id="loginButton" type="submit" class="login-button" disabled>
+                <span id="loginSpinner" class="spinner" aria-hidden="true" hidden></span>
+                <span id="loginButtonText">Log In</span>
+            </button>
+            <div id="messageBox" class="message-box" role="status" aria-live="polite" hidden></div>
+            <button type="button" id="retryButton" class="text-button retry-button" hidden>Retry connection</button>
+        </form>
+    </main>
+    <noscript><style>#authStartupOverlay { display: none; }</style><p>JavaScript must be enabled to sign in.</p></noscript>
+    <script>
+    (() => {
+        'use strict';
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        
-        // ==================================================================================================
-        // IMPORTANT: If running this HTML file directly from your local file system (e.g., C:/),
-        //            you MUST replace the object below with your actual Firebase project config.
-        //            You can find this in your Firebase console under Project settings -> Your apps.
-        // ==================================================================================================
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "AIzaSyDMIZubC87_z2tCnURoqQIJjCWPPdWFdnk",
-            authDomain: "pcms-e1162.firebaseapp.com",
-            projectId: "pcms-e1162",
-            storageBucket: "pcms-e1162.firebasestorage.app",
-            messagingSenderId: "383068543378",
-            appId: "1:383068543378:web:00c7d2bf95f9ded63a494b",
-            measurementId: "G-4C1P3GB6PP"
-        }; 
-        
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        let app;
-        let db;
-        let auth;
-
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-        const loginButton = document.getElementById('loginButton');
-        const messageBox = document.getElementById('messageBox');
-
-        // Explicit mapping of roles to Firestore collection names and dashboard filenames
         const roleMappings = {
             // Doctors will now be redirected based on their specialty from doctorSpecialityDashboards map
             'doctor': { collection: 'doctors' }, 
@@ -200,168 +140,270 @@
             'Intensive Care Medicine': 'intensive-care-medicine-dashboard.html' 
         };
 
-        /**
-         * Displays a message in the message box.
-         * @param {string} message - The message to display.
-         * @param {boolean} isError - True if it's an error message, false otherwise.
-         */
-        function showMessage(message, isError) {
+        const $ = id => document.getElementById(id);
+        const overlay = $('authStartupOverlay');
+        const loginCard = $('loginCard');
+        const form = $('loginForm');
+        const usernameInput = $('username');
+        const passwordInput = $('password');
+        const loginButton = $('loginButton');
+        const buttonText = $('loginButtonText');
+        const spinner = $('loginSpinner');
+        const messageBox = $('messageBox');
+        const forgotButton = $('forgotPasswordButton');
+        const retryButton = $('retryButton');
+        let authApi, firestoreApi, auth, db;
+        let ready = false;
+        let busy = false;
+        let navigating = false;
+
+        function setBusy(value, label = 'Log In') {
+            busy = value;
+            loginButton.disabled = !ready || value;
+            usernameInput.disabled = !ready || value;
+            passwordInput.disabled = !ready || value;
+            forgotButton.disabled = !ready || value;
+            spinner.hidden = !value;
+            buttonText.textContent = label;
+            form.setAttribute('aria-busy', String(value));
+        }
+
+        function showMessage(message, isError = true) {
             messageBox.textContent = message;
-            messageBox.style.display = 'block';
-            if (isError) {
-                messageBox.classList.remove('bg-f0fdf4', 'border-a7f3d0', 'text-065f46');
-                messageBox.classList.add('error');
-            } else {
-                messageBox.classList.remove('error');
-                messageBox.classList.add('bg-f0fdf4', 'border-a7f3d0', 'text-065f46');
-            }
-            setTimeout(() => {
-                messageBox.style.display = 'none';
-            }, 5000); // Hide after 5 seconds
+            messageBox.classList.toggle('error', isError);
+            messageBox.hidden = !message;
         }
 
-        /**
-         * Initializes Firebase and sets up authentication listener.
-         */
-        async function initializeFirebase() {
+        function timeout(promise, ms = 20000) {
+            let timer;
+            return Promise.race([
+                promise,
+                new Promise((_, reject) => {
+                    timer = setTimeout(() => reject(Object.assign(new Error('Connection timed out'), { code: 'connection-timeout' })), ms);
+                })
+            ]).finally(() => clearTimeout(timer));
+        }
+
+        function storedLoginError() {
             try {
-                if (!app) {
-                    app = initializeApp(firebaseConfig);
-                    db = getFirestore(app);
-                    auth = getAuth(app);
-                }
-
-                if (initialAuthToken) {
-                    try {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                        console.log("Signed in with custom token from Canvas.");
-                    } catch (e) {
-                        console.warn("Custom token sign-in failed or expired:", e.message);
-                    }
-                }
-
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        console.log("onAuthStateChanged: User is authenticated. UID:", user.uid);
-                    } else {
-                        console.log("onAuthStateChanged: No user is authenticated.");
-                    }
-                });
-
-            } catch (error) {
-                console.error("Error initializing Firebase:", error);
-                showMessage("Failed to initialize app. Please try again later.", true);
+                const message = sessionStorage.getItem('loginErrorMessage');
+                sessionStorage.removeItem('loginErrorMessage');
+                return message;
+            } catch (_) {
+                return null;
             }
         }
 
-        /**
-         * Handles the login process and redirects based on user role and doctor speciality.
-         */
-        loginButton.addEventListener('click', async () => {
-            const email = usernameInput.value.trim();
-            const password = passwordInput.value.trim();
+        function revealForm() {
+            overlay.hidden = true;
+            loginCard.inert = false;
+            setBusy(false);
+        }
 
-            if (!email || !password) {
-                showMessage("Please enter both email and password.", true);
+        const accountError = (code, message) => Object.assign(new Error(message), { code });
+        const profileError = () => accountError('profile-unavailable', 'Could not verify your account. Check your internet connection and try again.');
+        function friendlyError(error) {
+            switch (error?.code) {
+                case 'auth/invalid-credential':
+                case 'auth/user-not-found':
+                case 'auth/wrong-password': return 'Invalid email or password.';
+                case 'auth/invalid-email': return 'Please enter a valid email address.';
+                case 'auth/user-disabled':
+                case 'account-deactivated': return 'Your account is deactivated. Please contact support.';
+                case 'account-unauthorized': return 'Account not found or unauthorized. Please contact support.';
+                case 'auth/too-many-requests': return 'Too many attempts. Please try again later.';
+                case 'auth/network-request-failed':
+                case 'connection-timeout':
+                case 'profile-unavailable': return 'Could not connect or verify your account. Check your internet connection and try again.';
+                case 'auth/user-token-expired':
+                case 'auth/invalid-user-token': return 'Your session has expired. Please log in again.';
+                case 'account-changed': return 'Your session changed. Please log in again.';
+                default: return 'Unable to log in. Please try again.';
+            }
+        }
+        function mustSignOut(error) {
+            return ['account-deactivated', 'account-unauthorized', 'auth/user-disabled', 'auth/user-token-expired', 'auth/invalid-user-token'].includes(error?.code);
+        }
+
+        // Always read the account profile from the server, not from a cached role.
+        async function readProfile(user, role, mapping) {
+            const ref = firestoreApi.doc(db, `artifacts/${appId}/public/data/${mapping.collection}`, user.uid);
+            try {
+                const snap = await firestoreApi.getDocFromServer(ref);
+                return { role, mapping, data: snap.exists() ? snap.data() : null };
+            } catch (error) {
+                return { role, mapping, error };
+            }
+        }
+        function profileDestination(result) {
+            if (result.error) {
+                // Rules may restrict access to collections belonging to other roles.
+                if (result.error.code === 'permission-denied') return null;
+                throw profileError();
+            }
+            if (!result.data) return null;
+            if (result.data.deactivated) {
+                throw accountError('account-deactivated', 'Account deactivated');
+            }
+            if (result.data.role !== result.role) return null;
+            if (result.role === 'doctor') {
+                return Object.hasOwn(doctorSpecialityDashboards, result.data.speciality)
+                    ? doctorSpecialityDashboards[result.data.speciality]
+                    : 'doctor-dashboard.html';
+            }
+            return result.mapping.dashboard;
+        }
+
+        async function resolveDashboard(user) {
+            // Keep the existing admin rule, using the authenticated Firebase user.
+            if (user.email === "muntadherkareem@gmail.com") return roleMappings.admin.dashboard;
+
+            // Doctors have first priority in the original role mapping. Check them first
+            // to avoid unnecessary reads; check remaining collections concurrently.
+            const doctor = await readProfile(user, 'doctor', roleMappings.doctor);
+            const doctorPage = profileDestination(doctor);
+            if (doctorPage) return doctorPage;
+
+            const roles = Object.entries(roleMappings).filter(([role]) => role !== 'doctor' && role !== 'admin');
+            const results = await Promise.all(roles.map(([role, mapping]) => readProfile(user, role, mapping)));
+            for (const result of results) {
+                const page = profileDestination(result);
+                if (page) return page;
+            }
+            throw accountError('account-unauthorized', 'No valid role');
+        }
+
+        async function signOutIfRequired(error) {
+            if (auth && mustSignOut(error)) {
+                try { await authApi.signOut(auth); }
+                catch (_) { /* Never navigate on an invalid account. */ }
+            }
+        }
+
+        function openDashboard(user, page) {
+            if (auth.currentUser?.uid !== user.uid) throw accountError('account-changed', 'Session changed');
+            if (!page || navigating) return;
+            $('startupStatus').textContent = 'Opening your dashboard...';
+            buttonText.textContent = 'Opening dashboard...';
+            navigating = true;
+            window.location.replace(page);
+        }
+
+        form.addEventListener('submit', async event => {
+            event.preventDefault();
+            if (!ready || busy || navigating) return;
+            if (!form.reportValidity()) return;
+            showMessage('');
+            setBusy(true, 'Logging in...');
+            try {
+                const credential = await authApi.signInWithEmailAndPassword(auth, usernameInput.value.trim(), passwordInput.value);
+                buttonText.textContent = 'Verifying account...';
+                const page = await timeout(resolveDashboard(credential.user));
+                openDashboard(credential.user, page);
+            } catch (error) {
+                await signOutIfRequired(error);
+                showMessage(friendlyError(error));
+            } finally {
+                if (!navigating) setBusy(false);
+            }
+        });
+
+        forgotButton.addEventListener('click', async () => {
+            if (!ready || busy || navigating) return;
+            if (!usernameInput.value.trim()) {
+                showMessage('Enter your account email to request a password reset.');
+                usernameInput.focus();
                 return;
             }
-
+            if (!usernameInput.reportValidity()) return;
+            showMessage('');
+            setBusy(true, 'Sending reset link...');
             try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-
-                let redirectToDashboard = null;
-                let userDocFound = false;
-
-                // Admin login check: Based purely on email for the admin.
-                if (email === "muntadherkareem@gmail.com") { 
-                    redirectToDashboard = roleMappings['admin'].dashboard;
-                    userDocFound = true;
+                await authApi.sendPasswordResetEmail(auth, usernameInput.value.trim());
+                showMessage('If an account exists for that email, you will receive a password reset link.', false);
+            } catch (error) {
+                if (error?.code === 'auth/user-not-found') {
+                    showMessage('If an account exists for that email, you will receive a password reset link.', false);
                 } else {
-                    // For all other roles, iterate through the explicit role mappings
-                    for (const roleKey in roleMappings) {
-                        if (roleKey === 'admin') continue; // Skip admin here, already handled
+                    showMessage(error?.code === 'auth/too-many-requests' ? 'Too many attempts. Please try again later.' : 'Could not request a password reset. Please try again.');
+                }
+            } finally {
+                setBusy(false);
+            }
+        });
 
-                        const mapping = roleMappings[roleKey];
-                        const collectionName = mapping.collection;
+        retryButton.addEventListener('click', () => window.location.reload());
 
-                        if (collectionName) {
-                            const userDocRef = doc(db, `artifacts/${appId}/public/data/${collectionName}`, user.uid);
-                            try {
-                                const userDocSnap = await getDoc(userDocRef);
+        async function start() {
+            const previousError = storedLoginError();
+            try {
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+                    apiKey: "AIzaSyDMIZubC87_z2tCnURoqQIJjCWPPdWFdnk",
+                    authDomain: "pcms-e1162.firebaseapp.com",
+                    projectId: "pcms-e1162",
+                    storageBucket: "pcms-e1162.firebasestorage.app",
+                    messagingSenderId: "383068543378",
+                    appId: "1:383068543378:web:00c7d2bf95f9ded63a494b",
+                    measurementId: "G-4C1P3GB6PP"
+                }; 
+                
+                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                // Dynamic imports ensure that a failed CDN connection does not leave
+                // the startup overlay covering the form indefinitely.
+                const [appApi, loadedAuth, loadedFirestore] = await timeout(Promise.all([
+                    import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'),
+                    import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'),
+                    import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js')
+                ]));
+                authApi = loadedAuth;
+                firestoreApi = loadedFirestore;
+                const app = appApi.initializeApp(firebaseConfig);
+                auth = authApi.getAuth(app);
+                db = firestoreApi.getFirestore(app);
 
-                                if (userDocSnap.exists()) {
-                                    const userData = userDocSnap.data();
-                                    if (userData.deactivated) {
-                                        await signOut(auth);
-                                        showMessage("Your account is deactivated. Please contact support.", true);
-                                        return;
-                                    }
-                                    
-                                    // Check if the role matches the collection's expected role
-                                    if (userData.role === roleKey) { 
-                                        userDocFound = true;
-
-                                        // Special handling for Doctors: Redirect based on speciality
-                                        if (roleKey === 'doctor') {
-                                            if (userData.speciality && doctorSpecialityDashboards[userData.speciality]) {
-                                                redirectToDashboard = doctorSpecialityDashboards[userData.speciality];
-                                            } else {
-                                                // Fallback for doctors without a specific specialty dashboard configured
-                                                // (This case should ideally not happen if all doctors have a specialty)
-                                                console.warn(`Doctor ${user.uid} has specialty '${userData.speciality}' but no specific dashboard mapping. Redirecting to general doctor dashboard.`);
-                                                redirectToDashboard = 'doctor-dashboard.html'; 
-                                            }
-                                        } else {
-                                            // For other roles (pharmacy, clinics, labs), use their default dashboard mapping
-                                            redirectToDashboard = mapping.dashboard;
-                                        }
-                                        break; // Found the user's role and determined redirect path, stop searching
-                                    }
-                                }
-                            } catch (firestoreError) {
-                                console.warn(`Error fetching user from ${collectionName} for role ${roleKey}:`, firestoreError.message);
-                                // Continue to next collection if there's a Firestore error for one collection
-                            }
-                        }
+                if (initialAuthToken && !previousError) {
+                    try { await timeout(authApi.signInWithCustomToken(auth, initialAuthToken)); }
+                    catch (error) {
+                        if (error?.code === 'connection-timeout') throw error;
+                        // An invalid custom token does not prevent ordinary email sign-in.
                     }
                 }
-                
-                // Final redirection logic
-                if (userDocFound && redirectToDashboard) {
-                    showMessage("Login successful!", false);
-                    setTimeout(() => {
-                        window.location.href = redirectToDashboard;
-                    }, 500); 
-                } else {
-                    console.error("Authenticated user but no valid role document found in Firestore or role mismatch. Or no dashboard found.");
-                    await signOut(auth); // Sign out unauthorized or misconfigured user
-                    showMessage("Account not found or unauthorized. Please contact support.", true);
-                }
+                await timeout(auth.authStateReady());
+                ready = true;
 
+                // The dashboards can send a login error after rejecting an account.
+                // Show it rather than creating a login/dashboard redirect loop.
+                if (previousError) {
+                    showMessage(previousError);
+                    return;
+                }
+                const user = auth.currentUser;
+                if (!user) return;
+                $('startupStatus').textContent = 'Restoring your session...';
+                await timeout(authApi.reload(user));
+                const page = await timeout(resolveDashboard(user));
+                openDashboard(user, page);
             } catch (error) {
-                console.error("Login error:", error);
-                let errorMessage = "An unknown error occurred. Please try again.";
-                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                    errorMessage = "Invalid email or password.";
-                } else if (error.code === 'auth/invalid-email') {
-                    errorMessage = "The email address is not valid.";
-                } else if (error.code === 'auth/too-many-requests') {
-                    errorMessage = "Too many login attempts. Please try again later.";
+                await signOutIfRequired(error);
+                if (!ready) {
+                    showMessage('Could not initialize PSMS. Check your connection and retry.');
+                    retryButton.hidden = false;
+                } else {
+                    showMessage(friendlyError(error));
                 }
-                showMessage(errorMessage, true);
+            } finally {
+                if (!navigating) revealForm();
             }
+        }
+
+        // If this page is restored from the browser back/forward cache, check
+        // Firebase again instead of leaving a stale disabled login button.
+        window.addEventListener('pageshow', event => {
+            if (event.persisted) window.location.reload();
         });
 
-        // Display any error messages from previous redirects (e.g., from dashboards)
-        window.addEventListener('DOMContentLoaded', () => {
-            const storedMessage = sessionStorage.getItem('loginErrorMessage');
-            if (storedMessage) {
-                showMessage(storedMessage, true);
-                sessionStorage.removeItem('loginErrorMessage');
-            }
-            initializeFirebase(); // Initialize Firebase once DOM is ready
-        });
+        start();
+    })();
     </script>
 </body>
 </html>
