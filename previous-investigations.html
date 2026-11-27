@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="no-referrer">
+    <title>Previous Investigations | PSMS</title>
+    <link rel="stylesheet" href="assets/previous-investigations.css">
+</head>
+<body class="previous-page">
+<main class="previous-shell">
+    <header class="previous-header">
+        <div>
+            <nav class="previous-steps" aria-label="Patient workflow"><span>History</span> › <span>Physical Examination</span> › <span class="active" aria-current="step">Previous Investigations</span> › <span>Clinical Summary</span></nav>
+            <h1>Previous Investigations</h1>
+            <p>Document results already performed before ordering new investigations.</p>
+        </div>
+        <button type="button" id="dashboardButton" class="previous-button secondary">Dashboard</button>
+    </header>
+    <div id="loading" class="previous-card" role="status">Verifying patient access…</div>
+    <section id="workspace" hidden>
+        <div class="previous-card">
+            <div class="previous-intro">
+                <div><h2 id="patientName">Patient</h2><p class="previous-muted">Add a report type, date, written results, and/or report images. Leave this section empty if no results are available.</p></div>
+            </div>
+            <div class="previous-add-row" id="categoryButtons"></div>
+            <p class="previous-capacity" id="capacity"></p>
+            <p class="previous-muted">Images (JPG, PNG, WebP) are compressed locally without cropping and retained with the patient record. For PDFs or DICOM, attach an exported image of the relevant page or enter the result text. Verify readability before proceeding.</p>
+        </div>
+        <div id="entries"></div>
+        <p id="emptyMessage" class="previous-empty">No previous investigations added. Use the buttons above to add results, or continue to Clinical Summary.</p>
+        <div id="status" class="previous-status" role="status" aria-live="polite"></div>
+        <div class="previous-actions">
+            <button type="button" id="backButton" class="previous-button secondary">← Back to Physical Examination</button>
+            <button type="button" id="nextButton" class="previous-button primary">Next: Clinical Summary →</button>
+        </div>
+        <p class="previous-muted" style="margin-top:12px">Your entries stay in this patient draft. Submit the final record from Treatment to save them permanently.</p>
+    </section>
+</main>
+<script type="module">
+    import {initializeApp} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+    import {getAuth,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+    import {getFirestore,doc,getDocFromServer} from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+    import {investigationCategories, normalizePreviousInvestigations, cleanPreviousInvestigations, recordWithPreviousInvestigations, prepareReportImage, maxRecordBytes, maxAttachments, byteSize} from './assets/previous-investigations.js';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDMIZubC87_z2tCnURoqQIJjCWPPdWFdnk",
+            authDomain: "pcms-e1162.firebaseapp.com",
+            projectId: "pcms-e1162",
+            storageBucket: "pcms-e1162.firebasestorage.app",
+            messagingSenderId: "383068543378",
+            appId: "1:383068543378:web:00c7d2bf95f9ded63a494b",
+            measurementId: "G-4C1P3GB6PP"
+        };
+        
+
+
+    const params = new URLSearchParams(location.search);
+    const patientId = params.get('patientId');
+    const from = params.get('from');
+    const sessionKey='currentPatientRecord', ownerKey='currentPatientRecordOwner';
+    const $=id=>document.getElementById(id);
+    const workspace=$('workspace'), entriesEl=$('entries'), status=$('status');
+    const next=$('nextButton'), back=$('backButton');
+    let auth, db, uid=null, generation=0, entries=[], busy=false, saveTimer=null;
+    function target(page, draft=false) {
+        const query=new URLSearchParams({from:'cardiology-dashboard.html',patientId});
+        if(draft) query.set('mode','draft');
+        return page+'?'+query.toString();
+    }
+    function element(tag, className='', text='') {
+        const e=document.createElement(tag);if(className)e.className=className;if(text)e.textContent=text;return e;
+    }
+    function button(text,action,variant='secondary') {
+        const b=element('button','previous-button '+variant,text);b.type='button';b.addEventListener('click',action);return b;
+    }
+    function getDraft(userId) {
+        if(!userId || sessionStorage.getItem(ownerKey)!==userId) return null;
+        try {const d=JSON.parse(sessionStorage.getItem(sessionKey));return d?.patientId===patientId?d:null;}catch{return null;}
+    }
+    function valid() {return !!uid&&auth?.currentUser?.uid===uid&&!!getDraft(uid);}
+    function message(text,error=false) {status.textContent=text;status.className='previous-status'+(error?' error':'');}
+    function fail(text) {
+        clearTimeout(saveTimer);uid=null;busy=false;entries=[];entriesEl.replaceChildren();
+        workspace.hidden=true;$('loading').hidden=false;$('loading').textContent=text;
+        $('patientName').textContent='Patient';$('capacity').textContent='';status.textContent='';
+    }
+    function updateCapacity() {
+        if(!valid())return;
+        const record=getDraft(uid);
+        const size=byteSize({...record,previousInvestigations:cleanPreviousInvestigations(entries)});
+        const available=Math.max(0,maxRecordBytes-size);
+        $('capacity').textContent='Approximate remaining patient record space: '+Math.floor(available/1024)+' KB. Additional investigations and treatment also need space.';
+    }
+    function saveDraft(showStatus=true) {
+        clearTimeout(saveTimer);
+        if(!valid()) {fail('Patient session is no longer available. Return to the dashboard.');return false;}
+        try {
+            const draft=recordWithPreviousInvestigations(getDraft(uid),entries);
+            sessionStorage.setItem(sessionKey,JSON.stringify(draft));
+            updateCapacity();
+            if(showStatus)message('Saved to the current patient draft.');
+            return true;
+        } catch(error) {
+            message(error instanceof Error?error.message:'Unable to save patient draft. Remove some images and retry.',true);
+            return false;
+        }
+    }
+    function scheduleSave() {clearTimeout(saveTimer);saveTimer=setTimeout(()=>saveDraft(false),300);}
+    function setBusy(v) {
+        busy=v;next.disabled=v;back.disabled=v;
+        for(const e of document.querySelectorAll('#categoryButtons button,#entries button,#entries input[type=file]')) e.disabled=v;
+    }
+    function addEntry(category) {
+        if(busy||!valid())return;
+        entries.push({category,type:'',name:'',date:'',results:'',attachments:[]});render();scheduleSave();
+        entriesEl.lastElementChild?.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+    function field(parent,label,input) {
+        const f=element('div','previous-field');const l=element('label','',label);
+        l.htmlFor=input.id;f.append(l,input);parent.append(f);
+    }
+    function render() {
+        entriesEl.replaceChildren();
+        entries.forEach((entry,index)=>{
+            const card=element('article','previous-card');
+            const cat=investigationCategories.find(c=>c.id===entry.category) || investigationCategories[3];
+            const heading=element('div','previous-item-header');heading.append(element('h2','',cat.label+' · '+(index+1)));
+            heading.append(button('Remove investigation',()=>{
+                if(busy||!valid())return;
+                if((entry.name||entry.results||entry.attachments.length)&&!confirm('Remove this investigation and its attachments from the current draft?'))return;
+                entries.splice(index,1);render();saveDraft();
+            },'danger'));
+            card.append(heading);
+            const grid=element('div','previous-grid');
+            const category=element('select');category.id='category-'+index;
+            for(const c of investigationCategories)category.append(new Option(c.label,c.id,false,c.id===entry.category));
+            category.addEventListener('change',()=>{entry.category=category.value;entry.type='';render();scheduleSave();});
+            field(grid,'Category',category);
+            const type=element('select');type.id='type-'+index;
+            type.append(new Option('Select type (optional)','',false,!entry.type));
+            const types=cat.types.includes(entry.type)||!entry.type?cat.types:[...cat.types,entry.type];
+            for(const t of types)type.append(new Option(t,t,false,t===entry.type));
+            type.addEventListener('change',()=>{entry.type=type.value;scheduleSave();});
+            field(grid,'Investigation type',type);
+            const date=element('input');date.id='date-'+index;date.type='date';date.value=entry.date;
+            date.addEventListener('input',()=>{entry.date=date.value;scheduleSave();});
+            field(grid,'Date performed (optional)',date);card.append(grid);
+            const name=element('input');name.id='name-'+index;name.value=entry.name;name.maxLength=180;name.placeholder='e.g., Serum cortisol, Chest X-ray, CT brain';
+            name.addEventListener('input',()=>{entry.name=name.value;scheduleSave();});field(card,'Test / report name',name);
+            const results=element('textarea');results.id='results-'+index;results.value=entry.results;results.maxLength=30000;results.placeholder='Enter results, values, units, reference ranges or the radiology report. Use one line per result when appropriate.';
+            results.addEventListener('input',()=>{entry.results=results.value;scheduleSave();});field(card,'Written findings / results',results);
+            const attachments=element('section','previous-attachments');attachments.append(element('h3','','Report images'));
+            const file=element('input');file.type='file';file.accept='image/jpeg,image/png,image/webp';file.multiple=true;file.id='file-'+index;
+            field(attachments,'Attach JPG, PNG or WebP (optional)',file);
+            file.addEventListener('change',async()=>{
+                if(!valid()||busy)return;
+                const files=Array.from(file.files);if(!files.length)return;
+                setBusy(true);clearTimeout(saveTimer);const owner=uid, epoch=generation;
+                const errors=[];let added=0;
+                for(const f of files) {
+                    try {
+                        if(entries.reduce((n,x)=>n+x.attachments.length,0)>=maxAttachments)throw new Error('Attachment limit reached.');
+                        const image=await prepareReportImage(f);
+                        if(epoch!==generation||!valid()||uid!==owner)return;
+                        entry.attachments.push(image);
+                        // Validate complete record before accepting each image.
+                        try {recordWithPreviousInvestigations(getDraft(uid),entries);}catch(e){entry.attachments.pop();throw e;}
+                        added++;
+                    } catch(e) {errors.push(f.name+': '+(e.message||'Unable to process image.'));}
+                }
+                if(epoch!==generation||!valid()||uid!==owner)return;
+                busy=false;render();setBusy(false);
+                const ok=saveDraft(false);
+                if(ok) message([added?added+' image(s) attached.':'',...errors].filter(Boolean).join(' '),errors.length>0);
+            });
+            const previews=element('div','previous-file-list');
+            entry.attachments.forEach((a,i)=>{
+                const preview=element('div','previous-image-card');
+                const img=element('img');img.src=a.data;img.alt='Report image '+(i+1);preview.append(img);
+                const info=element('div','file-info');info.append(element('span','file-name',a.name||'Report image '+(i+1)));
+                const remove=element('button','remove-image','Remove');remove.type='button';remove.addEventListener('click',()=>{
+                    if(busy||!valid())return;
+                    entry.attachments.splice(i,1);render();saveDraft();
+                });info.append(remove);preview.append(info);previews.append(preview);
+            });
+            attachments.append(previews);card.append(attachments);entriesEl.append(card);
+        });
+        $('emptyMessage').hidden=entries.length>0;
+        updateCapacity();
+    }
+    for(const cat of investigationCategories) $('categoryButtons').append(button('+ '+cat.label.replace(' investigations',''),()=>addEntry(cat.id)));
+    next.addEventListener('click',()=>{if(!busy&&saveDraft())location.href=target('clinical-summary.html',true);});
+    back.addEventListener('click',()=>{if(!busy&&saveDraft())location.href=target('cardiology-physicalexam.html');});
+    $('dashboardButton').addEventListener('click',()=>{
+        if(busy)return;
+        if(valid()) {
+            if(!confirm('Exit this patient session? Unsaved progress will be lost.'))return;
+            sessionStorage.removeItem(sessionKey);sessionStorage.removeItem(ownerKey);
+        }
+        location.href='cardiology-dashboard.html';
+    });
+    window.addEventListener('pagehide',()=>{if(!busy&&valid())saveDraft(false);});
+    window.addEventListener('pageshow',event=>{if(event.persisted)location.reload();});
+    async function start() {
+        if(from!=='cardiology-dashboard.html'||!patientId||patientId.includes('/')) {fail('Invalid patient context. Return to the dashboard and select a patient.');return;}
+        const app=initializeApp(firebaseConfig);auth=getAuth(app);db=getFirestore(app);
+        onAuthStateChanged(auth,async user=>{
+            const epoch=++generation;fail('Verifying patient access…');
+            if(!user){location.replace('index.html');return;}
+            try{
+                const profile=await getDocFromServer(doc(db,`artifacts/${appId}/public/data/doctors`,user.uid));
+                if(epoch!==generation||auth.currentUser?.uid!==user.uid)return;
+                const doctor=profile.exists()?profile.data():null;
+                if(!doctor||doctor.deactivated||doctor.role!=='doctor'||doctor.speciality!=='Cardiology'){location.replace('index.html');return;}
+                const record=getDraft(user.uid);
+                if(!record){fail('Patient draft is missing or belongs to a different session. Return to the dashboard.');return;}
+                uid=user.uid;entries=normalizePreviousInvestigations(record.previousInvestigations);
+                $('patientName').textContent=record.history?.demographics?.name||record.name||'Patient';
+                $('loading').hidden=true;workspace.hidden=false;render();setBusy(false);
+            } catch(e){if(epoch===generation)fail('Unable to verify patient access. Please reload.');}
+        });
+    }
+    start().catch(()=>fail('Unable to initialize PSMS. Please refresh and retry.'));
+</script>
+</body>
+</html>
