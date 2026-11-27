@@ -148,9 +148,9 @@
                     <div class="grid grid-cols-3 gap-4">
                         <div>
                             <label for="gcsEyes" class="text-sm">Eyes (E)</label>
-                            <select id="gcsEyes" class="form-select text-sm">
-                                <option value="0">Not examined</option>
+                            <select id="gcsEyes" class="form-select text-sm" autocomplete="off">
                                 <option value="4" selected>4 - Spontaneous</option>
+                                <option value="0">Not examined</option>
                                 <option value="3">3 - To speech</option>
                                 <option value="2">2 - To pain</option>
                                 <option value="1">1 - None</option>
@@ -158,9 +158,9 @@
                         </div>
                         <div>
                             <label for="gcsVerbal" class="text-sm">Verbal (V)</label>
-                            <select id="gcsVerbal" class="form-select text-sm">
-                                <option value="0">Not examined</option>
+                            <select id="gcsVerbal" class="form-select text-sm" autocomplete="off">
                                 <option value="5" selected>5 - Orientated</option>
+                                <option value="0">Not examined</option>
                                 <option value="4">4 - Confused</option>
                                 <option value="3">3 - Inappropriate words</option>
                                 <option value="2">2 - Incomprehensible</option>
@@ -170,9 +170,9 @@
                         </div>
                         <div>
                             <label for="gcsMotor" class="text-sm">Motor (M)</label>
-                            <select id="gcsMotor" class="form-select text-sm">
-                                <option value="0">Not examined</option>
+                            <select id="gcsMotor" class="form-select text-sm" autocomplete="off">
                                 <option value="6" selected>6 - Obeys commands</option>
+                                <option value="0">Not examined</option>
                                 <option value="5">5 - Localises to pain</option>
                                 <option value="4">4 - Withdraws to pain</option>
                                 <option value="3">3 - Flexion to pain</option>
@@ -181,7 +181,11 @@
                             </select>
                         </div>
                     </div>
-                    <p class="pt-2 text-lg font-semibold text-gray-700">GCS Total: <span id="gcsTotal">15</span></p>
+                    <div class="flex flex-wrap items-center gap-2 pt-2">
+                        <p class="text-lg font-semibold text-gray-700">GCS Total: <span id="gcsTotal">15</span></p>
+                        <button type="button" id="resetGcsButton" class="text-sm font-semibold text-teal-700 underline">Reset to 15</button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Preset E4 V5 M6. Review and adjust if consciousness or responses differ.</p>
                 </div>
                 
                 <div>
@@ -545,7 +549,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="form-label">Apex Beat</label>
-                            <select id="apexBeatLocation" class="form-select">
+                            <select id="apexBeatLocation" class="form-select" autocomplete="off">
                                 <option value="Not examined" selected>Not examined</option>
                                 <option>5th ICS MCL</option>
                                 <option>Displaced (specify)</option>
@@ -1431,6 +1435,19 @@
             gcsEyes.addEventListener('change', calculateGcs);
             gcsVerbal.addEventListener('change', calculateGcs);
             gcsMotor.addEventListener('change', calculateGcs);
+            function presetNormalGcs() {
+                gcsEyes.value = '4';
+                gcsVerbal.value = '5';
+                gcsMotor.value = '6';
+                calculateGcs();
+            }
+            document.getElementById('resetGcsButton').addEventListener('click', presetNormalGcs);
+
+            // Initialize explicitly so browser form restoration cannot substitute
+            // another option when starting a fresh examination.
+            presetNormalGcs();
+            document.getElementById('apexBeatLocation').value = NOT_EXAMINED;
+            document.getElementById('apexBeatCharacter').value = NOT_EXAMINED;
 
             const lymphNodesPalpable = document.getElementById('lymphNodesPalpable');
             const localLapGroupContainer = document.getElementById('localLapGroupContainer');
@@ -1584,10 +1601,22 @@
                 
                 const gs = examData.generalSurvey || {};
                 setVal('appearance', gs.appearance || NOT_EXAMINED);
-                setVal('gcsEyes', gs.gcs?.eyes || '0');
-                setVal('gcsVerbal', gs.gcs?.verbal || '0');
-                setVal('gcsMotor', gs.gcs?.motor || '0');
-                calculateGcs();
+                const savedGcs = gs.gcs;
+                const components = ['eyes', 'verbal', 'motor'];
+                const blankGcs = components.every(key => ['', '0'].includes(String(savedGcs?.[key] ?? '')));
+                const legacyDraftGcs = patientId.startsWith('new_') && blankGcs &&
+                    ['', '0'].includes(String(savedGcs?.total ?? ''));
+                if (legacyDraftGcs) {
+                    // Empty older drafts were initialized as 0, not an assessed score.
+                    // Show the requested preset for clinician review. Do not change
+                    // previously saved assessments or a deliberately unexamined GCS.
+                    presetNormalGcs();
+                } else {
+                    setVal('gcsEyes', savedGcs?.eyes || '0');
+                    setVal('gcsVerbal', savedGcs?.verbal || '0');
+                    setVal('gcsMotor', savedGcs?.motor || '0');
+                    calculateGcs();
+                }
                 setVal('bodyHabitus', gs.bodyHabitus);
                 setVal('handshakeEnquiry', gs.handshakeEnquiry || NOT_EXAMINED);
                 setVal('bedsideEquipments', gs.bedsideEquipments || NOT_EXAMINED);
