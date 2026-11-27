@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>Clinical Summary Card | PSMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #print-area, #print-area * {
+                visibility: visible;
+            }
+            #print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f4f5; /* zinc-100 */
+        }
+        .summary-card {
+            background-color: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px_6px -1px rgb(0 0 0 / 0.1), 0 2px_4px -2px rgb(0 0 0 / 0.1);
+            margin: 2rem auto;
+            max-width: 8.5in; /* Standard letter paper width */
+        }
+        .summary-header {
+            text-align: center;
+            border-bottom: 2px solid #e4e4e7; /* zinc-200 */
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .summary-section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #3f3f46; /* zinc-700 */
+            border-bottom: 1px solid #e4e4e7;
+            padding-bottom: 0.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .summary-subsection-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #52525b; /* zinc-600 */
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .summary-content {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #3f3f46;
+        }
+        .summary-content ul {
+            list-style-position: inside;
+            padding-left: 0.5rem;
+        }
+        .summary-content .data-pair {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.25rem 0;
+        }
+        .summary-content .data-pair .key {
+            font-weight: 500;
+            color: #71717a; /* zinc-500 */
+        }
+        .summary-content .data-pair .value {
+            text-align: right;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 1px solid transparent;
+        }
+        .btn-primary { background-color: #3b82f6; color: white; }
+        .btn-primary:hover { background-color: #2563eb; }
+        .btn-secondary { background-color: #e4e4e7; color: #3f3f46; }
+        .btn-secondary:hover { background-color: #d4d4d8; }
+    </style>
+    <link rel="stylesheet" href="assets/summary-details.css">
+</head>
+<body>
+    <header class="max-w-4xl mx-auto p-4 no-print">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Clinical Summary</h1>
+                <p class="text-sm text-gray-600 mt-1">History and physical examination only</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button id="dashboardButton" class="btn btn-secondary">Dashboard</button>
+                <button id="printButton" class="btn btn-primary" disabled>Print Clinical Summary</button>
+            </div>
+        </div>
+        <div id="draftNotice" class="mt-4 rounded-lg border border-amber-200 bg-amber-50 text-sm text-amber-900 p-3" hidden>
+            <strong>Draft review:</strong> Review the clinical findings before proceeding to investigations. Your progress is held in this patient session; submit the final record from Treatment to save it.
+        </div>
+    </header>
+    <main id="print-area">
+        <div class="summary-card" id="summaryCardContainer" aria-live="polite">
+            <p class="text-center text-gray-500">Verifying patient access…</p>
+        </div>
+    </main>
+    <nav id="actions" class="max-w-4xl mx-auto px-4 pb-8 flex flex-wrap gap-3 justify-between no-print" hidden>
+        <button id="editButton" class="btn btn-secondary">Back to Physical Examination</button>
+        <button id="nextButton" class="btn btn-primary">Next: Investigation</button>
+    </nav>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDocFromServer } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { renderPatientHeader, renderClinicalSections } from "./assets/clinical-summary.js";
+
+        // --- Firebase and Global Config ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDMIZubC87_z2tCnURoqQIJjCWPPdWFdnk",
+            authDomain: "pcms-e1162.firebaseapp.com",
+            projectId: "pcms-e1162",
+            storageBucket: "pcms-e1162.firebasestorage.app",
+            messagingSenderId: "383068543378",
+            appId: "1:383068543378:web:00c7d2bf95f9ded63a494b",
+            measurementId: "G-4C1P3GB6PP"
+        };
+        
+
+        const params = new URLSearchParams(location.search);
+        const from = params.get('from');
+        const patientId = params.get('patientId');
+        const draftMode = params.get('mode') === 'draft';
+        const container = document.getElementById('summaryCardContainer');
+        const actions = document.getElementById('actions');
+        const printButton = document.getElementById('printButton');
+        const editButton = document.getElementById('editButton');
+        const nextButton = document.getElementById('nextButton');
+        const draftNotice = document.getElementById('draftNotice');
+        const sessionKey = 'currentPatientRecord';
+        const ownerKey = 'currentPatientRecordOwner';
+        let auth, db, loadedUser = null, authGeneration = 0;
+        function target(page, draft = false) {
+            const query = new URLSearchParams({from:'cardiology-dashboard.html',patientId});
+            if (draft) query.set('mode','draft');
+            return page + '?' + query.toString();
+        }
+        function fail(message) {
+            loadedUser = null;
+            container.textContent = message;
+            actions.hidden = true;
+            draftNotice.hidden = true;
+            printButton.disabled = true;
+        }
+        function draftFor(uid) {
+            if (sessionStorage.getItem(ownerKey) !== uid) return null;
+            try {
+                const draft = JSON.parse(sessionStorage.getItem(sessionKey));
+                return draft && draft.patientId === patientId ? draft : null;
+            } catch { return null; }
+        }
+        function canUseRecord() {
+            return !!loadedUser && auth?.currentUser?.uid === loadedUser && (!draftMode || !!draftFor(loadedUser));
+        }
+        function show(record, uid) {
+            container.innerHTML = renderPatientHeader(record,'Clinical Summary') +
+                '<p class="text-sm text-gray-500 text-center">'+(draftMode ? 'DRAFT · ' : '')+'Clinical Summary · History and Physical Examination</p>' +
+                renderClinicalSections(record) +
+                '<p class="text-xs text-gray-500 mt-4">Based on recorded form values. Verify findings before clinical use.</p>';
+            loadedUser = uid;
+            draftNotice.hidden = !draftMode;
+            printButton.disabled = false;
+            actions.hidden = false;
+            editButton.textContent = draftMode ? 'Back to Physical Examination' : 'Edit Patient Record';
+            nextButton.textContent = draftMode ? 'Next: Investigation' : 'View Full Patient Summary';
+        }
+        document.getElementById('dashboardButton').addEventListener('click', () => {
+            if (draftMode && auth?.currentUser?.uid && draftFor(auth.currentUser.uid)) {
+                if (!confirm('Exit this patient session? Unsaved changes will be lost.')) return;
+                sessionStorage.removeItem(sessionKey);
+                sessionStorage.removeItem(ownerKey);
+            }
+            location.href = 'cardiology-dashboard.html';
+        });
+        printButton.addEventListener('click', () => {
+            if (canUseRecord()) window.print();
+            else fail('Patient session changed. Please reopen the record.');
+        });
+        editButton.addEventListener('click', () => {
+            if (!canUseRecord()) return fail('Patient session changed. Please reopen the record.');
+            location.href = target(draftMode ? 'cardiology-physicalexam.html' : 'history-page.html');
+        });
+        nextButton.addEventListener('click', () => {
+            if (!canUseRecord()) return fail('Patient session changed. Please reopen the record.');
+            location.href = target(draftMode ? 'investigation.html' : 'summarycard.html');
+        });
+        async function start() {
+            if (from !== 'cardiology-dashboard.html' || !patientId || patientId.includes('/') || (params.has('mode') && !draftMode)) {
+                fail('Invalid patient context. Return to the dashboard and select a patient.');
+                return;
+            }
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            onAuthStateChanged(auth, async user => {
+                const generation = ++authGeneration;
+                fail('Verifying patient access…');
+                if (!user) { location.replace('index.html'); return; }
+                try {
+                    const profile = await getDocFromServer(doc(db, `artifacts/${appId}/public/data/doctors`, user.uid));
+                    if (generation !== authGeneration || auth.currentUser?.uid !== user.uid) return;
+                    const doctor = profile.exists() ? profile.data() : null;
+                    if (!doctor || doctor.deactivated || doctor.role !== 'doctor' || doctor.speciality !== 'Cardiology') {
+                        location.replace('index.html'); return;
+                    }
+                    let record;
+                    if (draftMode) {
+                        record = draftFor(user.uid);
+                        if (!record) { fail('Patient draft is missing or belongs to a different session. Return to the dashboard.'); return; }
+                    } else {
+                        const snap = await getDocFromServer(doc(db,`artifacts/${appId}/doctors/${user.uid}/patients`,patientId));
+                        if (!snap.exists()) { fail('Patient record not found.'); return; }
+                        record = snap.data();
+                    }
+                    if (generation !== authGeneration || auth.currentUser?.uid !== user.uid) return;
+                    show(record,user.uid);
+                } catch (error) {
+                    if (generation === authGeneration) {
+                        console.error('Unable to load clinical summary:',error);
+                        fail('Unable to verify patient access or load the record. Please retry.');
+                    }
+                }
+            });
+        }
+        start().catch(() => fail('Unable to initialize PSMS. Please refresh and retry.'));
+    </script>
+</body>
+</html>
