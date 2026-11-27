@@ -128,14 +128,19 @@
     </nav>
     <dialog id="copyDialog" class="clinical-copy-dialog no-print" aria-labelledby="copyDialogTitle">
         <form method="dialog" class="clinical-copy-body">
-            <h2 id="copyDialogTitle">Copy clinical text</h2>
-            <p>Patient name, full date of birth, address, phone number and occupation fields are omitted from this export. Review the text below for any identifying information in free-text findings before pasting into ChatGPT. Report images are not included; use Copy image on a report or export a PDF separately.</p>
+            <h2 id="copyDialogTitle">Copy complete clinical case</h2>
+            <p>Copy the reviewed summary and every attached previous-investigation image together. Patient name, full date of birth, address, phone number and occupation fields are omitted from the summary; report images and free-text findings may still identify the patient. Review both before sharing.</p>
             <label for="copyText">Review and edit before copying</label>
-            <textarea id="copyText" rows="14" spellcheck="false" autocomplete="off"></textarea>
+            <textarea id="copyText" rows="12" spellcheck="false" autocomplete="off"></textarea>
+            <div id="copyReportCount" class="clinical-copy-report-count"></div>
+            <div id="copyReportPreview" class="clinical-copy-report-preview" aria-label="Report images included in complete copy"></div>
+            <p id="copyFormatHint">Paste once in ChatGPT using Ctrl+V. If only the text appears, use Copy case as one image instead: that format contains the reviewed text and all reports in one picture. For long or image-heavy cases, export the PDF for better readability.</p>
             <p id="copyError" role="status" aria-live="polite"></p>
             <div class="clinical-copy-actions">
-                <button type="submit" class="btn btn-secondary">Cancel</button>
-                <button type="button" id="confirmCopy" class="btn btn-primary">Copy text to clipboard</button>
+                <button type="submit" id="cancelCopy" class="btn btn-secondary">Cancel</button>
+                <button type="button" id="copyTextOnly" class="btn btn-secondary">Copy text only</button>
+                <button type="button" id="copyImageOnly" class="btn btn-secondary" hidden>Copy case as one image</button>
+                <button type="button" id="confirmCopy" class="btn btn-primary">Copy complete case</button>
             </div>
         </form>
     </dialog>
@@ -145,6 +150,7 @@
         import { getFirestore, doc, getDocFromServer } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { renderPatientHeader, renderClinicalSections } from "./assets/clinical-summary.js";
         import { copyReportImage } from "./assets/previous-investigations.js";
+        import { collectCaseReports, copyCompleteCase } from "./assets/case-clipboard.js";
 
         // --- Firebase and Global Config ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -170,6 +176,14 @@
         const copyDialog = document.getElementById('copyDialog');
         const copyText = document.getElementById('copyText');
         const copyError = document.getElementById('copyError');
+        const copyReportCount = document.getElementById('copyReportCount');
+        const copyReportPreview = document.getElementById('copyReportPreview');
+        const copyFormatHint = document.getElementById('copyFormatHint');
+        const confirmCopy = document.getElementById('confirmCopy');
+        const copyTextOnly = document.getElementById('copyTextOnly');
+        const copyImageOnly = document.getElementById('copyImageOnly');
+        const cancelCopy = document.getElementById('cancelCopy');
+        let copyReports = [], copyBusy = false, copyGeneration = 0;
         const exportStatus = document.getElementById('exportStatus');
         const editButton = document.getElementById('editButton');
         const nextButton = document.getElementById('nextButton');
@@ -187,6 +201,7 @@
             loadedRecord = null;
             if (copyDialog.open) copyDialog.close();
             copyText.value = '';
+            clearCopyPreview();
             copyButton.disabled = true;
             exportStatus.textContent = '';
             container.textContent = message;
@@ -242,27 +257,89 @@
             const lines=['CLINICAL SUMMARY — History, Examination and Previous Investigations'];
             for(const node of doc.body.querySelectorAll('h1,h2,h3,h4,p,.summary-group > strong')) {
                 const text=node.textContent.trim();
-                if(text) lines.push((/^H[1-4]$/.test(node.tagName)?'\n':'')+text);
+                if(text) lines.push((/^H[1-4]$/.test(node.tagName)?'\n':'')+text.replace(' report image(s) attached — not included in text export.',' report image(s) attached.'));
             }
             return lines.join('\n').trim();
         }
+        function setCopyBusy(busy) {
+            copyBusy=busy;
+            for(const button of [confirmCopy,copyTextOnly,copyImageOnly,cancelCopy])button.disabled=busy;
+            copyText.readOnly=busy;
+            confirmCopy.textContent=busy?'Preparing clipboard…':'Copy complete case'+(copyReports.length?' (text + '+copyReports.length+' image'+(copyReports.length===1?'':'s')+')':'');
+        }
+        function clearCopyPreview() {
+            copyGeneration++;
+            copyReports=[];
+            copyText.value='';
+            copyError.textContent='';
+            copyReportCount.textContent='';
+            copyReportPreview.replaceChildren();
+            copyImageOnly.hidden=true;
+            setCopyBusy(false);
+        }
+        function showCopyPreview(record) {
+            clearCopyPreview();
+            copyText.value=clipboardClinicalText(record);
+            copyReports=collectCaseReports(record);
+            copyReportCount.textContent=copyReports.length
+                ? copyReports.length+' report image'+(copyReports.length===1?'':'s')+' included with the complete case'
+                : 'No previous-investigation images attached.';
+            for(const report of copyReports){
+                const figure=document.createElement('figure');
+                const image=document.createElement('img');
+                image.src=report.data;image.alt=report.label;
+                const caption=document.createElement('figcaption');caption.textContent=report.label;
+                figure.append(image,caption);copyReportPreview.append(figure);
+            }
+            copyImageOnly.hidden=!copyReports.length;
+            copyFormatHint.hidden=!copyReports.length;
+            setCopyBusy(false);
+        }
         copyButton.addEventListener('click',()=>{
             if (!canUseRecord()||!loadedRecord) return fail('Patient session changed. Please reopen the record.');
-            copyText.value=clipboardClinicalText(loadedRecord);
-            copyError.textContent='';
+            showCopyPreview(loadedRecord);
             copyDialog.showModal();copyText.focus();
         });
-        copyDialog.addEventListener('close',()=>{copyText.value='';copyError.textContent='';});
-        document.getElementById('confirmCopy').addEventListener('click',async()=>{
+        copyDialog.addEventListener('close',clearCopyPreview);
+        copyDialog.addEventListener('cancel',event=>{if(copyBusy)event.preventDefault();});
+        async function handleCompleteCopy(imageOnly=false) {
+            if(copyBusy)return;
             if(!canUseRecord())return fail('Patient session changed. Please reopen the record.');
+            const generation=copyGeneration;
+            const stillAuthorized=()=>generation===copyGeneration&&canUseRecord();
+            const count=copyReports.length;
+            setCopyBusy(true);copyError.textContent='';
+            try {
+                await copyCompleteCase(copyText.value,copyReports,{imageOnly,stillAuthorized});
+                if(!stillAuthorized())return;
+                copyDialog.close();
+                exportStatus.textContent=count
+                    ? (imageOnly?'Complete case image copied.':'Complete case copied: text and '+count+' report image(s).')+' Paste in ChatGPT with Ctrl+V.'
+                    : 'Clinical text copied. Paste it into ChatGPT.';
+            } catch {
+                if(stillAuthorized()){
+                    copyError.textContent='The browser could not copy the complete case. Try Copy case as one image, Copy text only, or export the PDF to include every report.';
+                }
+            } finally {if(generation===copyGeneration)setCopyBusy(false);}
+        }
+        confirmCopy.addEventListener('click',()=>handleCompleteCopy(false));
+        copyImageOnly.addEventListener('click',()=>handleCompleteCopy(true));
+        copyTextOnly.addEventListener('click',async()=>{
+            if(copyBusy)return;
+            if(!canUseRecord())return fail('Patient session changed. Please reopen the record.');
+            const generation=copyGeneration;
+            setCopyBusy(true);copyError.textContent='';
             try {
                 await navigator.clipboard.writeText(copyText.value);
+                if(generation!==copyGeneration||!canUseRecord())return;
                 copyDialog.close();
-                exportStatus.textContent='Clinical text copied. Paste it into ChatGPT or another application.';
+                exportStatus.textContent='Clinical text copied (without report images). Paste it into ChatGPT.';
             } catch {
-                // Select the text so the user can copy manually without data loss.
-                copyText.focus();copyText.select();copyError.textContent='Automatic clipboard access is unavailable. Press Ctrl+C (or use your device’s Copy action).';
-            }
+                if(generation===copyGeneration){
+                    copyText.readOnly=false;copyText.focus();copyText.select();
+                    copyError.textContent='Automatic clipboard access is unavailable. Press Ctrl+C or use your device’s Copy action.';
+                }
+            } finally{if(generation===copyGeneration)setCopyBusy(false);}
         });
         container.addEventListener('click',async event=>{
             const button=event.target.closest('[data-copy-report]');
