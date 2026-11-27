@@ -1262,7 +1262,7 @@
 
         <div class="mt-8 flex flex-col sm:flex-row justify-between gap-4">
             <button id="backToHistoryButton" class="btn btn-secondary">Back to Patient History</button>
-            <button id="nextButton" class="btn btn-primary">Next: Clinical Summary</button>
+            <button id="nextButton" class="btn btn-primary">Next: Previous Investigations</button>
         </div>
          <div class="mt-4 flex justify-center">
              <button id="backToDashboardButton" class="btn btn-secondary">Back to Dashboard</button>
@@ -1592,7 +1592,7 @@
                 saveAndProceed(`history-page.html?from=${fromDashboard}&patientId=${patientId}`);
             });
             document.getElementById('nextButton').addEventListener('click', () => {
-                saveAndProceed(`clinical-summary.html?from=${fromDashboard}&patientId=${encodeURIComponent(patientId)}&mode=draft`);
+                saveAndProceed(`previous-investigations.html?from=${fromDashboard}&patientId=${encodeURIComponent(patientId)}&mode=draft`);
             });
             document.getElementById('backToDashboardButton').addEventListener('click', () => {
                 const confirmExit = confirm("Are you sure you want to exit? All unsaved progress for this patient will be lost.");
