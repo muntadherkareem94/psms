@@ -20,3 +20,28 @@
   .summary-field { break-inside: avoid; }
 }
 [hidden] { display: none !important; }
+
+/* Previous investigation reports are never cropped. A complete report is sized to the PDF page. */
+.previous-summary-category { margin-top:1rem; }
+.previous-summary-item { margin: .75rem 0; border: 1px solid #e2e8f0; border-radius:.65rem; padding:.8rem; background:#fff; }
+.previous-summary-test { margin:0 0 .35rem; font-size:1rem; font-weight:700; color:#0f766e; }
+.report-figure { margin: .9rem 0; padding:.65rem; border:1px solid #e2e8f0; border-radius: .4rem; background:#fff; text-align:center; }
+.report-image { display:block; max-width:100%; height:auto; width:auto; margin:0 auto; object-fit:contain; }
+.report-figure figcaption { margin-top:.45rem; font-size:.8rem; color:#64748b; overflow-wrap:anywhere; }
+.report-copy-button { padding: .35rem .7rem; margin-top:.5rem; border-radius:.4rem; color:#0f766e; font-size:.82rem; background:#f0fdfa; border:1px solid #99f6e4; cursor:pointer; }
+.clinical-copy-dialog { width:min(760px,calc(100% - 24px)); max-height:90vh; overflow:auto; margin:auto; padding:0; border:1px solid #cbd5e1; border-radius:1rem; box-shadow:0 20px 50px #0f172a40; color:#334155; background:white; }
+.clinical-copy-dialog::backdrop {background:#0f172a80}
+.clinical-copy-body {padding:20px; display:flex; flex-direction:column; gap:12px}
+.clinical-copy-body h2 {font-size:1.3rem;font-weight:700}
+.clinical-copy-body p {font-size:.89rem;color:#475569;line-height:1.5}
+.clinical-copy-body label {font-size:.91rem;font-weight:600}
+.clinical-copy-body textarea {border:1px solid #cbd5e1;padding:10px;border-radius:8px;font-size:.85rem;width:100%;resize:vertical;max-height:55vh}
+.clinical-copy-actions {display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+@media print {
+  @page { size:A4; margin:12mm; }
+  .report-figure {break-inside:avoid;page-break-inside:avoid;border:0;padding:0;margin:0.5rem 0; }
+  .report-image {max-height:235mm;max-width:100%;height:auto;width:auto;object-fit:contain;}
+  .previous-summary-item {border:0;padding:0;margin:.5rem 0;}
+  .previous-summary-test {break-after:avoid;}
+  .clinical-copy-dialog,.no-print {display:none!important;}
+}
