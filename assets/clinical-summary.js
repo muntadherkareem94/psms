@@ -83,7 +83,8 @@ function renderHistory(record, {hideDirectIdentifiers=false}={}) {
     const social = object(h.socioeconomic);
     const smoking = {...object(social.smoking)};
     if (!scalar(smoking.cigsPerDay) || !scalar(smoking.yearsSmoked)) delete smoking.packYears;
-    if (smoking.status === 'non-smoker') { delete smoking.cigsPerDay; delete smoking.yearsSmoked; delete smoking.packYears; }
+    if (['non-smoker','passive-smoker'].includes(smoking.status)) { delete smoking.cigsPerDay; delete smoking.yearsSmoked; delete smoking.packYears; }
+    if (smoking.status === 'passive-smoker') smoking.status = 'Passive smoker';
     const petHistory = {...object(social.petHistory)};
     if (petHistory.hadPet === 'no') delete petHistory.pets;
     const family = {...object(h.family)};
@@ -118,19 +119,45 @@ function renderHistory(record, {hideDirectIdentifiers=false}={}) {
     ];
     return section('History',groups.map(([title,value])=>group(title,value)).join(''),'No history findings recorded.');
 }
+// Keep defaults readable: collapse entire unexamined groups into one status
+// line, while retaining mixed findings and all free-text notes.
+function onlyNotExamined(value) {
+    const leaves=[];
+    function visit(item) {
+        if (Array.isArray(item)) item.forEach(visit);
+        else if (item && typeof item==='object') Object.values(item).forEach(visit);
+        else { const text=scalar(item); if (text) leaves.push(text); }
+    }
+    visit(value);
+    return leaves.length > 0 && leaves.every(text=>text.toLowerCase()==='not examined');
+}
+function examinationGroup(title, value, notes) {
+    if (onlyNotExamined(value)) return group(title, {status:'Not examined',notes});
+    if (!scalar(notes)) return group(title,value);
+    const data = object(value);
+    if (value && typeof value==='object' && !Array.isArray(value)) return group(title,{...data,sectionNotes:notes});
+    return group(title,{findings:value,notes});
+}
 function extendedExam(exam) {
     let html = '';
     for (const system of extendedExams) {
+        const notes = exam.sectionNotes?.[system.key];
+        if (onlyNotExamined(exam[system.key])) {
+            html += examinationGroup(system.title,exam[system.key],notes);
+            continue;
+        }
         let sections = '';
         for (const part of system.sections) {
             const data = part.key ? exam[system.key]?.[part.key] : exam[system.key];
             const groups = part.groups.map(g => {
-                const fields = g.fields.map(f => valueRows(data?.[g.key]?.[f.key],f.label)).join('');
+                const values = g.fields.map(f => data?.[g.key]?.[f.key]);
+                const fields = onlyNotExamined(values) ? line('Status','Not examined') : g.fields.map(f => valueRows(data?.[g.key]?.[f.key],f.label)).join('');
                 return fields ? '<div class="summary-group"><strong>'+escape(g.label)+'</strong>'+fields+'</div>' : '';
             }).join('');
             if (groups) sections += (part.title ? '<h4 class="font-semibold mt-3 mb-2">'+escape(part.title)+'</h4>' : '')+groups;
         }
-        if (sections) html += '<div class="summary-block"><h3 class="summary-subsection-title">'+escape(system.title)+'</h3>'+sections+'</div>';
+        const noteHtml = line('Notes',notes);
+        if (sections || noteHtml) html += '<div class="summary-block"><h3 class="summary-subsection-title">'+escape(system.title)+'</h3>'+sections+noteHtml+'</div>';
     }
     return html;
 }
@@ -138,9 +165,12 @@ function renderExamination(record) {
     const e = object(record.examination);
     const generalSurvey = {...object(e.generalSurvey)};
     const gcs = {...object(generalSurvey.gcs)};
-    for (const k of ['eyes','verbal','motor']) if (String(gcs[k]) === '0') delete gcs[k];
-    if (!gcs.eyes || !gcs.verbal || !gcs.motor) delete gcs.total;
-    generalSurvey.gcs = gcs;
+    const components=['eyes','verbal','motor'];
+    if (Object.keys(gcs).length) {
+        for (const k of components) if (!scalar(gcs[k]) || String(gcs[k]) === '0') gcs[k]='Not examined';
+        if (components.some(k=>gcs[k]==='Not examined')) delete gcs.total;
+        generalSurvey.gcs = onlyNotExamined(gcs) ? 'Not examined' : gcs;
+    }
     const anthro = {...object(e.anthropometrics)};
     if (!scalar(anthro.height) || !scalar(anthro.weight)) delete anthro.bmi;
     const cv = {...object(e.cardiovascularExam)};
@@ -149,13 +179,13 @@ function renderExamination(record) {
     if (nodes.palpable !== 'Local LAP') delete nodes.group;
     if (!nodes.palpable || /^no/i.test(nodes.palpable)) delete nodes.consistency;
     const groups = [
-        ['General Survey',generalSurvey],['Vital Signs',e.vitals],['Anthropometric Measurements',anthro],
-        ['Hand Examination',e.hand],['Eyes Examination',e.eyes],['Mouth Examination',e.mouth],
-        ['Leg Edema',e.legEdema],['Lymph Nodes',nodes],['Jugular Venous Pressure',e.jvp],
-        ['Cardiovascular System',cv],['Peripheral Vascular Examination',e.peripheralVascularExam],['Respiratory System',e.respiratoryBrief]
+        ['General Survey',generalSurvey,'generalSurvey'],['Vital Signs',e.vitals,'vitals'],['Anthropometric Measurements',anthro,'anthropometrics'],
+        ['Hand Examination',e.hand,'hand'],['Eyes Examination',e.eyes,'eyes'],['Mouth Examination',e.mouth,'mouth'],
+        ['Leg Edema',e.legEdema,'legEdema'],['Lymph Nodes',nodes,'lymphNodes'],['Jugular Venous Pressure',e.jvp,'jvp'],
+        ['Cardiovascular System',cv,'cardiovascularExam'],['Peripheral Vascular Examination',e.peripheralVascularExam,'peripheralVascularExam'],['Respiratory System',e.respiratoryBrief,'respiratoryBrief']
     ];
     const legacy = group('Physical examination (previous notes)',record.physicalExam);
-    return section('Physical Examination',groups.map(([title,value])=>group(title,value)).join('')+extendedExam(e)+legacy,'No examination findings recorded.');
+    return section('Physical Examination',groups.map(([title,value,key])=>examinationGroup(title,value,e.sectionNotes?.[key])).join('')+extendedExam(e)+legacy,'No examination findings recorded.');
 }
 export function renderClinicalSections(record, options={}) {
     return renderHistory(record, options)+renderExamination(record)+renderPreviousInvestigations(record,options);
