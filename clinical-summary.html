@@ -129,18 +129,18 @@
     <dialog id="copyDialog" class="clinical-copy-dialog no-print" aria-labelledby="copyDialogTitle">
         <form method="dialog" class="clinical-copy-body">
             <h2 id="copyDialogTitle">Copy complete clinical case</h2>
-            <p>Copy the reviewed summary and every attached previous-investigation image together. Patient name, full date of birth, address, phone number and occupation fields are omitted from the summary; report images and free-text findings may still identify the patient. Review both before sharing.</p>
+            <p>Copy the reviewed summary and every attached previous-investigation image together as a single picture. This prevents ChatGPT from choosing a text-only clipboard format. Patient name, full date of birth, address, phone number and occupation fields are omitted from the summary; report images and free-text findings may still identify the patient. Review both before sharing.</p>
             <label for="copyText">Review and edit before copying</label>
             <textarea id="copyText" rows="12" spellcheck="false" autocomplete="off"></textarea>
             <div id="copyReportCount" class="clinical-copy-report-count"></div>
             <div id="copyReportPreview" class="clinical-copy-report-preview" aria-label="Report images included in complete copy"></div>
-            <p id="copyFormatHint">Paste once in ChatGPT using Ctrl+V. If only the text appears, use Copy case as one image instead: that format contains the reviewed text and all reports in one picture. For long or image-heavy cases, export the PDF for better readability.</p>
+            <p id="copyFormatHint">For one paste, choose Copy complete case as image. For editable text plus the original report images in the same ChatGPT message, click Copy text, paste it into ChatGPT without sending, then return here, click Copy all report images, and paste again. A PDF is best for lengthy cases.</p>
             <p id="copyError" role="status" aria-live="polite"></p>
             <div class="clinical-copy-actions">
-                <button type="submit" id="cancelCopy" class="btn btn-secondary">Cancel</button>
-                <button type="button" id="copyTextOnly" class="btn btn-secondary">Copy text only</button>
-                <button type="button" id="copyImageOnly" class="btn btn-secondary" hidden>Copy case as one image</button>
-                <button type="button" id="confirmCopy" class="btn btn-primary">Copy complete case</button>
+                <button type="submit" id="cancelCopy" class="btn btn-secondary">Done</button>
+                <button type="button" id="copyTextOnly" class="btn btn-secondary">Copy text</button>
+                <button type="button" id="copyImageOnly" class="btn btn-secondary" hidden>Copy all report images</button>
+                <button type="button" id="confirmCopy" class="btn btn-primary">Copy complete case as image</button>
             </div>
         </form>
     </dialog>
@@ -265,7 +265,7 @@
             copyBusy=busy;
             for(const button of [confirmCopy,copyTextOnly,copyImageOnly,cancelCopy])button.disabled=busy;
             copyText.readOnly=busy;
-            confirmCopy.textContent=busy?'Preparing clipboard…':'Copy complete case'+(copyReports.length?' (text + '+copyReports.length+' image'+(copyReports.length===1?'':'s')+')':'');
+            confirmCopy.textContent=busy?'Preparing clipboard…':copyReports.length?'Copy complete case as image (text + '+copyReports.length+' report'+(copyReports.length===1?'':'s')+')':'Copy complete clinical text';
         }
         function clearCopyPreview() {
             copyGeneration++;
@@ -302,7 +302,7 @@
         });
         copyDialog.addEventListener('close',clearCopyPreview);
         copyDialog.addEventListener('cancel',event=>{if(copyBusy)event.preventDefault();});
-        async function handleCompleteCopy(imageOnly=false) {
+        async function handleCompleteCopy(reportsOnly=false) {
             if(copyBusy)return;
             if(!canUseRecord())return fail('Patient session changed. Please reopen the record.');
             const generation=copyGeneration;
@@ -310,15 +310,20 @@
             const count=copyReports.length;
             setCopyBusy(true);copyError.textContent='';
             try {
-                await copyCompleteCase(copyText.value,copyReports,{imageOnly,stillAuthorized});
+                await copyCompleteCase(copyText.value,copyReports,{reportsOnly,stillAuthorized});
                 if(!stillAuthorized())return;
-                copyDialog.close();
-                exportStatus.textContent=count
-                    ? (imageOnly?'Complete case image copied.':'Complete case copied: text and '+count+' report image(s).')+' Paste in ChatGPT with Ctrl+V.'
-                    : 'Clinical text copied. Paste it into ChatGPT.';
+                if(reportsOnly){
+                    copyError.textContent='All '+count+' report image(s) copied. Paste into the same ChatGPT message, then click Done here.';
+                    exportStatus.textContent='Report images copied to clipboard.';
+                }else{
+                    copyDialog.close();
+                    exportStatus.textContent=count
+                        ? 'Complete case copied as one image, including text and all '+count+' report image(s). Paste in ChatGPT with Ctrl+V.'
+                        : 'Clinical text copied. Paste it into ChatGPT.';
+                }
             } catch {
                 if(stillAuthorized()){
-                    copyError.textContent='The browser could not copy the complete case. Try Copy case as one image, Copy text only, or export the PDF to include every report.';
+                    copyError.textContent='The browser could not copy the image. Try Copy text and Copy all report images separately, or export the PDF to include every report.';
                 }
             } finally {if(generation===copyGeneration)setCopyBusy(false);}
         }
@@ -332,8 +337,13 @@
             try {
                 await navigator.clipboard.writeText(copyText.value);
                 if(generation!==copyGeneration||!canUseRecord())return;
-                copyDialog.close();
-                exportStatus.textContent='Clinical text copied (without report images). Paste it into ChatGPT.';
+                if(copyReports.length){
+                    copyError.textContent='Text copied. Paste it into ChatGPT without sending, then return here and click Copy all report images.';
+                    exportStatus.textContent='Clinical text copied (without report images).';
+                }else{
+                    copyDialog.close();
+                    exportStatus.textContent='Clinical text copied. Paste it into ChatGPT.';
+                }
             } catch {
                 if(generation===copyGeneration){
                     copyText.readOnly=false;copyText.focus();copyText.select();
