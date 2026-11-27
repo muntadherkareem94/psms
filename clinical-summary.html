@@ -107,12 +107,13 @@
             </div>
             <div class="flex flex-wrap gap-2">
                 <button id="dashboardButton" class="btn btn-secondary">Dashboard</button>
-                <button id="copyButton" class="btn btn-secondary" disabled>Copy for ChatGPT</button>
-                <button id="printButton" class="btn btn-primary" disabled>Export PDF / Print</button>
+                <button id="casePdfButton" class="btn btn-primary" disabled>Download case PDF for ChatGPT</button>
+                <button id="copyButton" class="btn btn-secondary" disabled>Copy text / images</button>
+                <button id="printButton" class="btn btn-secondary" disabled>Export PDF / Print</button>
             </div>
         </div>
         <p id="exportStatus" class="text-sm text-gray-600 mt-2" role="status" aria-live="polite"></p>
-        <p class="text-xs text-gray-500 mt-2">PDF: choose Save as PDF in the print dialog. The PDF includes identifiers and report images. Review before sharing.</p>
+        <p class="text-xs text-gray-500 mt-2">For ChatGPT: download the complete case PDF (text + every report), then attach it in the chat. Direct demographic identifiers are omitted; free text and report images may still identify the patient. Review before sharing. Export PDF / Print remains available for the full clinical card with identifiers.</p>
         <div id="draftNotice" class="mt-4 rounded-lg border border-amber-200 bg-amber-50 text-sm text-amber-900 p-3" hidden>
             <strong>Draft review:</strong> Review the clinical findings before proceeding to investigations. Your progress is held in this patient session; submit the final record from Treatment to save it.
         </div>
@@ -129,12 +130,12 @@
     <dialog id="copyDialog" class="clinical-copy-dialog no-print" aria-labelledby="copyDialogTitle">
         <form method="dialog" class="clinical-copy-body">
             <h2 id="copyDialogTitle">Copy complete clinical case</h2>
-            <p>Copy the reviewed summary and every attached previous-investigation image together as a single picture. This prevents ChatGPT from choosing a text-only clipboard format. Patient name, full date of birth, address, phone number and occupation fields are omitted from the summary; report images and free-text findings may still identify the patient. Review both before sharing.</p>
+            <p>Copy the reviewed summary or report images separately. For a complete case, the direct PDF download is recommended because text and images are preserved together. Patient name, full date of birth, address, phone number and occupation fields are omitted from the summary; report images and free-text findings may still identify the patient. Review both before sharing.</p>
             <label for="copyText">Review and edit before copying</label>
             <textarea id="copyText" rows="12" spellcheck="false" autocomplete="off"></textarea>
             <div id="copyReportCount" class="clinical-copy-report-count"></div>
             <div id="copyReportPreview" class="clinical-copy-report-preview" aria-label="Report images included in complete copy"></div>
-            <p id="copyFormatHint">For one paste, choose Copy complete case as image. For editable text plus the original report images in the same ChatGPT message, click Copy text, paste it into ChatGPT without sending, then return here, click Copy all report images, and paste again. A PDF is best for lengthy cases.</p>
+            <p id="copyFormatHint">For editable text and original reports in the same ChatGPT message, click Copy text, paste without sending, then return here and click Copy all report images and paste again. For the simplest complete-case transfer, use Download case PDF for ChatGPT.</p>
             <p id="copyError" role="status" aria-live="polite"></p>
             <div class="clinical-copy-actions">
                 <button type="submit" id="cancelCopy" class="btn btn-secondary">Done</button>
@@ -173,6 +174,8 @@
         const actions = document.getElementById('actions');
         const printButton = document.getElementById('printButton');
         const copyButton = document.getElementById('copyButton');
+        const casePdfButton = document.getElementById('casePdfButton');
+        let casePdfBusy = false;
         const copyDialog = document.getElementById('copyDialog');
         const copyText = document.getElementById('copyText');
         const copyError = document.getElementById('copyError');
@@ -203,6 +206,7 @@
             copyText.value = '';
             clearCopyPreview();
             copyButton.disabled = true;
+            casePdfButton.disabled = true;
             exportStatus.textContent = '';
             container.textContent = message;
             actions.hidden = true;
@@ -229,6 +233,7 @@
             draftNotice.hidden = !draftMode;
             printButton.disabled = false;
             copyButton.disabled = false;
+            casePdfButton.disabled = casePdfBusy;
             actions.hidden = false;
             editButton.textContent = draftMode ? 'Back to Previous Investigations' : 'Edit Patient Record';
             nextButton.textContent = draftMode ? 'Next: Investigation' : 'View Full Patient Summary';
@@ -261,6 +266,31 @@
             }
             return lines.join('\n').trim();
         }
+        casePdfButton.addEventListener('click', async () => {
+            if (casePdfBusy) return;
+            if (!canUseRecord() || !loadedRecord) return fail('Patient session changed. Please reopen the record.');
+            const record = loadedRecord, generation = authGeneration;
+            const stillAuthorized = () => generation === authGeneration && loadedRecord === record && canUseRecord();
+            casePdfBusy = true;
+            casePdfButton.disabled = true;
+            casePdfButton.textContent = 'Preparing complete PDF…';
+            exportStatus.textContent = 'Creating the PDF locally with readable text and full report images…';
+            try {
+                const { buildClinicalCasePdf, downloadClinicalCasePdf } = await import('./assets/case-pdf.js');
+                if (!stillAuthorized()) return;
+                const reports = collectCaseReports(record);
+                const bytes = await buildClinicalCasePdf(clipboardClinicalText(record), reports);
+                if (!stillAuthorized()) return;
+                downloadClinicalCasePdf(bytes);
+                exportStatus.textContent = 'PDF download started: PSMS-clinical-case.pdf (' + reports.length + ' report image(s)). Attach it from Downloads in ChatGPT after reviewing for patient identifiers.';
+            } catch (error) {
+                if (stillAuthorized()) exportStatus.textContent = 'Unable to create the complete PDF. No partial file was downloaded. Use Export PDF / Print or retry.';
+            } finally {
+                casePdfBusy = false;
+                casePdfButton.disabled = !canUseRecord();
+                casePdfButton.textContent = 'Download case PDF for ChatGPT';
+            }
+        });
         function setCopyBusy(busy) {
             copyBusy=busy;
             for(const button of [confirmCopy,copyTextOnly,copyImageOnly,cancelCopy])button.disabled=busy;
