@@ -1,0 +1,43 @@
+:root { --paper:#fff; --ink:#1f2937; --muted:#64748b; --primary:#0f766e; --line:#e2e8f0; }
+.previous-page { margin:0; background:linear-gradient(145deg,#e0f2fe,#ecfdf5 60%,#f8fafc); font-family:Inter,system-ui,sans-serif; color:var(--ink); min-height:100vh; }
+.previous-shell { max-width:1100px; margin:auto; padding:24px 20px 56px; }
+.previous-header {display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.previous-header h1 {font-size:clamp(1.65rem,4vw,2.15rem);margin:0 0 6px;font-weight:750;letter-spacing:-.025em}
+.previous-header p,.previous-muted {font-size:.9rem;color:var(--muted);margin:0;line-height:1.5}
+.previous-steps {display:flex;gap:6px;flex-wrap:wrap;align-items:center;color:var(--muted);font-size:.8rem;font-weight:600;margin-bottom:20px}
+.previous-steps .active {color:#0f766e;background:#ccfbf1;border-radius:20px;padding:7px 10px}
+.previous-card {background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 5px 15px #0f172a08;margin-bottom:16px}
+.previous-intro {display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.previous-intro h2 {font-size:1.1rem;font-weight:700;margin:0 0 4px}
+.previous-button {border:1px solid transparent;border-radius:9px;cursor:pointer;padding:11px 16px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:.92rem;font-weight:650;min-height:44px;line-height:1.25}
+.previous-button.primary {background:var(--primary);color:white}
+.previous-button.primary:hover {background:#115e59}
+.previous-button.secondary {background:#f1f5f9;border-color:#e2e8f0;color:#334155}
+.previous-button.secondary:hover {background:#e2e8f0}
+.previous-button.danger {color:#b91c1c;border-color:#fecaca;background:#fff7f7}
+.previous-button:disabled {opacity:.48;cursor:not-allowed}
+.previous-add-row {display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.previous-add-row .previous-button {flex:1;min-width:170px}
+.previous-item-header {display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.previous-item-header h2 {font-size:1.13rem;margin:0;color:var(--primary);font-weight:700}
+.previous-grid {display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.previous-field {display:flex;flex-direction:column;gap:6px}
+.previous-field label {font-size:.88rem;font-weight:650;color:#334155}
+.previous-field input,.previous-field select,.previous-field textarea {width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;background:white;font:inherit;font-size:.95rem;color:var(--ink);box-sizing:border-box}
+.previous-field textarea {min-height:122px;resize:vertical;line-height:1.5}
+.previous-field :focus {outline:2px solid #5eead4;outline-offset:1px}
+.previous-attachments {margin-top:16px;padding-top:15px;border-top:1px solid var(--line)}
+.previous-attachments h3 {font-size:.94rem;font-weight:700;margin-bottom:4px}
+.previous-file-list {display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:14px}
+.previous-image-card {border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#f8fafc;min-width:0}
+.previous-image-card img {display:block;width:100%;height:160px;object-fit:contain;background:white}
+.previous-image-card .file-info {padding:9px;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.previous-image-card .file-name {font-size:.76rem;color:#475569;overflow-wrap:anywhere;min-width:0}
+.previous-image-card .remove-image {border:0;background:none;cursor:pointer;color:#b91c1c;font-weight:700;font-size:.82rem}
+.previous-status {margin:12px 0;color:#0f766e;font-size:.86rem;line-height:1.5}
+.previous-status.error {color:#b91c1c;background:#fff1f2;border-radius:8px;padding:10px}
+.previous-actions {display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:20px}
+.previous-empty {text-align:center;padding:30px 15px;color:var(--muted);border:1px dashed #b7cbd3;border-radius:12px;background:#ffffffb3}
+.previous-capacity {margin-top:10px;font-size:.8rem;color:var(--muted)}
+[hidden] {display:none!important}
+@media(max-width:700px){.previous-grid{grid-template-columns:1fr}.previous-shell{padding:16px 12px 34px}.previous-card{padding:16px}.previous-actions .previous-button{flex:1;min-width:130px}}
