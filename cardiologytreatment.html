@@ -359,6 +359,15 @@
 
             const finalRecord = { ...fullPatientRecord, lastUpdated: serverTimestamp() };
             delete finalRecord.patientId; 
+            // Previous investigation images are stored in this document. Check the
+            // complete record, including new investigation/treatment uploads, before saving.
+            if (Array.isArray(finalRecord.previousInvestigations) && finalRecord.previousInvestigations.length &&
+                new TextEncoder().encode(JSON.stringify(finalRecord)).length > 900000) {
+                showMessage('This record is too large to save safely. Go back and remove some report images or replace them with written results.', true);
+                submitButton.disabled = false; submitButton.textContent = 'Submit and Save to Record';
+                return;
+            }
+
 
             try {
                 if (patientId.startsWith('new_')) {
