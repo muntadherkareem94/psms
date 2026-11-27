@@ -204,7 +204,7 @@
         </div>
 
         <div class="mt-8 flex flex-col sm:flex-row justify-between gap-4">
-            <button id="backButton" class="btn btn-secondary">Back to Physical Examination</button>
+            <button id="backButton" class="btn btn-secondary">Back to Clinical Summary</button>
             <button id="nextButton" class="btn btn-primary">Next: Treatment</button>
         </div>
          <div class="mt-4 flex justify-center">
@@ -537,7 +537,7 @@ function setupEventListeners() {
     }
 
     // Main Page Buttons
-    document.getElementById('backButton').addEventListener('click', () => saveAndProceed(`cardiology-physicalexam.html?from=${fromDashboard}&patientId=${patientId}`));
+    document.getElementById('backButton').addEventListener('click', () => saveAndProceed(`clinical-summary.html?from=${fromDashboard}&patientId=${encodeURIComponent(patientId)}&mode=draft`));
     document.getElementById('nextButton').addEventListener('click', () => {
         const specialtyTreatmentMap = { 'cardiology-dashboard.html': 'cardiologytreatment.html' };
         const destination = specialtyTreatmentMap[fromDashboard] || 'treatment.html';
