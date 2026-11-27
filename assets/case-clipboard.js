@@ -1,5 +1,5 @@
-// Local complete-case export. All clipboard formats contain the same reviewed case.
-// Clipboard consumers decide which format they paste; nothing is sent to a remote service.
+// Local complete-case export. Use exactly one clipboard format per action.
+// Some paste targets prefer plain text and drop images when both formats are present.
 import { investigationCategories, cleanPreviousInvestigations, safeImageUrl } from './previous-investigations.js';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -68,23 +68,34 @@ function loadReport(report) {
         return {...report,img,width:img.naturalWidth,height:img.naturalHeight};
     });
 }
-export async function buildCompleteCasePNG(text,reports) {
+export async function buildCompleteCasePNG(text,reports,{includeText=true}={}) {
     const decoded = await Promise.all(validReports(reports).map(loadReport));
-    const padding=38, gap=28, fontSize=30, lineHeight=44, minWidth=1540;
+    if(!includeText && decoded.length===1){
+        // The reports-only action preserves a single report at its exact stored resolution.
+        const report=decoded[0],canvas=document.createElement('canvas');
+        canvas.width=report.width;canvas.height=report.height;
+        const ctx=canvas.getContext('2d');
+        if(!ctx)throw new Error('Canvas is unavailable.');
+        ctx.drawImage(report.img,0,0);
+        return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Could not copy the report.')),'image/png'));
+    }
+    const padding=38, gap=28, fontSize=30, lineHeight=44, minWidth=includeText?1540:700;
     const panelWidth=Math.max(minWidth,...decoded.map(r=>Math.min(r.width,2400)+padding*2));
     const innerWidth=panelWidth-padding*2;
     const scratch=document.createElement('canvas');
     const measure=scratch.getContext('2d');
     if(!measure)throw new Error('Canvas is unavailable.');
-    measure.font=fontSize+'px Arial, sans-serif';
-    const lines=wrapCaseText(measure,text,innerWidth);
-    const perPanel=46;
     const panels=[];
-    const pageCount=Math.max(1,Math.ceil(lines.length/perPanel));
-    for(let i=0;i<pageCount;i++){
-        const pageLines=lines.slice(i*perPanel,(i+1)*perPanel);
-        panels.push({kind:'text',title:'Clinical summary · '+(i+1)+' / '+pageCount,
-            lines:pageLines,height:padding*2+100+pageLines.length*lineHeight});
+    if(includeText){
+        measure.font=fontSize+'px Arial, sans-serif';
+        const lines=wrapCaseText(measure,text,innerWidth);
+        const perPanel=46;
+        const pageCount=Math.max(1,Math.ceil(lines.length/perPanel));
+        for(let i=0;i<pageCount;i++){
+            const pageLines=lines.slice(i*perPanel,(i+1)*perPanel);
+            panels.push({kind:'text',title:'Clinical summary · '+(i+1)+' / '+pageCount,
+                lines:pageLines,height:padding*2+100+pageLines.length*lineHeight});
+        }
     }
     for(const report of decoded) {
         measure.font='bold 28px Arial, sans-serif';
@@ -94,6 +105,7 @@ export async function buildCompleteCasePNG(text,reports) {
         const drawH=Math.max(1,Math.round(report.height*fit));
         panels.push({kind:'image',titleLines,img:report.img,drawW,drawH,height:padding*2+titleLines.length*40+26+drawH});
     }
+    if(!panels.length)throw new Error("No report images attached.");
     // A near-square panel grid avoids a single excessively tall image. Scale only
     // when browser canvas limits require it; every panel is retained, never cropped.
     const columns=Math.min(5,Math.max(1,Math.ceil(Math.sqrt(panels.length))));
@@ -143,27 +155,23 @@ export async function buildCompleteCasePNG(text,reports) {
     });
 }
 
-export function copyCompleteCase(text,reports,{imageOnly=false,stillAuthorized=()=>true}={}) {
+export function copyCompleteCase(text,reports,{reportsOnly=false,stillAuthorized=()=>true}={}) {
     if(!stillAuthorized())throw new Error('Patient session changed.');
-    if(!reports.length&&!imageOnly){
+    validReports(reports);
+    if(!reports.length){
+        if(reportsOnly)throw new Error('No report images attached.');
         if(!navigator.clipboard?.writeText)throw new Error('Clipboard access is unavailable.');
         return navigator.clipboard.writeText(text);
     }
-    if(!navigator.clipboard?.write||typeof ClipboardItem==='undefined')throw new Error('This browser does not support copying images together with text.');
-    validReports(reports);
-    // Pass a promise to ClipboardItem and invoke clipboard.write within the
-    // actual click handler, retaining the browser's user-activation permission.
-    const png=buildCompleteCasePNG(text,reports).then(blob=>{
+    if(!navigator.clipboard?.write||typeof ClipboardItem==='undefined')throw new Error('This browser does not support copying report images.');
+    // IMPORTANT: only write image/png when reports are present. A multi-format
+    // item offers text as an alternative; ChatGPT may choose it and omit images.
+    // The PNG contains both the reviewed summary and all full report images,
+    // or just report images when explicitly requested for a second paste.
+    const png=buildCompleteCasePNG(text,reports,{includeText:!reportsOnly}).then(blob=>{
         if(!stillAuthorized())throw new Error('Patient session changed.');
         return blob;
     });
-    // Prevent an unhandled rejection if the permission prompt rejects before the PNG is ready.
     png.catch(()=>{});
-    const formats={'image/png':png};
-    if(!imageOnly){
-        formats['text/plain']=new Blob([text],{type:'text/plain'});
-        formats['text/html']=new Blob([buildCaseClipboardHTML(text,reports)],{type:'text/html'});
-    }
-    try{return navigator.clipboard.write([new ClipboardItem(formats)]);}
-    catch(error){png.catch(()=>{});throw error;}
+    return navigator.clipboard.write([new ClipboardItem({'image/png':png})]);
 }
