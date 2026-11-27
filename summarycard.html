@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="referrer" content="no-referrer">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Summary Card</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -95,15 +96,17 @@
         .btn-secondary { background-color: #e4e4e7; color: #3f3f46; }
         .btn-secondary:hover { background-color: #d4d4d8; }
     </style>
+    <link rel="stylesheet" href="assets/summary-details.css">
 </head>
 <body>
 
     <div class="max-w-4xl mx-auto p-4 no-print">
-        <div class="flex justify-between items-center">
+        <div class="flex flex-wrap gap-3 justify-between items-center">
             <h1 class="text-2xl font-bold text-gray-800">Patient Summary</h1>
-            <div class="flex gap-4">
+            <div class="flex flex-wrap gap-2">
                 <button id="backToDashboardButton" class="btn btn-secondary">Back to Dashboard</button>
-                <button id="printButton" class="btn btn-primary">Print Summary</button>
+                <a id="clinicalSummaryLink" class="btn btn-secondary" hidden>Clinical Summary</a>
+                <button id="printButton" disabled class="btn btn-primary">Print Summary</button>
             </div>
         </div>
     </div>
@@ -120,6 +123,8 @@
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDocFromServer } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        import { renderPatientHeader, renderClinicalSections, renderInvestigationAndTreatmentSections } from "./assets/clinical-summary.js";
+
         // --- Firebase and Global Config ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
@@ -132,7 +137,7 @@
             measurementId: "G-4C1P3GB6PP"
         };
         
-        let app, db, auth, doctorUserId, fromDashboard, patientId;
+        let app, db, auth, doctorUserId, fromDashboard, patientId, authGeneration = 0;
 
         // --- DOM Elements ---
         const summaryCardContainer = document.getElementById('summaryCardContainer');
@@ -140,7 +145,7 @@
         const printButton = document.getElementById('printButton');
 
         // --- Helper Functions ---
-        const isEmpty = (arr) => !arr || arr.length === 0;
+        const isEmpty = (arr) => !Array.isArray(arr) || arr.length === 0;
         const toSentenceCase = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 
         /**
@@ -151,24 +156,24 @@
             if (!record || !record.history) return "Not enough information to generate a summary.";
 
             const { history, examination, treatment } = record;
-            const { demographics = {}, chiefComplaint = {}, hpi = '', pastMedical = [] } = history;
-            const { vitals = {}, cardiovascularExam = {} } = examination || {};
+            const { hpi = '', pastMedical = [] } = history;
+            const demographics = history.demographics || {}, chiefComplaint = history.chiefComplaint || {};
+            const vitals = examination?.vitals || {}, cardiovascularExam = examination?.cardiovascularExam || {};
             const { diagnosis: finalDiagnosis, pharmacological = [] } = treatment || {};
             
-            const age = demographics.dob ? `${new Date(new Date() - new Date(demographics.dob)).getFullYear() - 1970}` : 'An unknown age';
+            const dob = new Date(demographics.dob);
+            const age = demographics.dob && Number.isFinite(dob.getTime()) && dob <= new Date() ? new Date(new Date() - dob).getUTCFullYear() - 1970 : null;
             const gender = demographics.gender || 'patient';
 
-            let summary = `This is a ${age}-year-old ${gender.toLowerCase()}`;
+            let summary = age === null ? `This is a ${String(gender).toLowerCase()}` : `This is a ${age}-year-old ${String(gender).toLowerCase()}`;
             if (demographics.name) summary += `, ${demographics.name},`;
             summary += ` who presented with a chief complaint of "${chiefComplaint.complaint || 'unspecified issue'}" for a duration of ${chiefComplaint.duration || 'an unknown period'}.`;
             
             if (hpi) summary += `\n\nThe history of the presenting illness is as follows: ${hpi}`;
 
             if (!isEmpty(pastMedical)) {
-                const diseases = pastMedical.map(d => `${d.disease} (${d.control || 'status unknown'})`).join(', ');
-                summary += `\n\nThe patient has a significant past medical history of ${diseases}.`;
-            } else {
-                summary += `\n\nThe patient reports no significant past medical history.`;
+                const diseases = pastMedical.filter(d => d?.disease).map(d => `${d.disease} (${d.control || 'status unknown'})`).join(', ');
+                if (diseases) summary += `\n\nRecorded past medical history: ${diseases}.`;
             }
 
             if (vitals.bp || vitals.hr) {
@@ -176,1150 +181,20 @@
             }
             
             if (cardiovascularExam?.auscultation?.murmurPresent === 'Yes') {
-                const murmur = cardiovascularExam.auscultation.murmur;
-                summary += ` A ${murmur.timing || ''} murmur of grade ${murmur.loudness?.split(' ')[0] || ''} was noted at the ${murmur.location || 'unspecified area'}.`;
+                const murmur = cardiovascularExam.auscultation.murmur || {};
+                summary += ` A ${murmur.timing || ''} murmur of grade ${String(murmur.loudness || '').split(' ')[0] || ''} was noted at the ${murmur.location || 'unspecified area'}.`;
             }
 
-            summary += `\n\nThe final diagnosis is ${finalDiagnosis || 'Not specified'}.`;
+            if (finalDiagnosis) summary += `\n\nThe recorded final diagnosis is ${finalDiagnosis}.`;
 
             if (!isEmpty(pharmacological)) {
-                const drugs = pharmacological.map(d => `${d.name} ${d.dose} ${d.frequency}`).join(', ');
-                summary += ` The patient has been prescribed ${drugs}.`;
+                const drugs = pharmacological.filter(d => d?.name).map(d => [d.name,d.dose,d.frequency].filter(Boolean).join(' ')).join(', ');
+                if (drugs) summary += ` Recorded prescriptions: ${drugs}.`;
             }
 
             return summary;
         }
         
-        // --- Section Rendering Functions ---
-
-        function renderHistorySection(history) {
-            if (!history) return '';
-            let html = `<div class="summary-section"><h2 class="summary-section-title">History</h2><div class="summary-content">`;
-            
-            // Systemic Review
-            if (!isEmpty(history.systemicReview)) {
-                html += `<h3 class="summary-subsection-title">Systemic Review</h3><p>Positive findings on systemic review include: ${history.systemicReview.join(', ')}.</p>`;
-            }
-            
-            // Surgical History
-            if (!isEmpty(history.pastSurgical)) {
-                html += `<h3 class="summary-subsection-title">Past Surgical History</h3><ul>`;
-                history.pastSurgical.forEach(s => {
-                    html += `<li>${s.surgery || 'Unnamed surgery'} on ${s.date || 'an unknown date'}.`;
-                    if (s.complications) html += ` Complications: ${s.complications}.`;
-                    if (s.transfusion === 'yes') html += ` Required blood transfusion.`;
-                    html += `</li>`;
-                });
-                html += `</ul>`;
-            }
-
-            // Drug History
-            if (!isEmpty(history.drugHistory)) {
-                 html += `<h3 class="summary-subsection-title">Drug History</h3><ul>`;
-                 history.drugHistory.forEach(d => {
-                     let drugInfo = `<li><strong>${d.name || 'Unnamed Drug'} (${d.category || 'N/A'})</strong>`;
-                     if (d.category === 'Allergen') {
-                         drugInfo += `: Known allergen, reaction is ${d.fields['drug-allergy-severity'] || 'not specified'}.`;
-                     } else if (d.category === 'Prescription') {
-                         drugInfo += `: Taking ${d.fields['drug-dose']} ${d.fields['freq-select']}, compliance is ${d.fields['comp-select']}.`;
-                     }
-                     html += `${drugInfo}</li>`;
-                 });
-                 html += `</ul>`;
-            }
-            
-            // Social History
-            const smoking = history.socioeconomic?.smoking;
-            if (smoking && smoking.status !== 'non-smoker') {
-                html += `<h3 class="summary-subsection-title">Social History</h3><p>Patient is a ${smoking.status} with a ${smoking.packYears} pack-year history.</p>`;
-            }
-
-            // Family History
-            if (!isEmpty(history.family?.diseases)) {
-                 html += `<h3 class="summary-subsection-title">Family History</h3><p>Significant family history of ${history.family.diseases.join(', ')}.</p>`;
-            }
-
-            html += `</div></div>`;
-            return html;
-        }
-
-
-        // Label map for the structured neurological and abdominal examination.
-        // Values received here have already been escaped by safeSummaryValue.
-        const additionalExamSummarySchema = [
-          {
-            "key": "neurologicalExam",
-            "title": "Neurological Examination",
-            "sections": [
-              {
-                "key": "cranialNerves",
-                "title": "1. Cranial Nerves (CN I–XII)",
-                "groups": [
-                  {
-                    "key": "cn1",
-                    "label": "CN I — Olfactory",
-                    "fields": [
-                      {
-                        "key": "smell",
-                        "label": "Olfaction",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "cn2",
-                    "label": "CN II — Optic",
-                    "fields": [
-                      {
-                        "key": "visualAcuity",
-                        "label": "Visual acuity",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "visualFields",
-                        "label": "Visual fields (confrontation)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "fundoscopy",
-                        "label": "Fundoscopy",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "cn346",
-                    "label": "CN III, IV & VI — Oculomotor, Trochlear and Abducens",
-                    "fields": [
-                      {
-                        "key": "pupilSize",
-                        "label": "Pupil size (mm)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "directLightReflex",
-                        "label": "Direct light reflex",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "consensualLightReflex",
-                        "label": "Consensual light reflex",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "ptosis",
-                        "label": "Ptosis",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "ocularMovements",
-                        "label": "Extraocular movements",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "diplopia",
-                        "label": "Diplopia",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "nystagmus",
-                        "label": "Nystagmus",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "accommodation",
-                        "label": "Accommodation / convergence",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "cn5",
-                    "label": "CN V — Trigeminal",
-                    "fields": [
-                      {
-                        "key": "v1Sensation",
-                        "label": "V1 (ophthalmic) sensation",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "v2Sensation",
-                        "label": "V2 (maxillary) sensation",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "v3Sensation",
-                        "label": "V3 (mandibular) sensation",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "mastication",
-                        "label": "Muscles of mastication",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "cornealReflex",
-                        "label": "Corneal reflex (eye stimulated)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "jawDeviation",
-                        "label": "Jaw opening",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "cn7",
-                    "label": "CN VII — Facial",
-                    "fields": [
-                      {
-                        "key": "forehead",
-                        "label": "Forehead wrinkling",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "eyeClosure",
-                        "label": "Eye closure",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "lowerFace",
-                        "label": "Smile / lower facial movement",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "facialPattern",
-                        "label": "Facial weakness pattern",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "cn8",
-                    "label": "CN VIII — Vestibulocochlear",
-                    "fields": [
-                      {
-                        "key": "hearing",
-                        "label": "Hearing",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "rinne",
-                        "label": "Rinne test",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "weber",
-                        "label": "Weber test",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "cn910",
-                    "label": "CN IX & X — Glossopharyngeal and Vagus",
-                    "fields": [
-                      {
-                        "key": "palate",
-                        "label": "Palatal elevation",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "uvula",
-                        "label": "Uvula",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "voice",
-                        "label": "Voice",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "swallow",
-                        "label": "Swallowing (if assessed)",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "gagReflex",
-                        "label": "Gag reflex (if tested)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "cn11",
-                    "label": "CN XI — Accessory",
-                    "fields": [
-                      {
-                        "key": "shoulderShrug",
-                        "label": "Shoulder shrug",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "headTurn",
-                        "label": "Head rotation toward side tested",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "cn12",
-                    "label": "CN XII — Hypoglossal",
-                    "fields": [
-                      {
-                        "key": "tongueProtrusion",
-                        "label": "Tongue protrusion",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "tongueWasting",
-                        "label": "Tongue wasting",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "fasciculations",
-                        "label": "Tongue fasciculations",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "key": "upperLimbs",
-                "title": "2. Upper Limbs",
-                "groups": [
-                  {
-                    "key": "inspection",
-                    "label": "Inspection & muscle bulk",
-                    "fields": [
-                      {
-                        "key": "muscleBulk",
-                        "label": "Muscle bulk",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "fasciculations",
-                        "label": "Fasciculations",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "involuntaryMovements",
-                        "label": "Involuntary movements / tremor",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "tone",
-                    "label": "Tone",
-                    "fields": [
-                      {
-                        "key": "tone",
-                        "label": "Muscle tone",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "power",
-                    "label": "Power — MRC grading (0–5)",
-                    "fields": [
-                      {
-                        "key": "shoulderAbduction",
-                        "label": "Shoulder abduction (C5)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "elbowFlexion",
-                        "label": "Elbow flexion (C5–C6)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "elbowExtension",
-                        "label": "Elbow extension (C7)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "wristExtension",
-                        "label": "Wrist extension (C6–C7)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "wristFlexion",
-                        "label": "Wrist flexion",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "fingerExtension",
-                        "label": "Finger extension (C7–C8)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "fingerFlexion",
-                        "label": "Finger flexion (C8)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "fingerAbduction",
-                        "label": "Finger abduction (T1)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "thumbAbduction",
-                        "label": "Thumb abduction",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "reflexes",
-                    "label": "Deep tendon reflexes",
-                    "fields": [
-                      {
-                        "key": "biceps",
-                        "label": "Biceps (C5–C6)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "supinator",
-                        "label": "Brachioradialis (C5–C6)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "triceps",
-                        "label": "Triceps (C7–C8)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "hoffmann",
-                        "label": "Hoffmann sign",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "sensation",
-                    "label": "Sensation",
-                    "fields": [
-                      {
-                        "key": "lightTouch",
-                        "label": "Light touch",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "pinprick",
-                        "label": "Pinprick",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "temperature",
-                        "label": "Temperature",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "vibration",
-                        "label": "Vibration",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "jointPosition",
-                        "label": "Joint position sense",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "distribution",
-                        "label": "Sensory distribution / level",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "coordination",
-                    "label": "Coordination & drift",
-                    "fields": [
-                      {
-                        "key": "pronatorDrift",
-                        "label": "Pronator drift",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "fingerNose",
-                        "label": "Finger–nose test",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "rapidAlternating",
-                        "label": "Rapid alternating movements",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "key": "lowerLimbs",
-                "title": "3. Lower Limbs",
-                "groups": [
-                  {
-                    "key": "inspection",
-                    "label": "Inspection & muscle bulk",
-                    "fields": [
-                      {
-                        "key": "muscleBulk",
-                        "label": "Muscle bulk",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "fasciculations",
-                        "label": "Fasciculations",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "involuntaryMovements",
-                        "label": "Involuntary movements / tremor",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "tone",
-                    "label": "Tone",
-                    "fields": [
-                      {
-                        "key": "tone",
-                        "label": "Muscle tone",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "power",
-                    "label": "Power — MRC grading (0–5)",
-                    "fields": [
-                      {
-                        "key": "hipFlexion",
-                        "label": "Hip flexion (L2–L3)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "hipExtension",
-                        "label": "Hip extension",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "hipAbduction",
-                        "label": "Hip abduction",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "hipAdduction",
-                        "label": "Hip adduction",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "kneeExtension",
-                        "label": "Knee extension (L3–L4)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "kneeFlexion",
-                        "label": "Knee flexion (L5–S1)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "ankleDorsiflexion",
-                        "label": "Ankle dorsiflexion (L4–L5)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "anklePlantarflexion",
-                        "label": "Ankle plantarflexion (S1–S2)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "greatToeExtension",
-                        "label": "Great toe extension (L5)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "reflexes",
-                    "label": "Reflexes & plantar response",
-                    "fields": [
-                      {
-                        "key": "knee",
-                        "label": "Patellar (L3–L4)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "ankle",
-                        "label": "Achilles (S1–S2)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "clonus",
-                        "label": "Ankle clonus",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "plantar",
-                        "label": "Plantar response",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "sensation",
-                    "label": "Sensation",
-                    "fields": [
-                      {
-                        "key": "lightTouch",
-                        "label": "Light touch",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "pinprick",
-                        "label": "Pinprick",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "temperature",
-                        "label": "Temperature",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "vibration",
-                        "label": "Vibration",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "jointPosition",
-                        "label": "Joint position sense",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "distribution",
-                        "label": "Sensory distribution / level",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "coordination",
-                    "label": "Coordination, gait & balance",
-                    "fields": [
-                      {
-                        "key": "heelShin",
-                        "label": "Heel–shin test",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "gait",
-                        "label": "Gait",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "tandem",
-                        "label": "Tandem gait",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "romberg",
-                        "label": "Romberg test",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "key": "abdominalExam",
-            "title": "Abdominal Examination",
-            "sections": [
-              {
-                "key": "",
-                "title": "",
-                "groups": [
-                  {
-                    "key": "inspection",
-                    "label": "Inspection",
-                    "fields": [
-                      {
-                        "key": "contour",
-                        "label": "Abdominal contour",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "respiratoryMovement",
-                        "label": "Movement with respiration",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "umbilicus",
-                        "label": "Umbilicus",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "findings",
-                        "label": "Visible findings",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "auscultation",
-                    "label": "Auscultation",
-                    "fields": [
-                      {
-                        "key": "bowelSounds",
-                        "label": "Bowel sounds",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "bruits",
-                        "label": "Bruits heard",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "bruitStatus",
-                        "label": "Bruit assessment",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "percussion",
-                    "label": "Percussion & ascites",
-                    "fields": [
-                      {
-                        "key": "generalPercussion",
-                        "label": "Percussion note",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "liverSpan",
-                        "label": "Liver span at right midclavicular line (cm)",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "splenicDullness",
-                        "label": "Splenic percussion",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "shiftingDullness",
-                        "label": "Shifting dullness",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "fluidThrill",
-                        "label": "Fluid thrill / wave",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "palpation",
-                    "label": "Superficial & deep palpation",
-                    "fields": [
-                      {
-                        "key": "consistency",
-                        "label": "Abdominal wall",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "tenderness",
-                        "label": "Tenderness",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "tenderRegions",
-                        "label": "Site(s) of tenderness",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "guarding",
-                        "label": "Guarding",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "rebound",
-                        "label": "Rebound tenderness (if tested)",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "mass",
-                        "label": "Palpable mass",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "massDetails",
-                        "label": "Mass description",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "organs",
-                    "label": "Organ palpation",
-                    "fields": [
-                      {
-                        "key": "liver",
-                        "label": "Liver",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "liverDetails",
-                        "label": "Liver findings",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "spleen",
-                        "label": "Spleen",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "spleenDetails",
-                        "label": "Spleen findings",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "kidneys",
-                        "label": "Kidneys (ballotment)",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "renalAngle",
-                        "label": "Renal angle tenderness",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "kidneyDetails",
-                        "label": "Kidney findings",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "aorta",
-                        "label": "Abdominal aortic pulsation",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  },
-                  {
-                    "key": "specialSigns",
-                    "label": "Special signs & hernial orifices",
-                    "fields": [
-                      {
-                        "key": "murphy",
-                        "label": "Murphy sign",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "mcburney",
-                        "label": "McBurney point tenderness",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "rovsing",
-                        "label": "Rovsing sign",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "psoas",
-                        "label": "Psoas sign",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "obturator",
-                        "label": "Obturator sign",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "inguinalHernia",
-                        "label": "Inguinal hernia",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "femoralHernia",
-                        "label": "Femoral hernia",
-                        "bilateral": true
-                      },
-                      {
-                        "key": "umbilicalHernia",
-                        "label": "Umbilical hernia",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "incisionalHernia",
-                        "label": "Incisional hernia",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "otherExamination",
-                        "label": "Other examination findings (if performed)",
-                        "bilateral": false
-                      },
-                      {
-                        "key": "notes",
-                        "label": "Additional findings",
-                        "bilateral": false
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ];
-        function renderAdditionalExamSections(exam) {
-            const format = value => Array.isArray(value)
-                ? value.filter(item => typeof item === 'string' && item.trim()).join(', ')
-                : (typeof value === 'string' && value.trim() ? value : (typeof value === 'number' && Number.isFinite(value) ? String(value) : ''));
-            let html = '';
-            for (const system of additionalExamSummarySchema) {
-                const systemData = exam?.[system.key];
-                if (!systemData) continue;
-                let sections = '';
-                for (const section of system.sections) {
-                    const data = section.key ? systemData[section.key] : systemData;
-                    let groups = '';
-                    for (const group of section.groups) {
-                        const findings = group.fields.map(field => {
-                            const value = data?.[group.key]?.[field.key];
-                            let text = format(value);
-                            if (field.bilateral) {
-                                const right = format(value?.right), left = format(value?.left);
-                                text = [right ? 'Right: ' + right : '', left ? 'Left: ' + left : ''].filter(Boolean).join(' | ');
-                            }
-                            return text ? '<li class="break-words"><strong>' + field.label + ':</strong> <span class="whitespace-pre-wrap">' + text + '</span></li>' : '';
-                        }).filter(Boolean).join('');
-                        if (findings) groups += '<div class="mb-3"><p class="font-semibold">' + group.label + '</p><ul>' + findings + '</ul></div>';
-                    }
-                    if (groups) sections += (section.title ? '<p class="font-semibold mt-3 mb-2">' + section.title + '</p>' : '') + groups;
-                }
-                if (sections) html += '<h3 class="summary-subsection-title">' + system.title + '</h3>' + sections;
-            }
-            return html;
-        }
-
-        function renderExaminationSection(exam) {
-            if (!exam) return '';
-            let html = `<div class="summary-section"><h2 class="summary-section-title">Physical Examination</h2><div class="summary-content">`;
-
-            // Vitals
-            html += `<h3 class="summary-subsection-title">Vital Signs</h3><p>BP: ${exam.vitals?.bp || 'N/A'}, HR: ${exam.vitals?.hr || 'N/A'} bpm, RR: ${exam.vitals?.rr || 'N/A'}, Temp: ${exam.vitals?.temp || 'N/A'}°C, SpO2: ${exam.vitals?.spo2 || 'N/A'}%.</p>`;
-            
-            // Cardiovascular
-            const cvs = exam.cardiovascularExam;
-            if (cvs) {
-                html += `<h3 class="summary-subsection-title">Cardiovascular System</h3>`;
-                let cvsSummary = [];
-                if(cvs.inspection?.findings?.length > 0) cvsSummary.push(`Inspection noted ${cvs.inspection.findings.join(', ')}.`);
-                const apex = cvs.palpation;
-                if (apex?.apexBeatLocation === 'Not palpable') cvsSummary.push('Apex beat not palpable.');
-                else if (apex?.apexBeatLocation || apex?.apexBeatCharacter) cvsSummary.push('Apex beat: ' + [apex.apexBeatCharacter, apex.apexBeatLocation].filter(Boolean).join(', ') + '.');
-                if(cvs.palpation?.thrillsHeaves?.length > 0 && cvs.palpation.thrillsHeaves[0] !== 'No thrills/heaves') cvsSummary.push(`Palpation revealed ${cvs.palpation.thrillsHeaves.join(', ')}.`);
-                if(cvs.auscultation?.heartSounds?.length > 0) cvsSummary.push(`Heart sounds: ${cvs.auscultation.heartSounds.join(', ')}.`);
-                if(cvs.auscultation?.extraHeartSounds?.length > 0 && cvs.auscultation.extraHeartSounds[0] !== 'None') cvsSummary.push(`Extra sounds include ${cvs.auscultation.extraHeartSounds.join(', ')}.`);
-                html += `<p>${cvsSummary.join(' ')}</p>`;
-            }
-            
-            html += renderAdditionalExamSections(exam);
-            html += `</div></div>`;
-            return html;
-        }
-
-        function renderInvestigationSection(investigation) {
-            if (!investigation) return '';
-            let html = `<div class="summary-section"><h2 class="summary-section-title">Investigations</h2><div class="summary-content">`;
-
-            // Lab Tests
-            let orderedLabs = [];
-            if (investigation.labTests) {
-                Object.values(investigation.labTests).forEach(cat => {
-                    if (!isEmpty(cat.tests)) orderedLabs = orderedLabs.concat(cat.tests);
-                });
-            }
-            if(orderedLabs.length > 0) {
-                 html += `<h3 class="summary-subsection-title">Ordered Labs</h3><p>${orderedLabs.join(', ')}.</p>`;
-            }
-
-            // Imaging
-            if (investigation.imaging && investigation.imaging.modality) {
-                html += `<h3 class="summary-subsection-title">Ordered Imaging</h3><p>${toSentenceCase(investigation.imaging.modality)} of the ${investigation.imaging.region.join(', ')}.</p>`;
-            }
-
-            // Attached Files
-            if (investigation.uploadedFiles) {
-                html += `<h3 class="summary-subsection-title">Attached Results</h3><ul>`;
-                Object.entries(investigation.uploadedFiles).forEach(([section, files]) => {
-                    if (!isEmpty(files)) {
-                        files.forEach(file => {
-                            html += `<li><strong>${toSentenceCase(section.replace(/_/g, ' '))}:</strong> ${file.name}</li>`;
-                        });
-                    }
-                });
-                html += `</ul>`;
-            }
-
-            html += `</div></div>`;
-            return html;
-        }
-        
-        function renderTreatmentSection(treatment) {
-             if (!treatment) return '';
-             let html = `<div class="summary-section"><h2 class="summary-section-title">Final Diagnosis & Treatment</h2><div class="summary-content">`;
-             html += `<p><strong>Diagnosis:</strong> ${treatment.diagnosis || 'Not specified.'}</p>`;
-             
-             if (!isEmpty(treatment.pharmacological)) {
-                 html += `<h3 class="summary-subsection-title">Pharmacological Plan</h3><ul>${treatment.pharmacological.map(d => `<li>${d.name} ${d.dose} ${d.frequency}</li>`).join('')}</ul>`;
-             }
-             if (!isEmpty(treatment.interventions)) {
-                 html += `<h3 class="summary-subsection-title">Interventional Plan</h3><ul>${treatment.interventions.map(i => `<li>${i.name}</li>`).join('')}</ul>`;
-             }
-             if (!isEmpty(treatment.instructions)) {
-                 html += `<h3 class="summary-subsection-title">Medical Instructions</h3><ul>${treatment.instructions.map(i => `<li>${i}</li>`).join('')}</ul>`;
-             }
-
-             html += `</div></div>`;
-             return html;
-        }
-
         /**
          * Renders the full patient summary card.
          */
@@ -1331,57 +206,35 @@
         }
         function renderSummaryCard(input) {
             const originalHistory = input.history && typeof input.history === 'object' && !Array.isArray(input.history) ? input.history : {};
-            const recordedDemo = originalHistory.demographics || {};
+            const d = originalHistory.demographics || {};
             const record = safeSummaryValue({
-                ...input,
-                history: {...originalHistory, demographics: {...recordedDemo, name: recordedDemo.name ?? input.name, dob: recordedDemo.dob ?? input.dateOfBirth, gender: recordedDemo.gender ?? input.gender}, hpi: originalHistory.hpi ?? (typeof input.history === 'string' ? input.history : '')},
-                investigation: typeof input.investigation === 'object' ? input.investigation : null,
-                treatment: typeof input.treatment === 'object' ? input.treatment : null
+                history: {...originalHistory, demographics: {...d, name: d.name ?? input.name, dob: d.dob ?? input.dateOfBirth, gender: d.gender ?? input.gender}, hpi: originalHistory.hpi ?? (typeof input.history === 'string' ? input.history : '')},
+                examination: input.examination,
+                treatment: input.treatment && typeof input.treatment === 'object' ? input.treatment : {}
             });
-            summaryCardContainer.innerHTML = ''; // Clear loading message
-
-            const demographics = record.history?.demographics || {};
             const smartSummaryText = generateSmartSummary(record);
-
-            let html = `
-                <div class="summary-header">
-                    <h1 class="text-3xl font-bold text-gray-900">${demographics.name || 'Patient Summary'}</h1>
-                    <p class="text-md text-gray-600 mt-2">
-                        DOB: ${demographics.dob || 'N/A'} | 
-                        Gender: ${demographics.gender || 'N/A'} | 
-                        Blood Group: ${demographics.bloodGroup || 'N/A'}
-                    </p>
-                </div>
-
-                <div class="summary-section">
-                    <h2 class="summary-section-title">Smart Summary</h2>
-                    <p class="summary-content whitespace-pre-wrap bg-blue-50 p-4 rounded-lg border border-blue-200">${smartSummaryText}</p>
-                </div>
-            `;
-            
-            // Render detailed sections
-            html += renderHistorySection(record.history);
-            html += renderExaminationSection(record.examination);
-            html += renderInvestigationSection(record.investigation);
-            html += renderTreatmentSection(record.treatment);
-
-            summaryCardContainer.innerHTML = html;
-            const notes = [['Medical history', input.medicalHistory], ['Medication', input.currentMedication], ['Allergies', input.allergies], ['Physical exam', input.physicalExam], ['Investigation', typeof input.investigation === 'string' ? input.investigation : input.legacyInvestigationText], ['Treatment', typeof input.treatment === 'string' ? input.treatment : input.legacyTreatmentText], ['Previous history text', input.legacyHistoryText]].filter(([,v]) => typeof v === 'string' && v.trim());
-            if (notes.length) { const section = document.createElement('div'); section.className = 'summary-section'; const h = document.createElement('h2'); h.className = 'summary-section-title'; h.textContent = 'Previously recorded notes'; section.append(h); for (const [label,value] of notes) { const p = document.createElement('p'); p.className = 'summary-content whitespace-pre-wrap'; p.textContent = label + ': ' + value; section.append(p); } summaryCardContainer.append(section); }
+            summaryCardContainer.innerHTML = renderPatientHeader(input) +
+                '<div class="summary-section"><h2 class="summary-section-title">Smart Summary</h2><p class="summary-content whitespace-pre-wrap bg-blue-50 p-4 rounded-lg border border-blue-200">'+smartSummaryText+'</p></div>' +
+                renderClinicalSections(input) + renderInvestigationAndTreatmentSections(input);
+            printButton.disabled = false;
+            const link = document.getElementById('clinicalSummaryLink');
+            link.href = 'clinical-summary.html?' + new URLSearchParams({from:fromDashboard,patientId});
+            link.hidden = false;
         }
 
         /**
          * Fetches the patient record from Firestore.
          */
-        async function fetchPatientRecord() {
+        async function fetchPatientRecord(uid, generation) {
             if (!doctorUserId || !patientId) {
                 summaryCardContainer.innerHTML = `<div class="text-center text-red-600 font-semibold">Error: Missing Doctor or Patient ID. Cannot load data.</div>`;
                 return;
             }
 
-            const patientDocRef = doc(db, `artifacts/${appId}/doctors/${doctorUserId}/patients`, patientId);
+            const patientDocRef = doc(db, `artifacts/${appId}/doctors/${uid}/patients`, patientId);
             try {
                 const docSnap = await getDocFromServer(patientDocRef);
+                if (generation !== authGeneration || auth.currentUser?.uid !== uid) return;
                 if (docSnap.exists()) {
                     const patientRecord = docSnap.data();
                     renderSummaryCard(patientRecord);
@@ -1389,6 +242,7 @@
                     summaryCardContainer.innerHTML = `<div class="text-center text-red-600 font-semibold">Error: Patient record not found.</div>`;
                 }
             } catch (error) {
+                if (generation !== authGeneration) return;
                 console.error("Error loading patient from Firestore:", error);
                 summaryCardContainer.innerHTML = `<div class="text-center text-red-600 font-semibold">Error loading data. Please check the console.</div>`;
             }
@@ -1402,7 +256,7 @@
             fromDashboard = urlParams.get('from');
             patientId = urlParams.get('patientId');
 
-            if (fromDashboard !== 'cardiology-dashboard.html' || !patientId) {
+            if (fromDashboard !== 'cardiology-dashboard.html' || !patientId || patientId.includes('/')) {
                 summaryCardContainer.innerHTML = `<div class="text-center text-red-600 font-semibold">Error: Navigation context lost. Please return to the dashboard.</div>`;
                 return;
             }
@@ -1412,14 +266,19 @@
                 db = getFirestore(app);
                 auth = getAuth(app);
                 onAuthStateChanged(auth, async (user) => {
+                    const generation = ++authGeneration;
+                    summaryCardContainer.textContent = 'Verifying patient access…';
+                    printButton.disabled = true;
+                    document.getElementById('clinicalSummaryLink').hidden = true;
                     if (user) {
                         doctorUserId = user.uid;
                         try {
                             const snap = await getDocFromServer(doc(db, `artifacts/${appId}/public/data/doctors`, user.uid));
+                            if (generation !== authGeneration || auth.currentUser?.uid !== user.uid) return;
                             const doctor = snap.exists() ? snap.data() : null;
                             if (!doctor || doctor.deactivated || doctor.role !== 'doctor' || doctor.speciality !== 'Cardiology') { window.location.replace('index.html'); return; }
-                            await fetchPatientRecord();
-                        } catch (_) { summaryCardContainer.textContent = 'Unable to verify patient access. Please retry.'; }
+                            await fetchPatientRecord(user.uid, generation);
+                        } catch (_) { if (generation === authGeneration) summaryCardContainer.textContent = 'Unable to verify patient access. Please retry.'; }
                     } else {
                         window.location.href = 'index.html';
                     }
@@ -1434,7 +293,7 @@
             });
 
             printButton.addEventListener('click', () => {
-                window.print();
+                if (!printButton.disabled && auth?.currentUser?.uid === doctorUserId) window.print();
             });
         });
 
