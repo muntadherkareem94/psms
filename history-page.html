@@ -177,7 +177,7 @@
             <h2 class="section-title">Socioeconomic History</h2>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="border p-4 rounded-lg">
-                     <label class="form-label">Smoking Status</label><select id="smokingStatus" class="form-select"><option value="non-smoker">Non-smoker</option><option value="ex-smoker">Ex-smoker</option><option value="current-smoker">Current Smoker</option></select>
+                     <label class="form-label">Smoking Status</label><select id="smokingStatus" class="form-select"><option value="non-smoker">Non-smoker</option><option value="passive-smoker">Passive smoker</option><option value="ex-smoker">Ex-smoker</option><option value="current-smoker">Current Smoker</option></select>
                      <div id="smokerCalculator" class="mt-4 space-y-2" style="display:none;"><input type="number" id="cigsPerDay" class="form-input" placeholder="Cigarettes per day"><input type="number" id="yearsSmoked" class="form-input" placeholder="Years smoked"><p class="text-right font-semibold">Pack-Years: <span id="packYearsResult">0</span></p></div>
                 </div>
                 <div class="border p-4 rounded-lg">
@@ -1459,7 +1459,11 @@ if (menopausalSection) {
             pastSurgical: Array.from(document.querySelectorAll('#surgeryList .dynamic-entry')).map(e => ({ surgery: getTomSelectValue(`#${e.id} .surgery-select`), date: e.querySelector('.surgery-date').value, complications: e.querySelector('.surgery-complications').value, transfusion: e.querySelector('.transfusion-needed').value, postOpComplications: getTomSelectValues(e.querySelector('.post-op-complications')), bloodComponents: Array.from(e.querySelectorAll(`#${e.id} .pints-container .blood-pint`)).map(pintInput => ({ name: pintInput.dataset.component, pints: pintInput.value })) })),
             drugHistory: Array.from(document.querySelectorAll('#drugList .dynamic-entry')).map(e => ({ name: getTomSelectValue(`#${e.id} .drug-select`), category: e.querySelector('.drug-category-select').value, fields: { 'drug-dose': e.querySelector('.drug-dose')?.value, 'freq-select': getTomSelectValue(`#${e.id} .freq-select`), 'route-select': getTomSelectValue(`#${e.id} .route-select`), 'comp-select': getTomSelectValue(`#${e.id} .comp-select`), 'drug-indication': e.querySelector('.drug-indication')?.value, 'drug-side-effects': e.querySelector('.drug-side-effects')?.value, 'drug-current-use': e.querySelector('.drug-current-use')?.value, 'drug-abuse-freq': e.querySelector('.drug-abuse-freq')?.value, 'route-abuse-select': getTomSelectValues(e.querySelector('.route-abuse-select')), 'drug-needle-sharing': e.querySelector('.drug-needle-sharing')?.value, 'drug-rehab': e.querySelector('.drug-rehab')?.value, 'drug-dependency-symptoms': e.querySelector('.drug-dependency-symptoms')?.value, 'drug-allergy-severity': e.querySelector('.drug-allergy-severity')?.value, } })),
             socioeconomic: { 
-                smoking: { status: document.getElementById('smokingStatus').value, cigsPerDay: document.getElementById('cigsPerDay').value, yearsSmoked: document.getElementById('yearsSmoked').value, packYears: document.getElementById('packYearsResult').textContent, }, 
+                smoking: (() => {
+                    const status = document.getElementById('smokingStatus').value;
+                    const activeOrFormer = status === 'current-smoker' || status === 'ex-smoker';
+                    return { status, cigsPerDay: activeOrFormer ? document.getElementById('cigsPerDay').value : '', yearsSmoked: activeOrFormer ? document.getElementById('yearsSmoked').value : '', packYears: activeOrFormer ? document.getElementById('packYearsResult').textContent : '' };
+                })(), 
                 alcohol: Array.from(document.querySelectorAll('#alcoholList .dynamic-entry')).map(e => ({ type: getTomSelectValue(`#${e.id} .drink-type-select`), volume: e.querySelector('.volume-input').value, abv: e.querySelector('.abv-input').value, quantity: e.querySelector('.quantity-input').value, })),
                 petHistory: {
                     hadPet: document.getElementById('hadPet').value,
